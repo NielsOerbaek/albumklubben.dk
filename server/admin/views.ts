@@ -16,7 +16,7 @@ export function layout(title: string, body: string, flash?: string): string {
 <title>${e(title)} | Albumklubben</title>
 <link rel="stylesheet" href="/admin/admin.css"></head>
 <body>
-<header><a href="/admin">Albumklubben</a>
+<header><a href="/admin">Albumklubben · Redigering</a>
 <form method="post" action="/admin/logout"><button type="submit" class="link">Log ud</button></form></header>
 <main>${flash ? `<p class="flash">${e(flash)}</p>` : ''}${body}</main>
 </body></html>`

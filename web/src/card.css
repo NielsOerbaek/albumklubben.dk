@@ -3,7 +3,8 @@
   container-type: inline-size;
   width: 100%;
   aspect-ratio: 1; /* a minimum: long text makes the card taller instead of being clipped */
-  border-radius: 6.7%;
+  border-radius: 0;
+  font-family: var(--font);
   padding: 8%;
   background: var(--card-bg, #262d66);
   color: var(--card-ink, #fff);
@@ -11,7 +12,7 @@
   line-height: 1.3;
 }
 .album-card > * { font-size: var(--u); }
-.album-card h3 { margin: 0; font-size: calc(var(--u) * 1.35); font-weight: 800; letter-spacing: -0.01em; }
+.album-card h3 { margin: 0; font-size: calc(var(--u) * 1.35); font-weight: 600; }
 .album-card p { margin: 0; }
 .album-title { margin-top: 0.3em !important; font-size: calc(var(--u) * 1.2) !important; }
 .album-facts { margin-top: 1.6em; }
@@ -20,7 +21,7 @@
 .album-story {
   margin: 1em 0 0;
   padding-left: 1em;
-  border-left: 2px solid var(--muted, #a8a398);
-  color: var(--muted, #a8a398);
+  border-left: 1px solid currentColor;
+  color: var(--muted-on-black, #9ca3af);
   font-style: italic;
 }

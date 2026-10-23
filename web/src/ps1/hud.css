@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=VT323&display=swap');
+@import '../theme.css';
 
 .ps1-canvas {
   position: fixed;
@@ -11,10 +11,9 @@
 .ps1-hud { position: fixed; inset: 0; pointer-events: none; z-index: 1; }
 
 .ps1-hint, .ps1-prompt, .ps1-small {
-  font-family: 'VT323', ui-monospace, monospace;
-  color: #f3efe6;
-  text-shadow: 2px 2px 0 #000;
-  letter-spacing: 0.02em;
+  font-family: var(--font);
+  font-weight: 300;
+  color: #fff;
 }
 
 .ps1-hint, .ps1-prompt {
@@ -23,12 +22,13 @@
   transform: translateX(-50%);
   max-width: calc(100% - 32px);
   padding: 8px 16px;
-  background: rgb(10 10 14 / 0.72);
-  border: 2px solid #f3efe6;
-  font-size: 28px;
+  background: #000;
+  border: 0;
+  border-radius: 0;
+  font-size: 16px;
   text-align: center;
 }
-.ps1-hint { top: 50%; translate: 0 -50%; white-space: nowrap; font-size: clamp(20px, 2vw, 28px); }
+.ps1-hint { top: 50%; translate: 0 -50%; white-space: nowrap; font-size: clamp(16px, 1.5vw, 20px); }
 .ps1-prompt { bottom: 48px; }
 
 .ps1-overlay {
@@ -37,7 +37,7 @@
   display: grid;
   place-items: center;
   pointer-events: auto;
-  background: rgb(10 10 14 / 0.55);
+  background: rgb(0 0 0 / 0.55);
 }
 
 .ps1-hud [hidden] { display: none !important; }
@@ -47,6 +47,7 @@
   display: grid;
   place-items: center;
   padding: 16px;
-  font-size: 28px;
+  font-size: 26px;
+  background: #000;
   text-align: center;
 }

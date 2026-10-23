@@ -1,0 +1,53 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter+Tight:wght@300;400;600&display=swap');
+
+/* Thoravej 29 identity. Swap --font for a licensed Waldenburg when there is one. */
+:root {
+  --font: 'Inter Tight', system-ui, sans-serif;
+  --black: #000;
+  --white: #fff;
+  --muted-on-white: #666;
+  --muted-on-black: #9ca3af;
+  --focus: #2276fc;
+  --bar: 40px;
+  --pad: 20px;
+  --bg: var(--black);
+  --ink: var(--white);
+  --muted: var(--muted-on-black);
+  --line: #333;
+}
+* { box-sizing: border-box; }
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--ink);
+  font: 300 16px/1.45 var(--font);
+}
+a { color: inherit; }
+button { font: inherit; color: inherit; }
+:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
+
+.topbar { position: sticky; top: 0; z-index: 20; height: var(--bar); display: flex; align-items: center;
+  gap: 40px; padding: 0 var(--pad); background: #000; color: #fff; font-size: 13px; font-weight: 300; }
+.topbar a { color: #fff; text-decoration: none; }
+.topbar .wordmark { text-transform: uppercase; white-space: nowrap; }
+.topbar nav { display: flex; gap: 26px; flex-wrap: nowrap; white-space: nowrap; }
+.topbar nav a:hover, .topbar nav a[aria-current='page'] { text-decoration: underline; text-underline-offset: 4px; }
+.topbar-right { margin-left: auto; display: flex; gap: 6px; }
+
+/* Pills are the only rounded elements. */
+.pill { height: 22px; padding: 0 9px; border-radius: 999px; border: 1px solid #fff; background: transparent;
+  color: #fff; font-size: 12px; font-weight: 300; text-transform: uppercase; cursor: pointer;
+  display: inline-flex; align-items: center; text-decoration: none; }
+.pill[aria-pressed='true'], .pill.on, .pill[aria-current='page'] { background: #fff; color: #000; }
+
+.stub { padding: 48px var(--pad); }
+.stub h1 { font-size: 39px; font-weight: 300; margin: 0 0 16px; }
+.stub a { text-transform: uppercase; font-size: 13px; }
+
+@media (max-width: 700px) {
+  :root { --pad: 16px; }
+  .topbar { height: auto; min-height: var(--bar); flex-wrap: wrap; gap: 8px 16px; padding-top: 8px; padding-bottom: 8px; }
+  .topbar-right { margin-left: 0; }
+  .topbar nav { gap: 14px; }
+  .topbar .wordmark { display: none; }
+}

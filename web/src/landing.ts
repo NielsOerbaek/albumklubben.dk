@@ -1,5 +1,6 @@
 import { html, render, nothing } from 'lit-html'
 import './base.css'
+import { topBarTemplate } from './topbar.ts'
 import './landing.css'
 import { fetchArchive, textureUrl } from './api.ts'
 import type { Archive } from '../../shared/types.ts'
@@ -9,18 +10,20 @@ function view(archive: Archive | null) {
   const covers = meetings.flatMap((m) => m.albums).flatMap((a) => (a.coverUrl ? [a.coverUrl] : []))
   const latest = meetings.at(-1)
   const latestAlbums = latest?.albums.filter((a) => a.coverUrl) ?? []
-  return html`<div class="hero">
+  return html`${topBarTemplate(null)}
+    <div class="hero">
     <div class="mosaic" aria-hidden="true">
       ${covers.map((c) => html`<img src=${textureUrl(c, 256)} alt="" loading="lazy">`)}
     </div>
+    <div class="side-mark" aria-hidden="true">Albumklubben</div>
     <header>
-      <h1>Albumklubben</h1>
-      <p>Thoravej 29 · hver anden tirsdag 11.30-12.30</p>
+      <h1>Albumklubben lytter til to albums hver anden tirsdag på Thoravej 29.</h1>
+      <p>Hver anden tirsdag 11.30-12.30</p>
     </header>
     <nav class="entries">
-      <a href="/crate">Crate digging</a>
-      <a href="/museum">Albumklubben Museum</a>
-      <a href="/arkiv">Arkivet</a>
+      <a href="/crate">Crate digging <span aria-hidden="true">→</span></a>
+      <a href="/museum">Albumklubben Museum <span aria-hidden="true">→</span></a>
+      <a href="/arkiv">Arkivet <span aria-hidden="true">→</span></a>
     </nav>
     ${latest && latestAlbums.length
       ? html`<footer class="latest">

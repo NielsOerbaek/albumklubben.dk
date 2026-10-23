@@ -1,5 +1,6 @@
 import { html, nothing, render, type TemplateResult } from 'lit-html'
 import '../base.css'
+import { topBarTemplate } from '../topbar.ts'
 import './arkiv.css'
 import { fetchArchive } from '../api.ts'
 import type { Album } from '../../../shared/types.ts'
@@ -79,16 +80,9 @@ function body(tab: Tab): TemplateResult {
 function draw() {
   const tab = tabFromHash()
   render(
-    html`<header class="top">
-        <div class="brand">
-          <a class="logo" href="/">Albumklubben</a>
-          <span class="sub">${subtitle(tab)}</span>
-        </div>
-        <nav class="tabs">
-          ${TABS.map(([id, label]) =>
-            html`<a href="#${id}" aria-current=${tab === id ? 'page' : nothing}>${label}</a>`)}
-        </nav>
-      </header>
+    html`${topBarTemplate('arkiv', html`${TABS.map(([id, label]) =>
+        html`<a class="pill" href="#${id}" aria-current=${tab === id ? 'page' : nothing}>${label}</a>`)}`)}
+      ${subtitle(tab) ? html`<p class="subline">${subtitle(tab)}</p>` : nothing}
       ${body(tab)}`,
     app,
   )
