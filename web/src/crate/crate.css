@@ -2,39 +2,3 @@
 body.crate .topbar { position: fixed; top: 0; left: 0; right: 0; }
 body.crate.walking .topbar { display: none; }
 body.crate .ps1-small { padding-top: calc(var(--bar) + 16px); }
-
-.crate-pull {
-  position: absolute;
-  inset: 0;
-  overflow-y: auto;
-  padding: calc(var(--bar) + 32px) var(--pad) 40px;
-  background: rgb(0 0 0 / 0.78);
-  font-family: var(--font);
-  font-weight: 300;
-  color: #fff;
-}
-.crate-pull-inner { width: min(520px, 54vh, 100%); margin: 0 auto; }
-.crate-pull-kicker { margin: 0 0 12px; font-size: 13px; text-transform: uppercase; }
-.crate-pull-help { margin: 20px 0 0; font-size: 13px; color: var(--muted-on-black); }
-
-.crate-record {
-  display: block;
-  width: 100%;
-  padding: 0;
-  border: 0;
-  border-radius: 0;
-  background: var(--card-bg);
-  cursor: pointer;
-  text-align: left;
-  animation: crate-turn 180ms ease-out;
-  transform-origin: center;
-}
-.crate-record.is-card { animation-name: crate-turn-card; }
-.crate-record img { display: block; width: 100%; aspect-ratio: 1; object-fit: cover; }
-.crate-nocover { display: block; aspect-ratio: 1; padding: 8%; font-size: 24px; }
-.crate-pull .album-story { font-size: 18px; margin-top: 24px; }
-
-/* Turning the record over: each side swings in from edge-on. */
-@keyframes crate-turn { from { transform: perspective(900px) rotateY(-90deg); } }
-@keyframes crate-turn-card { from { transform: perspective(900px) rotateY(90deg); } }
-@media (prefers-reduced-motion: reduce) { .crate-record { animation: none; } }

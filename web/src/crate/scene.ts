@@ -1,7 +1,9 @@
 import * as THREE from 'three'
 import { textureUrl } from '../api.ts'
+import { at, coverTexture, createBuilder, plane } from '../ps1/build.ts'
+import { fitText, fontsReady, painted, rng, speckle } from '../ps1/paint.ts'
 import { ps1Material } from '../ps1/material.ts'
-import { loadPixelTexture, pixelate } from '../ps1/textures.ts'
+import { loadPixelTexture } from '../ps1/textures.ts'
 import type { Album, Poster } from '../../../shared/types.ts'
 import { COUNTER, SHELF_DEPTH, TABLE, type CrateSpec, type ShopLayout } from './layout.ts'
 
@@ -10,30 +12,6 @@ export const WALL_H = 2.8
 
 // ---------------------------------------------------------------------------------------------
 // Textures, painted on small canvases so they stay hard-pixelled.
-
-function painted(w: number, h: number, paint: (g: CanvasRenderingContext2D) => void, repeat = false) {
-  const c = document.createElement('canvas')
-  c.width = w
-  c.height = h
-  const g = c.getContext('2d')!
-  paint(g)
-  const tex = pixelate(new THREE.CanvasTexture(c))
-  if (repeat) tex.wrapS = tex.wrapT = THREE.RepeatWrapping
-  return tex
-}
-
-/** A small deterministic random, so the shop looks the same on every visit. */
-function rng(seed: number) {
-  return () => ((seed = (seed * 16807) % 2147483647) - 1) / 2147483646
-}
-
-function speckle(g: CanvasRenderingContext2D, w: number, h: number, alpha: number, seed: number) {
-  const r = rng(seed)
-  for (let i = 0; i < w * h / 6; i++) {
-    g.fillStyle = r() < 0.5 ? `rgb(0 0 0 / ${alpha})` : `rgb(255 255 255 / ${alpha * 0.6})`
-    g.fillRect(Math.floor(r() * w), Math.floor(r() * h), 1, 1)
-  }
-}
 
 const floorTex = () => painted(32, 32, (g) => {
   for (let y = 0; y < 2; y++) for (let x = 0; x < 2; x++) {
@@ -113,20 +91,6 @@ const windowTex = () => painted(96, 48, (g) => {
   g.fillRect(31, 0, 2, 48); g.fillRect(63, 0, 2, 48)
 })
 
-async function fontsReady() {
-  // Canvas text needs the web font loaded; the system font is a fine fallback.
-  await Promise.race([document.fonts.load('600 40px "Inter Tight"'), new Promise((r) => setTimeout(r, 1500))])
-    .catch(() => {})
-}
-const FONT = '"Inter Tight", system-ui, sans-serif'
-
-/** Sets the largest font up to `size` px at which `text` fits in `maxW`, and returns that size. */
-function fitText(g: CanvasRenderingContext2D, text: string, maxW: number, size: number, weight = 600): number {
-  do g.font = `${weight} ${size}px ${FONT}`
-  while (g.measureText(text).width > maxW && --size > 6)
-  return size
-}
-
 // No thin border or light weight: single-pixel strokes vanish at a distance in 240 lines.
 const signTex = () => painted(256, 40, (g) => {
   g.fillStyle = '#000'; g.fillRect(0, 0, 256, 40)
@@ -154,48 +118,7 @@ const dividerTex = (label: string) => painted(96, 128, (g) => {
   lines.forEach((line, i) => g.fillText(line, 48, 13 + i * 19))
 })
 
-const covers = new Map<string, Promise<THREE.Texture>>()
-/** The 128 px cover texture, loaded once per album. */
-export function coverTexture(album: Album): Promise<THREE.Texture> | null {
-  if (!album.coverUrl) return null
-  let p = covers.get(album.coverUrl)
-  if (!p) covers.set(album.coverUrl, p = loadPixelTexture(textureUrl(album.coverUrl, 128)))
-  return p
-}
-
-// ---------------------------------------------------------------------------------------------
-// Geometry helpers. Large faces are subdivided so the affine texture warp stays small.
-
-const mats = new Map<string, THREE.ShaderMaterial>()
-function mat(color: THREE.ColorRepresentation, map: THREE.Texture | null = null, shade = 1) {
-  const c = new THREE.Color(color).multiplyScalar(shade)
-  const key = `${c.getHexString()}|${map?.uuid ?? ''}`
-  let m = mats.get(key)
-  if (!m) mats.set(key, m = ps1Material({ map, color: c, ...FOG }))
-  return m
-}
-
-/** A box with flat fake lighting: lit top, dimmer fronts, darker sides. */
-function shadedBox(w: number, h: number, d: number, color: THREE.ColorRepresentation, map: THREE.Texture | null = null) {
-  const seg = (n: number) => Math.max(1, Math.ceil(n / 0.5))
-  const geo = new THREE.BoxGeometry(w, h, d, seg(w), seg(h), seg(d))
-  const side = mat(color, map, 0.62), front = mat(color, map, 0.8)
-  return new THREE.Mesh(geo, [side, side, mat(color, map, 1), mat(color, map, 0.4), front, front])
-}
-
-/** A plane `w` × `h` whose texture repeats every `tileW` × `tileH` metres. */
-function plane(w: number, h: number, material: THREE.Material, tileW = w, tileH = h) {
-  const geo = new THREE.PlaneGeometry(w, h, Math.ceil(w / 0.6), Math.ceil(h / 0.6))
-  const uv = geo.attributes.uv as THREE.BufferAttribute
-  for (let i = 0; i < uv.count; i++) uv.setXY(i, uv.getX(i) * w / tileW, uv.getY(i) * h / tileH)
-  return new THREE.Mesh(geo, material)
-}
-
-const at = <T extends THREE.Object3D>(o: T, x: number, y: number, z: number, ry = 0): T => {
-  o.position.set(x, y, z)
-  o.rotation.y = ry
-  return o
-}
+const { mat, shadedBox } = createBuilder(FOG)
 
 // ---------------------------------------------------------------------------------------------
 // Crates.

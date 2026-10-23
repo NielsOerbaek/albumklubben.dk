@@ -1,0 +1,20 @@
+/* The top bar floats over the halls while you are not walking. */
+body.museum .topbar { position: fixed; top: 0; left: 0; right: 0; }
+body.museum.walking .topbar { display: none; }
+body.museum .ps1-small { padding-top: calc(var(--bar) + 16px); }
+
+/* A small dot in the middle of the view while walking, to aim at a cover. */
+.museum-aim { display: none; }
+body.museum.walking .museum-aim {
+  display: block;
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  width: 4px;
+  height: 4px;
+  margin: -2px 0 0 -2px;
+  background: #fff;
+  outline: 1px solid #000;
+  pointer-events: none;
+  z-index: 1;
+}

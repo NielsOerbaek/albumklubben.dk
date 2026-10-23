@@ -1,9 +1,9 @@
 import * as THREE from 'three'
-import { html, render } from 'lit-html'
+import { render } from 'lit-html'
 import '../base.css'
 import './crate.css'
 import { fetchArchive } from '../api.ts'
-import { cardTemplate, inkFor, storyTemplate } from '../card.ts'
+import { recordOverlay } from '../record.ts'
 import { topBarTemplate } from '../topbar.ts'
 import { createPs1Renderer } from '../ps1/renderer.ts'
 import { createWalkControls } from '../ps1/controls.ts'
@@ -67,22 +67,12 @@ async function start() {
   function drawOverlay() {
     if (!pulled) return showOverlay(null)
     const { album, flipped } = pulled
-    const n = meetingNumber.get(album.meetingId)!
-    const turn = () => { pulled!.flipped = !pulled!.flipped; drawOverlay() }
-    showOverlay(html`<div class="crate-pull" @click=${(e: MouseEvent) => { if (e.target === e.currentTarget) putBack() }}>
-      <div class="crate-pull-inner">
-        <p class="crate-pull-kicker">Møde ${n} · ${album.artist}, ${album.title}</p>
-        <button class="crate-record ${flipped ? 'is-card' : 'is-cover'}" aria-pressed=${flipped} style="--card-bg:${album.cardColor};color:${inkFor(album.cardColor)}" @click=${turn}>
-          ${flipped
-            ? cardTemplate(album, n)
-            : album.coverUrl
-              ? html`<img src=${album.coverUrl} alt=${`${album.artist}, ${album.title}`}>`
-              : html`<span class="crate-nocover">${album.artist}<br>${album.title}</span>`}
-        </button>
-        ${storyTemplate(album)}
-        <p class="crate-pull-help">Klik på pladen for at vende den · Esc for at lægge den tilbage</p>
-      </div>
-    </div>`)
+    showOverlay(recordOverlay({
+      album, flipped, meetingNumber: meetingNumber.get(album.meetingId)!,
+      help: 'Klik på pladen for at vende den · Esc for at lægge den tilbage',
+      onTurn: () => { pulled!.flipped = !pulled!.flipped; drawOverlay() },
+      onClose: putBack,
+    }))
   }
 
   function pullOut() {
