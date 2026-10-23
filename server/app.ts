@@ -1,8 +1,11 @@
 import cookie from '@fastify/cookie'
+import formbody from '@fastify/formbody'
+import multipart from '@fastify/multipart'
 import fastifyStatic from '@fastify/static'
 import Fastify, { type FastifyInstance } from 'fastify'
 import { resolve } from 'node:path'
 import { registerApi } from './api.ts'
+import { registerAdmin } from './admin/routes.ts'
 import type { Database } from './db.ts'
 
 export interface AppOptions {
@@ -16,7 +19,10 @@ export interface AppOptions {
 export function buildApp(opts: AppOptions): FastifyInstance {
   const app = Fastify()
   app.register(cookie, { secret: opts.sessionSecret })
+  app.register(formbody)
+  app.register(multipart, { limits: { fileSize: 500 * 1024 * 1024 } })
   registerApi(app, opts.db, opts.uploadDir)
+  registerAdmin(app, opts)
 
   // Dotfiles (.cache) are ignored by default, so only real uploads are served.
   app.register(fastifyStatic, {

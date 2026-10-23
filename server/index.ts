@@ -9,6 +9,12 @@ if (!existsSync('.env')) {
 }
 process.loadEnvFile('.env')
 const env = process.env
+for (const key of ['ADMIN_PASSWORD', 'SESSION_SECRET']) {
+  if (!env[key]) {
+    console.error(`Mangler ${key} i .env`)
+    process.exit(1)
+  }
+}
 const dbPath = env.DB_PATH ?? 'var/albumklubben.sqlite'
 const uploadDir = env.UPLOAD_DIR ?? 'var/uploads'
 mkdirSync(dirname(dbPath), { recursive: true })
