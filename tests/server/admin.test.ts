@@ -4,6 +4,7 @@ import { join } from 'node:path'
 import sharp from 'sharp'
 import { describe, expect, it } from 'vitest'
 import { buildApp } from '../../server/app.ts'
+import { saveImage } from '../../server/files.ts'
 import { openDb } from '../../server/db.ts'
 import { getMeeting, listMeetings } from '../../server/repo.ts'
 import type { Archive } from '../../shared/types.ts'
@@ -48,6 +49,39 @@ async function newMeeting(c: Ctx, cookie: string, number = '23') {
   await c.app.inject({ method: 'POST', url: '/admin/meetings/new', headers: { ...URLENC, cookie }, payload: form({ number, theme: 'Fest' }) })
   return listMeetings(c.db).find(m => m.number === Number(number))!
 }
+
+describe('admin cross-origin writes', () => {
+  const attempt = async (extra: Record<string, string>) => {
+    const c = setup()
+    const { cookie } = await login(c.app)
+    const res = await c.app.inject({ method: 'POST', url: '/admin/meetings/new', headers: { ...URLENC, cookie, ...extra }, payload: form({ number: '7' }) })
+    return { res, count: listMeetings(c.db).length }
+  }
+
+  it('rejects a sibling-subdomain Origin and changes nothing', async () => {
+    const { res, count } = await attempt({ origin: 'https://evil.osogdata.dk', host: 'albumklubben.dn.osogdata.dk' })
+    expect(res.statusCode).toBe(403)
+    expect(count).toBe(0)
+  })
+
+  it('rejects Sec-Fetch-Site: same-site', async () => {
+    const { res, count } = await attempt({ 'sec-fetch-site': 'same-site' })
+    expect(res.statusCode).toBe(403)
+    expect(count).toBe(0)
+  })
+
+  it('accepts a matching Origin', async () => {
+    const { res, count } = await attempt({ origin: 'https://albumklubben.dn.osogdata.dk', host: 'albumklubben.dn.osogdata.dk' })
+    expect(res.statusCode).toBe(302)
+    expect(count).toBe(1)
+  })
+
+  it('rejects a cross-origin login', async () => {
+    const res = await setup().app.inject({ method: 'POST', url: '/admin/login', headers: { ...URLENC, origin: 'https://evil.osogdata.dk', host: 'a.osogdata.dk' }, payload: form({ password: 'hemmelig' }) })
+    expect(res.statusCode).toBe(403)
+    expect(res.cookies).toHaveLength(0)
+  })
+})
 
 describe('admin auth', () => {
   it('redirects to login without a session', async () => {
@@ -182,6 +216,30 @@ describe('admin CMS', () => {
     await c.app.inject({ method: 'POST', url: `/admin/meetings/${m.id}/delete`, headers: { ...URLENC, cookie }, payload: form({ confirm: 'ja' }) })
     expect(getMeeting(c.db, m.id)).toBeUndefined()
     expect(files(c.uploadDir, 'covers')).toEqual([])
+  })
+
+  it('deleting an album removes its cached derivatives, and .cache is not served', async () => {
+    const c = setup()
+    const { cookie } = await login(c.app)
+    const m = await newMeeting(c, cookie)
+    const body = multipart([...albumFields(), { name: 'cover', filename: 'c.png', data: await png() }])
+    await c.app.inject({ method: 'POST', url: `/admin/meetings/${m.id}/albums/new`, headers: { ...body.headers, cookie }, payload: body.payload })
+    const cover = getMeeting(c.db, m.id)!.albums[0].coverUrl!
+    expect((await c.app.inject(cover.replace('/uploads/', '/tex/128/'))).statusCode).toBe(200)
+    const cached = `.cache/128/${cover.replace('/uploads/', '').replaceAll('/', '_')}.png`
+    expect(existsSync(join(c.uploadDir, cached))).toBe(true)
+    expect((await c.app.inject(`/uploads/${cached}`)).statusCode).toBe(404)
+    await c.app.inject({ method: 'POST', url: `/admin/meetings/${m.id}/delete`, headers: { ...URLENC, cookie }, payload: form({ confirm: 'ja' }) })
+    expect(existsSync(join(c.uploadDir, cached))).toBe(false)
+  })
+
+  it('stores a rotated phone photo upright', async () => {
+    const { uploadDir } = setup()
+    const jpg = await sharp({ create: { width: 200, height: 100, channels: 3, background: '#f00' } })
+      .jpeg().withMetadata({ orientation: 6 }).toBuffer()
+    const rel = await saveImage(uploadDir, jpg, 'covers')
+    const meta = await sharp(join(uploadDir, rel)).metadata()
+    expect([meta.width, meta.height]).toEqual([100, 200])
   })
 
   it('move reorders albums', async () => {

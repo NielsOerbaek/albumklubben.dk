@@ -32,7 +32,7 @@ function input(label: string, name: string, v: Fields, errors: Errors, attrs = '
 export function meetingsPage(meetings: Meeting[], flash?: string): string {
   const rows = [...meetings].sort((a, b) => b.number - a.number).map(m =>
     `<tr><td><a href="/admin/meetings/${m.id}">Møde ${m.number}</a></td><td>${e(m.date)}</td><td>${e(m.theme)}</td>
-<td>${m.albums.length} album${m.albums.length === 1 ? '' : 'mer'}, ${m.posters.length} plakat${m.posters.length === 1 ? '' : 'er'}</td></tr>`).join('')
+<td>${m.albums.length} album${m.albums.length === 1 ? '' : 's'}, ${m.posters.length} plakat${m.posters.length === 1 ? '' : 'er'}</td></tr>`).join('')
   return layout('Møder', `<h1>Møder</h1><p><a class="button" href="/admin/meetings/new">Nyt møde</a></p>
 <table><thead><tr><th>Møde</th><th>Dato</th><th>Tema</th><th>Indhold</th></tr></thead><tbody>${rows}</tbody></table>`, flash)
 }
@@ -122,7 +122,8 @@ ${formError(errors)}
 <label>Billede ${poster ? thumb(poster.imageUrl, 'Nuværende billede') : ''}
 <input type="file" name="image" accept="image/jpeg,image/png,image/webp" ${poster ? '' : 'required'}>${fieldError(errors, 'image')}</label>
 ${input('Billedtekst', 'caption', v, errors)}
-<label>Video (mp4 eller webm) <input type="file" name="video" accept="video/mp4,video/webm">${fieldError(errors, 'video')}</label>
+<label>Video (mp4 eller webm) <input type="file" name="video" accept="video/mp4,video/webm">
+<span class="hint">Videoen skal være mp4 (H.264) eller webm. Videoer fra iPhone (.mov, HEVC) skal først eksporteres eller konverteres.</span>${fieldError(errors, 'video')}</label>
 ${poster?.videoUrl ? `<p>Nuværende video: <a href="${e(poster.videoUrl)}">se video</a></p>
 <label><input type="checkbox" name="remove_video" value="ja"> Fjern videoen</label>` : ''}
 <button type="submit">Gem</button> <a href="/admin/meetings/${meeting.id}">Annuller</a>

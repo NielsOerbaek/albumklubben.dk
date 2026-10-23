@@ -3,12 +3,13 @@ import './base.css'
 import { topBarTemplate } from './topbar.ts'
 import './landing.css'
 import { fetchArchive, textureUrl } from './api.ts'
+import { latestMeetingWithAlbums } from '../../shared/latest.ts'
 import type { Archive } from '../../shared/types.ts'
 
 function view(archive: Archive | null) {
   const meetings = archive?.meetings ?? []
   const covers = meetings.flatMap((m) => m.albums).flatMap((a) => (a.coverUrl ? [a.coverUrl] : []))
-  const latest = meetings.at(-1)
+  const latest = latestMeetingWithAlbums(meetings)
   const latestAlbums = latest?.albums.filter((a) => a.coverUrl) ?? []
   return html`${topBarTemplate(null)}
     <div class="hero">

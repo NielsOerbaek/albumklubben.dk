@@ -37,6 +37,7 @@ describe('api', () => {
     const res = await app.inject(await firstCover(app))
     expect(res.statusCode).toBe(200)
     expect(res.headers['content-type']).toMatch(/^image\//)
+    expect(res.headers['cache-control']).toMatch(/^private/)
   })
 
   it('/uploads/../.env is 404', async () => {
@@ -54,6 +55,7 @@ describe('api', () => {
     const meta = await sharp(res.rawPayload).metadata()
     expect(meta.format).toBe('png')
     expect(meta.width).toBeLessThanOrEqual(128)
+    expect(res.headers['cache-control']).toBe('private, max-age=3600')
     expect((await app.inject(url)).statusCode).toBe(200) // from cache
   })
 

@@ -54,12 +54,11 @@ function detail(e: Entry | undefined): TemplateResult | typeof nothing {
 }
 
 export function wallView(s: State, act: Actions): TemplateResult {
-  const latest = Math.max(...s.entries.map((e) => e.n))
   const tile = (e: Entry, badge: boolean) => html`<button class="tile ${badge ? '' : 'mini'}"
     aria-label=${label(e.album)} title=${label(e.album)} aria-current=${e.album.id === s.selId ? 'true' : 'false'}
     @click=${() => act.set({ selId: e.album.id })}>
     ${e.album.coverUrl ? html`<img src=${textureUrl(e.album.coverUrl, 128)} alt="" loading="lazy">` : nothing}
-    ${badge ? html`<span class="badge">${e.n === latest ? `Nyt · ${e.n}` : e.n}</span>` : nothing}
+    ${badge ? html`<span class="badge">${e.n === s.latest ? `Nyt · ${e.n}` : e.n}</span>` : nothing}
   </button>`
   const newestFirst = s.entries.slice().sort((a, b) => b.n - a.n || a.album.position - b.album.position)
 

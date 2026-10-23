@@ -7,6 +7,7 @@ import type { Album } from '../../../shared/types.ts'
 import type { MapView } from '../../../shared/projection.ts'
 import { shelfView, type Filter } from './shelf.ts'
 import { mapView } from './map.ts'
+import { latestMeetingWithAlbums } from '../../../shared/latest.ts'
 import { wallView, type Sort } from './wall.ts'
 
 /** An album together with the number of the meeting it belongs to. */
@@ -14,6 +15,8 @@ export interface Entry { album: Album; n: number }
 
 export interface State {
   entries: Entry[]
+  /** Number of the latest meeting with albums. */
+  latest: number | null
   selId: number | null
   flipped: boolean
   filter: Filter
@@ -32,7 +35,7 @@ const TABS = [['hylden', 'Hylden'], ['kortet', 'Kortet'], ['vaeggen', 'Væggen']
 type Tab = (typeof TABS)[number][0]
 
 const state: State = {
-  entries: [], selId: null, flipped: false, filter: 'alle', mapView: 'world', panelOpen: false, sort: 'meeting',
+  entries: [], latest: null, selId: null, flipped: false, filter: 'alle', mapView: 'world', panelOpen: false, sort: 'meeting',
 }
 let status: 'loading' | 'error' | 'ready' = 'loading'
 let scrollToSelected = false
@@ -97,6 +100,7 @@ draw()
 fetchArchive().then(
   (archive) => {
     state.entries = archive.meetings.flatMap((m) => m.albums.map((album) => ({ album, n: m.number })))
+    state.latest = latestMeetingWithAlbums(archive.meetings)?.number ?? null
     state.selId = state.entries.at(-1)?.album.id ?? null
     status = 'ready'
     draw()

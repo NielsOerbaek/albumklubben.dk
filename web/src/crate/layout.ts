@@ -1,4 +1,5 @@
 import { GENRE_ORDER, genreFamily } from '../../../shared/genre.ts'
+import { latestMeetingWithAlbums } from '../../../shared/latest.ts'
 import type { Album, Meeting } from '../../../shared/types.ts'
 import type { Box2 } from '../ps1/collide.ts'
 
@@ -74,8 +75,7 @@ export function buildShopLayout(meetings: Meeting[]): ShopLayout {
 
   // The counter runs from the right wall; the shopkeeper stands between it and the front wall.
   const counter = box(hw - COUNTER.w / 2, hd - 1.3, COUNTER.w, COUNTER.d)
-  const latest = meetings.filter((m) => m.albums.length).reduce<Meeting | null>(
-    (best, m) => (!best || m.number > best.number ? m : best), null)
+  const latest = latestMeetingWithAlbums(meetings)
   if (latest) {
     crates.unshift({ id: 'nyt', label: 'Nyt', albums: latest.albums.slice(0, PER_CRATE),
       x: counter.minX + 0.6, z: hd - 1.3, rotationY: Math.PI })

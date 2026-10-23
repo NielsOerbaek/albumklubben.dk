@@ -214,7 +214,7 @@ function buildCrate(spec: CrateSpec, baseY: number, crateWood: THREE.Texture): {
         rec.t = 0
       })
       showCovers()
-      coverTexture(records[(view.front + 1) % n].album) // warm the next one
+      coverTexture(records[(view.front + 1) % n].album)?.catch(() => {}) // warm the next one
     },
     update(dt) {
       for (const rec of records) {

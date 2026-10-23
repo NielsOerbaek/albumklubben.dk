@@ -24,9 +24,11 @@ export function buildApp(opts: AppOptions): FastifyInstance {
   registerApi(app, opts.db, opts.uploadDir)
   registerAdmin(app, opts)
 
-  // Dotfiles (.cache) are ignored by default, so only real uploads are served.
+  // dotfiles: 'ignore' keeps the derivative cache (.cache) out of reach; only real uploads are served.
   app.register(fastifyStatic, {
     root: resolve(opts.uploadDir), prefix: '/uploads/', decorateReply: false,
+    dotfiles: 'ignore', cacheControl: false,
+    setHeaders: (res) => res.header('Cache-Control', 'private, max-age=0, must-revalidate'),
   })
 
   if (opts.webDir) {

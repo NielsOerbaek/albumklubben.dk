@@ -20,7 +20,7 @@ const AGAIN = 'Klik for at gå videre'
 render(topBarTemplate('crate'), document.getElementById('app')!)
 const canvas = document.querySelector<HTMLCanvasElement>('canvas.ps1-canvas')!
 if (smallScreenGuard()) canvas.remove()
-else start().catch(() => showHint('Butikken kunne ikke åbne. Prøv at genindlæse siden.'))
+else start().catch((err) => { console.error(err); showHint('Butikken kunne ikke åbne. Prøv at genindlæse siden.') })
 
 /** The crate in reach that you look most squarely at, from its front side. */
 function crateInView(crates: CrateView[], camera: THREE.PerspectiveCamera): CrateView | null {
@@ -139,5 +139,5 @@ async function start() {
   })
 
   // For the screenshot script and the browser console.
-  Object.assign(window, { __crate: { camera, controls, shop, layout, pullOut: (c: CrateView) => { target = c; pullOut() } } })
+  if (import.meta.env.DEV) Object.assign(window, { __crate: { camera, controls, shop, layout, pullOut: (c: CrateView) => { target = c; pullOut() } } })
 }
