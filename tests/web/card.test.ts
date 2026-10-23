@@ -5,7 +5,7 @@ import { cardTemplate, inkFor, storyTemplate } from '../../web/src/card.ts'
 import type { Album } from '../../shared/types.ts'
 
 const jeff: Album = { id: 1, meetingId: 1, position: 0, artist: 'Jeff Buckley', title: 'Grace', year: 1994,
-  origin: 'Anaheim', country: 'USA, Californien', lat: null, lng: null, genre: 'Alternativ Rock',
+  origin: 'USA, Californien, Anaheim', country: 'USA', lat: null, lng: null, genre: 'Alternativ Rock',
   gender: 'Mand', status: 'Døde d. 29.maj 1997 (30år)', pickedByName: 'Medlem 9',
   pickedByWorkplace: 'Arbejdsplads B', story: 'En stemme.', cardColor: '#262d66', coverUrl: null }
 
@@ -20,6 +20,13 @@ test('full card', () => {
   const text = draw(cardTemplate(jeff, 21)).textContent!.replace(/\s+/g, ' ')
   for (const s of ['MØDE 21', 'Jeff Buckley, Grace (1994)', 'Kunstners oprindelsesland:',
     'Nostalgialbum: Valgt af Medlem 9, Arbejdsplads B']) expect(text).toContain(s)
+})
+
+test('origin line is shown as-is, without repeating the country', () => {
+  const text = draw(cardTemplate(jeff, 21)).textContent!.replace(/\s+/g, ' ')
+  expect(text).toContain('Kunstners oprindelsesland: USA, Californien, Anaheim')
+  expect(text.match(/USA/g)).toHaveLength(1)
+  expect(draw(cardTemplate({ ...jeff, origin: '' }, 21)).textContent).toContain('oprindelsesland: USA')
 })
 
 test('missing optional fields', () => {

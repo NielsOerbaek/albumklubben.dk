@@ -12,7 +12,8 @@ const row = (label: string, value: string) =>
   value ? html`<p><strong>${label}</strong> ${value}</p>` : nothing
 
 export function cardTemplate(album: Album, meetingNumber: number): TemplateResult {
-  const origin = [album.country, album.origin].filter(Boolean).join(', ')
+  // `origin` is the full card text and already starts with the country.
+  const origin = album.origin || album.country
   const title = `${album.artist}, ${album.title}${album.year != null ? ` (${album.year})` : ''}`
   const pick = album.pickedByName
     ? `Valgt af ${[album.pickedByName, album.pickedByWorkplace].filter(Boolean).join(', ')}`
