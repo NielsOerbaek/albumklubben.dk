@@ -1,0 +1,6 @@
+[Unit]
+Description=Albumklubben nightly backup
+
+[Service]
+Type=oneshot
+ExecStart=/home/theta/albumklubben-live/ops/backup.sh

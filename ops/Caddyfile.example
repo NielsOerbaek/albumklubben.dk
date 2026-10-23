@@ -1,0 +1,23 @@
+# Albumklubben. Imported from /etc/caddy/Caddyfile with: import /home/theta/albumklubben-ops/Caddyfile
+# Make the hash with: caddy hash-password  (the plain password lives in the live .env as SITE_PASSWORD).
+albumklubben.dn.osogdata.dk {
+	encode zstd gzip
+	header {
+		X-Robots-Tag "noindex, nofollow"
+		X-Content-Type-Options nosniff
+		Referrer-Policy strict-origin-when-cross-origin
+		Strict-Transport-Security "max-age=31536000"
+	}
+	header ?X-Frame-Options SAMEORIGIN
+	@robots path /robots.txt
+	respond @robots "User-agent: *
+Disallow: /
+" 200
+	request_body {
+		max_size 600MB
+	}
+	basic_auth {
+		albumklub <BCRYPT-HASH>
+	}
+	reverse_proxy 127.0.0.1:3600
+}
