@@ -19,7 +19,8 @@ Nyt hash: `caddy hash-password`. Aendring af Caddyfilen kraever `caddy validate`
 
     /home/theta/albumklubben/ops/deploy.sh <commit>
 
-Tjekker commit'en ud i live-worktree'et, `pnpm install --frozen-lockfile`, `pnpm build`, genstarter tjenesten og tjekker `/api/archive` lokalt.
+Tjekker commit'en ud i live-worktree'et, `pnpm install --frozen-lockfile`, bygger til `dist.new`, bytter den ind som `dist/`, genstarter tjenesten og tjekker `/api/archive` lokalt.
+Fejler install, build eller tjekket, ruller scriptet tilbage: forrige commit tjekkes ud igen, `node_modules` geninstalleres, den gamle `dist/` bevares (tjenesten genstartes kun hvis den var skiftet) og scriptet afslutter med fejl. Siden er altsaa uaendret efter en mislykket deploy.
 Status: `systemctl --user status albumklubben`, log: `journalctl --user -u albumklubben`.
 
 ## Backup
