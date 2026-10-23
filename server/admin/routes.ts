@@ -9,7 +9,7 @@ import {
 } from '../repo.ts'
 import type { Album, Poster } from '../../shared/types.ts'
 import { registerAuth, requireAdmin } from './auth.ts'
-import { parseAlbumForm, parseMeetingForm } from './forms.ts'
+import { parseAlbumForm, parseMeetingForm, parsePosterForm } from './forms.ts'
 import {
   albumForm, meetingPage, meetingsPage, newMeetingPage, notFoundPage, posterForm,
 } from './views.ts'
@@ -69,11 +69,10 @@ export function registerAdmin(app: FastifyInstance, { db, uploadDir, adminPasswo
 
   app.get('/admin/admin.css', (_req, reply) => reply.type('text/css').send(CSS))
   registerAuth(app, adminPassword)
-  app.addHook('preHandler', (req, reply, done) => {
-    const p = req.url.split('?')[0]
-    if (!p.startsWith('/admin') || p === '/admin/login' || p === '/admin/admin.css') return done()
-    requireAdmin(req, reply, done)
-  })
+  // Everything registered below is encapsulated: the guard applies to the matched route,
+  // not the raw URL, so percent-encoded paths cannot slip past it.
+  app.register(async app => {
+  app.addHook('preHandler', requireAdmin)
 
   const flashOf = (req: FastifyRequest) => (req.query as { flash?: string }).flash
 
@@ -193,13 +192,14 @@ export function registerAdmin(app: FastifyInstance, { db, uploadDir, adminPasswo
     const m = getMeeting(db, id(req))
     if (!m) return notFound(reply)
     const up = await readUpload(req)
+    const { caption } = parsePosterForm(up.fields).value
     const error = up.error ? { [up.error.field]: up.error.message } : !up.saved.image ? { image: 'Vælg et billede' } : null
     if (error) {
       discard(up)
       return html(reply, posterForm(m, `/admin/meetings/${m.id}/posters/new`, up.fields, error, null), 400)
     }
     createPoster(db, m.id, {
-      imagePath: up.saved.image!, caption: up.fields.caption?.trim() || null, videoPath: up.saved.video ?? null,
+      imagePath: up.saved.image!, caption, videoPath: up.saved.video ?? null,
     })
     return back(reply, m.id, 'Plakaten er oprettet')
   })
@@ -218,12 +218,13 @@ export function registerAdmin(app: FastifyInstance, { db, uploadDir, adminPasswo
       discard(up)
       return html(reply, posterForm(getMeeting(db, p.meetingId)!, `/admin/posters/${p.id}`, up.fields, { [up.error.field]: up.error.message }, p), 400)
     }
+    const { caption } = parsePosterForm(up.fields).value
     const oldImage = relPath(p.imageUrl)!
     const oldVideo = relPath(p.videoUrl)
     const removeVideo = up.fields.remove_video === 'ja'
     const videoPath = up.saved.video ?? (removeVideo ? null : oldVideo)
     updatePoster(db, p.id, {
-      imagePath: up.saved.image ?? oldImage, caption: up.fields.caption?.trim() || null, videoPath,
+      imagePath: up.saved.image ?? oldImage, caption, videoPath,
     })
     removeFiles(uploadDir, [
       ...(up.saved.image ? [oldImage] : []),
@@ -244,5 +245,6 @@ export function registerAdmin(app: FastifyInstance, { db, uploadDir, adminPasswo
     if (!p) return notFound(reply)
     movePoster(db, p.id, req.body?.dir === 'up' ? -1 : 1)
     return back(reply, p.meetingId, 'Rækkefølgen er ændret')
+  })
   })
 }

@@ -52,6 +52,6 @@ export function parseAlbumForm(f: Fields): Parsed<Omit<AlbumInput, 'coverPath'>>
 }
 
 /** Only the caption is a text field; image and video come from the upload. */
-export function parsePosterForm(f: Fields): Parsed<Pick<PosterInput, 'caption'>> {
+export function parsePosterForm(f: Fields): { ok: true; value: Pick<PosterInput, 'caption'> } {
   return { ok: true, value: { caption: optional(f, 'caption') } }
 }

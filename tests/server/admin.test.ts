@@ -67,6 +67,16 @@ describe('admin auth', () => {
     expect(res.cookies).toHaveLength(0)
   })
 
+  it('percent-encoded paths do not bypass the session check', async () => {
+    const c = setup()
+    const get = await c.app.inject('/%61dmin')
+    expect(get.statusCode).toBe(302)
+    expect(get.headers.location).toBe('/admin/login')
+    const post = await c.app.inject({ method: 'POST', url: '/%61dmin/meetings/new', headers: URLENC, payload: form({ number: '7' }) })
+    expect(post.statusCode).toBe(401)
+    expect(listMeetings(c.db)).toHaveLength(0)
+  })
+
   it('a forged cookie is not a session', async () => {
     const res = await setup().app.inject({ url: '/admin', headers: { cookie: 'ak_admin=ok' } })
     expect(res.statusCode).toBe(302)
