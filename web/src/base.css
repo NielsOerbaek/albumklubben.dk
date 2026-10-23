@@ -1,0 +1,15 @@
+:root {
+  --bg: #121316;
+  --ink: #f3efe6;
+  --muted: #a8a398;
+  --line: #26282d;
+}
+* { box-sizing: border-box; }
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--ink);
+  font-family: 'Bricolage Grotesque', system-ui, sans-serif;
+}
+a { color: var(--ink); }
+.stub { padding: 48px 40px; }

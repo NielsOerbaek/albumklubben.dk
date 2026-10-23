@@ -1,0 +1,36 @@
+import { html, render, nothing } from 'lit-html'
+import './base.css'
+import './landing.css'
+import { fetchArchive, textureUrl } from './api.ts'
+import type { Archive } from '../../shared/types.ts'
+
+function view(archive: Archive | null) {
+  const meetings = archive?.meetings ?? []
+  const covers = meetings.flatMap((m) => m.albums).flatMap((a) => (a.coverUrl ? [a.coverUrl] : []))
+  const latest = meetings.at(-1)
+  const latestAlbums = latest?.albums.filter((a) => a.coverUrl) ?? []
+  return html`<div class="hero">
+    <div class="mosaic" aria-hidden="true">
+      ${covers.map((c) => html`<img src=${textureUrl(c, 256)} alt="" loading="lazy">`)}
+    </div>
+    <header>
+      <h1>Albumklubben</h1>
+      <p>Thoravej 29 · hver anden tirsdag 11.30-12.30</p>
+    </header>
+    <nav class="entries">
+      <a href="/crate">Crate digging</a>
+      <a href="/museum">Albumklubben Museum</a>
+      <a href="/arkiv">Arkivet</a>
+    </nav>
+    ${latest && latestAlbums.length
+      ? html`<footer class="latest">
+          ${latestAlbums.map((a) => html`<img src=${textureUrl(a.coverUrl!, 256)} alt="${a.artist}, ${a.title}">`)}
+          <div><strong>Seneste møde</strong>Møde ${latest.number}</div>
+        </footer>`
+      : nothing}
+  </div>`
+}
+
+const app = document.getElementById('app')!
+render(view(null), app)
+fetchArchive().then((a) => render(view(a), app), () => {})

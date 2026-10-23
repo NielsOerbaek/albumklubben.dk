@@ -10,5 +10,5 @@
     "skipLibCheck": true,
     "types": ["node"]
   },
-  "include": ["shared", "server", "client", "tests", "*.ts"]
+  "include": ["shared", "server", "web", "tests", "tests", "*.ts"]
 }
