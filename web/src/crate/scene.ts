@@ -120,9 +120,11 @@ async function fontsReady() {
 }
 const FONT = '"Inter Tight", system-ui, sans-serif'
 
-function fitText(g: CanvasRenderingContext2D, text: string, maxW: number, size: number, weight = 600) {
+/** Sets the largest font up to `size` px at which `text` fits in `maxW`, and returns that size. */
+function fitText(g: CanvasRenderingContext2D, text: string, maxW: number, size: number, weight = 600): number {
   do g.font = `${weight} ${size}px ${FONT}`
   while (g.measureText(text).width > maxW && --size > 6)
+  return size
 }
 
 // No thin border or light weight: single-pixel strokes vanish at a distance in 240 lines.
@@ -143,9 +145,9 @@ const dividerTex = (label: string) => painted(96, 128, (g) => {
   g.fillStyle = '#000'; g.fillRect(0, 0, 96, 44)
   g.fillStyle = '#fff'
   g.textAlign = 'center'; g.textBaseline = 'middle'
-  fitText(g, label, 88, 24)
+  const size = fitText(g, label, 88, 24)
   const words = label.split(' ')
-  if (parseInt(g.font) >= 18 || words.length < 2) return g.fillText(label, 48, 23)
+  if (size >= 18 || words.length < 2) return g.fillText(label, 48, 23)
   const cut = Math.ceil(words.length / 2)
   const lines = [words.slice(0, cut).join(' '), words.slice(cut).join(' ')]
   fitText(g, lines.reduce((a, b) => (g.measureText(a).width > g.measureText(b).width ? a : b)), 88, 19)
