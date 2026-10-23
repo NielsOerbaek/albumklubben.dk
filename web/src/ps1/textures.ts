@@ -1,6 +1,7 @@
 import * as THREE from 'three'
 
-function pixelate<T extends THREE.Texture>(tex: T): T {
+/** Hard-pixel settings: nearest filtering, no mipmaps, sRGB. */
+export function pixelate<T extends THREE.Texture>(tex: T): T {
   tex.magFilter = THREE.NearestFilter
   tex.minFilter = THREE.NearestFilter
   tex.generateMipmaps = false

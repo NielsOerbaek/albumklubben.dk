@@ -12,6 +12,7 @@ export default defineConfig({
   build: {
     outDir: resolve(import.meta.dirname, 'dist'),
     emptyOutDir: true,
+    chunkSizeWarningLimit: 800, // three.js alone is about 550 kB
     rollupOptions: {
       input: Object.fromEntries(
         ['index', 'crate', 'museum', 'arkiv'].map((n) => [n, resolve(root, `${n}.html`)]),
