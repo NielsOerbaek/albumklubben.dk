@@ -1,0 +1,156 @@
+<!doctype html>
+<html lang="da">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>PS1-test</title>
+<link rel="stylesheet" href="/src/base.css">
+</head>
+<body>
+<!-- Dev only (not in the Vite build inputs): a textured room for eyeballing the PS1 kit. -->
+<canvas class="ps1-canvas"></canvas>
+<script type="module">
+import * as THREE from 'three'
+import { createPs1Renderer } from '/src/ps1/renderer.ts'
+import { ps1Material } from '/src/ps1/material.ts'
+import { loadPixelTexture, videoTexture } from '/src/ps1/textures.ts'
+import { createWalkControls } from '/src/ps1/controls.ts'
+import { FIRST_HINT, showHint, showPrompt, smallScreenGuard } from '/src/ps1/hud.ts'
+import marvin from '../data/covers/02-marvin-gaye-what-s-going-on.jpg?url'
+import rosalia from '../data/covers/02-rosalia-lux.jpg?url'
+import patina from '../data/covers/04-patina-uvejr.jpg?url'
+
+const canvas = document.querySelector('canvas')
+if (smallScreenGuard()) canvas.remove()
+else start()
+
+// A small canvas drawn by `paint`, as a hard-pixel texture.
+function painted(size, paint) {
+  const c = document.createElement('canvas')
+  c.width = c.height = size
+  paint(c.getContext('2d'), size)
+  return loadPixelTexture(c.toDataURL())
+}
+
+// A cover from data/covers, downsampled hard to 128 px like the server's /tex route.
+async function cover(url) {
+  const img = new Image()
+  img.src = url
+  await img.decode()
+  return painted(128, (g, s) => { g.imageSmoothingEnabled = false; g.drawImage(img, 0, 0, s, s) })
+}
+
+async function start() {
+  const fog = { fogColor: 0x1b1712, fogNear: 2, fogFar: 11 }
+  const { render } = createPs1Renderer(canvas)
+  const scene = new THREE.Scene()
+  scene.background = new THREE.Color(fog.fogColor)
+  const camera = new THREE.PerspectiveCamera(70, 1, 0.05, 40)
+  camera.position.set(0, 0, 3)
+
+  const [floorTex, wallTex, woodTex, coverA, coverB, coverC] = await Promise.all([
+    painted(32, (g, s) => {
+      for (let y = 0; y < 2; y++) for (let x = 0; x < 2; x++) {
+        g.fillStyle = (x + y) % 2 ? '#6f5a44' : '#8c7a5e'
+        g.fillRect(x * s / 2, y * s / 2, s / 2, s / 2)
+      }
+    }),
+    painted(32, (g, s) => {
+      g.fillStyle = '#9a4a32'; g.fillRect(0, 0, s, s)
+      g.fillStyle = '#5d2c1f'
+      for (let y = 0; y < s; y += 8) {
+        g.fillRect(0, y, s, 1)
+        for (let x = (y / 8) % 2 ? 0 : 8; x < s; x += 16) g.fillRect(x, y, 1, 8)
+      }
+    }),
+    painted(16, (g, s) => {
+      g.fillStyle = '#7a5230'; g.fillRect(0, 0, s, s)
+      g.fillStyle = '#5e3c22'
+      for (let y = 1; y < s; y += 3) g.fillRect(0, y, s, 1)
+    }),
+    cover(marvin),
+    cover(rosalia),
+    cover(patina),
+  ])
+  for (const t of [floorTex, wallTex]) { t.wrapS = t.wrapT = THREE.RepeatWrapping }
+
+  const W = 10, D = 10, H = 3
+  const plane = (w, h, tex, repeat) => {
+    const geo = new THREE.PlaneGeometry(w, h, Math.ceil(w), Math.ceil(h))
+    geo.attributes.uv.array.forEach((v, i, a) => { a[i] = v * (i % 2 ? h : w) / repeat })
+    return new THREE.Mesh(geo, ps1Material({ map: tex, ...fog }))
+  }
+  const floor = plane(W, D, floorTex, 1)
+  floor.rotation.x = -Math.PI / 2
+  const ceiling = plane(W, D, null, 1)
+  ceiling.material.uniforms.color.value.set(0x2c2620)
+  ceiling.rotation.x = Math.PI / 2
+  ceiling.position.y = H
+  scene.add(floor, ceiling)
+  for (const [x, z, ry] of [[0, -D / 2, 0], [0, D / 2, Math.PI], [-W / 2, 0, Math.PI / 2], [W / 2, 0, -Math.PI / 2]]) {
+    const wall = plane(W, H, wallTex, 2)
+    wall.position.set(x, H / 2, z)
+    wall.rotation.y = ry
+    scene.add(wall)
+  }
+
+  // Tables with record crates, and covers leaning on them.
+  const boxes = [
+    { minX: -W / 2 - 1, minZ: -D / 2 - 1, maxX: W / 2 + 1, maxZ: -D / 2 },
+    { minX: -W / 2 - 1, minZ: D / 2, maxX: W / 2 + 1, maxZ: D / 2 + 1 },
+    { minX: -W / 2 - 1, minZ: -D / 2, maxX: -W / 2, maxZ: D / 2 },
+    { minX: W / 2, minZ: -D / 2, maxX: W / 2 + 1, maxZ: D / 2 },
+  ]
+  const wood = ps1Material({ map: woodTex, ...fog })
+  const table = (x, z, covers) => {
+    const top = new THREE.Mesh(new THREE.BoxGeometry(2, 0.8, 0.8, 2, 1, 1), wood)
+    top.position.set(x, 0.4, z)
+    scene.add(top)
+    boxes.push({ minX: x - 1, minZ: z - 0.4, maxX: x + 1, maxZ: z + 0.4 })
+    covers.forEach((tex, i) => {
+      const sleeve = new THREE.Mesh(new THREE.PlaneGeometry(0.31, 0.31), ps1Material({ map: tex, ...fog }))
+      sleeve.position.set(x - 0.6 + i * 0.6, 0.97, z + 0.1)
+      sleeve.rotation.x = -0.25
+      scene.add(sleeve)
+    })
+  }
+  table(-2.2, -1.5, [coverA, coverB, coverC])
+  table(2.2, -1.5, [coverC, coverA, coverB])
+  table(0, -3.8, [coverB, coverC, coverA])
+
+  // A "video" poster on the far wall: a canvas stream played by a real <video>.
+  const src = document.createElement('canvas')
+  src.width = 64; src.height = 48
+  const sg = src.getContext('2d')
+  const video = document.createElement('video')
+  video.muted = true
+  video.srcObject = src.captureStream(30)
+  video.play()
+  const screen = new THREE.Mesh(new THREE.PlaneGeometry(1.6, 1.2, 2, 2), ps1Material({ map: videoTexture(video), ...fog }))
+  screen.position.set(0, 1.6, -D / 2 + 0.01)
+  scene.add(screen)
+
+  const controls = createWalkControls(camera, canvas, { boxes })
+  showHint(FIRST_HINT)
+  controls.onLockChange(locked => showPrompt(locked ? null : 'Klik for at gå videre'))
+
+  let last = performance.now()
+  renderLoop(last)
+  function renderLoop(now) {
+    const t = now / 1000
+    for (let x = 0; x < 64; x += 8) {
+      sg.fillStyle = `hsl(${(x * 5 + t * 90) % 360} 70% 55%)`
+      sg.fillRect(x, 0, 8, 48)
+    }
+    sg.fillStyle = '#f3efe6'
+    sg.fillRect((t * 30) % 64, 20, 6, 6)
+    controls.update((now - last) / 1000)
+    last = now
+    render(scene, camera)
+    requestAnimationFrame(renderLoop)
+  }
+  window.__ps1 = { THREE, camera, controls }
+}
+</script>
+</body>
+</html>
