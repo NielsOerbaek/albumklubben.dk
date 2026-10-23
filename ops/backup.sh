@@ -2,6 +2,7 @@
 # Nightly backup: SQLite online backup + hard-linked uploads. Keeps the newest 14 days.
 set -euo pipefail
 LIVE=/home/theta/albumklubben-live
+NODE=/home/theta/.nvm/versions/node/v22.22.0/bin/node  # same node as the service; systemd PATH finds an older one
 DEST=/home/theta/albumklubben-backups
 env_get() { grep -m1 "^$1=" "$LIVE/.env" | cut -d= -f2-; }
 DB_PATH=$(env_get DB_PATH); UPLOAD_DIR=$(env_get UPLOAD_DIR)
@@ -12,7 +13,7 @@ DAY=$(date +%F)
 prev=$(find "$DEST" -mindepth 1 -maxdepth 1 -type d -name '????-??-??' ! -name "$DAY" | sort | tail -n1)
 mkdir -p "$DEST/$DAY"
 cd "$LIVE"
-node -e '
+"$NODE" -e '
 const Database = require("better-sqlite3");
 const db = new Database(process.argv[1], { readonly: true });
 db.backup(process.argv[2]).then(() => db.close()).catch((e) => { console.error(e); process.exit(1); });
