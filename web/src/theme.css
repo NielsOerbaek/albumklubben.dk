@@ -46,5 +46,4 @@ button { font: inherit; color: inherit; }
   .topbar { height: auto; min-height: var(--bar); flex-wrap: wrap; gap: 8px 16px; padding-top: 8px; padding-bottom: 8px; }
   .topbar-right { margin-left: 0; }
   .topbar nav { gap: 14px; }
-  .topbar .wordmark { display: none; }
 }

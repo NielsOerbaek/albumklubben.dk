@@ -49,7 +49,7 @@ export function smallScreenGuard(): boolean {
   if (window.innerWidth >= 900) return false
   const el = document.createElement('main')
   el.className = 'ps1-small'
-  render(html`<p>Rummene er lavet til en computer. Prøv <a href="/arkiv">Arkivet</a>.</p>`, el)
+  render(html`<p>Rummene er lavet til en computer. Prøv <a href="/">Arkivet</a>.</p>`, el)
   document.body.append(el)
   return true
 }

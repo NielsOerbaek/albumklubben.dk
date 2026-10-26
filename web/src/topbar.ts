@@ -1,10 +1,10 @@
 import { html, nothing, type TemplateResult } from 'lit-html'
 
-const LINKS = [['klubhus', 'Klubhuset', '/klubhuset'], ['arkiv', 'Arkivet', '/arkiv']] as const
+const LINKS = [['klubhus', 'Klubhuset', '/klubhuset']] as const
 
-/** The shared thin black top bar. `right` holds pills (toggles). */
+/** The shared thin black top bar: the wordmark (the front page) and Klubhuset. `right` holds pills (toggles). */
 export function topBarTemplate(
-  active: 'klubhus' | 'arkiv' | null,
+  active: 'klubhus' | null,
   right?: TemplateResult,
 ): TemplateResult {
   return html`<header class="topbar">

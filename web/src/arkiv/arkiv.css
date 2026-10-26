@@ -13,7 +13,6 @@ body.arkiv { min-height: 100vh; }
 .sections { position: sticky; top: var(--bar); z-index: 15; display: flex; gap: 6px; align-items: center;
   flex-wrap: wrap; padding: 8px var(--pad); background: #000; }
 .arkiv .sections .pill { height: 28px; padding: 0 14px; font-size: 12px; }
-.sections .where { margin-left: auto; font-size: 13px; }
 .sec { scroll-margin-top: calc(var(--bar) + 44px); }
 .sec + .sec { border-top: 1px solid var(--line); }
 .sec-head { padding: 40px var(--pad) 0; }
@@ -55,7 +54,3 @@ body.arkiv { min-height: 100vh; }
 .mini-grid { display: grid; grid-template-columns: repeat(3, 52px); gap: 3px; align-content: end; }
 .tile.mini { width: 52px; height: 52px; }
 .clabel { font-size: 16px; margin-top: 4px; display: flex; flex-direction: column; align-items: center; }
-
-@media (max-width: 700px) {
-  .sections .where { display: none; }
-}

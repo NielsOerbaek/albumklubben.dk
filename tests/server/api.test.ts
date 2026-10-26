@@ -32,6 +32,12 @@ describe('pages', () => {
     }
   })
 
+  it('301s /arkiv to the front page', async () => {
+    const res = await setup().app.inject('/arkiv')
+    expect(res.statusCode).toBe(301)
+    expect(res.headers.location).toBe('/')
+  })
+
   it('serves klubhuset.html at /klubhuset', async () => {
     const webDir = mkdtempSync(join(tmpdir(), 'web-'))
     writeFileSync(join(webDir, 'klubhuset.html'), '<p>klubhuset</p>')

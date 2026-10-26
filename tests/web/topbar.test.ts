@@ -5,13 +5,13 @@ import { topBarTemplate } from '../../web/src/topbar.ts'
 
 const draw = (t: unknown) => { const d = document.createElement('div'); render(t as never, d); return d }
 
-test('renders wordmark linking to / and two nav links', () => {
+test('renders the wordmark linking to / and the Klubhuset link', () => {
   const d = draw(topBarTemplate(null))
   const mark = d.querySelector('a.wordmark')!
   expect(mark.textContent).toBe('Albumklubben')
   expect(mark.getAttribute('href')).toBe('/')
   const links = [...d.querySelectorAll('nav a')].map((a) => [a.textContent, a.getAttribute('href')])
-  expect(links).toEqual([['Klubhuset', '/klubhuset'], ['Arkivet', '/arkiv']])
+  expect(links).toEqual([['Klubhuset', '/klubhuset']])
   expect(d.querySelector('[aria-current]')).toBeNull()
 })
 
@@ -23,6 +23,6 @@ test('marks the active link with aria-current', () => {
 })
 
 test('renders the right slot', () => {
-  const d = draw(topBarTemplate('arkiv', html`<button class="pill">Hylden</button>`))
+  const d = draw(topBarTemplate(null, html`<button class="pill">Hylden</button>`))
   expect(d.querySelector('.topbar-right .pill')?.textContent).toBe('Hylden')
 })

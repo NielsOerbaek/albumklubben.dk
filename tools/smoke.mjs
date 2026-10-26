@@ -13,10 +13,9 @@ const out = process.env.SMOKE_OUT ?? new URL('../var/screens/task10/', import.me
 mkdirSync(out, { recursive: true })
 
 const pages = [
-  ['landing', '/'],
-  ['arkiv-hylden', '/arkiv#hylden'],
-  ['arkiv-kortet', '/arkiv#kortet'],
-  ['arkiv-tal', '/arkiv#tal'],
+  ['front', '/'],
+  ['front-kortet', '/#kortet'],
+  ['front-tal', '/#tal'],
   ['klubhuset', '/klubhuset', true],
   ['admin-login', '/admin/login'],
 ]
@@ -27,12 +26,12 @@ const ctx = await browser.newContext({
   viewport: { width: 1280, height: 800 },
 })
 let failed = 0
-// The old museum address must land on the Klubhuset.
-{
+// Old addresses: the museum lands on the Klubhuset, Arkivet on the front page.
+for (const [from, to] of [['/museum', '/klubhuset'], ['/arkiv', '/']]) {
   const page = await ctx.newPage()
-  await page.goto(base + '/museum', { waitUntil: 'domcontentloaded' })
-  const ok = new URL(page.url()).pathname === '/klubhuset'
-  console.log(ok ? 'ok   /museum -> /klubhuset' : `FAIL /museum landed on ${page.url()}`)
+  await page.goto(base + from, { waitUntil: 'domcontentloaded' })
+  const ok = new URL(page.url()).pathname === to
+  console.log(ok ? `ok   ${from} -> ${to}` : `FAIL ${from} landed on ${page.url()}`)
   failed += ok ? 0 : 1
   await page.close()
 }
