@@ -8,7 +8,7 @@ import { posterDialog } from '../poster.ts'
 import { topBarTemplate } from '../topbar.ts'
 import { createPs1Renderer } from '../ps1/renderer.ts'
 import { createWalkControls } from '../ps1/controls.ts'
-import { FIRST_HINT, showHint, showOverlay, showPrompt, smallScreenGuard } from '../ps1/hud.ts'
+import { FIRST_HINT, showHint, showOverlay, showPrompt, showReticle, smallScreenGuard } from '../ps1/hud.ts'
 import { buildClubLayout } from './layout.ts'
 import { bookSpreads } from './book.ts'
 import { buildClub, type CrateView } from './scene.ts'
@@ -24,9 +24,8 @@ const BOOK_SHUT = 'Klik eller E for at åbne plakatbogen'
 const BOOK_OPEN = 'Klik på en plakat for at se den · A/D eller pilene for at bladre · Esc for at lukke'
 const BOOK_REACH = 1.6 // metres on the floor plan from the book's centre
 const EASE_TIME = 0.5 // seconds, to the open book and back
-// The look while reading, around the view pose: it sits close over the spread and looks steeply
-// down, so reaching the covers at a page's outer edge takes a wide yaw.
-const LOOK = { yaw: 1.1, down: 0.28, up: 0.47 }
+// The look while reading, around the view pose: enough to aim at every poster and cover on a spread.
+const LOOK = { yaw: 0.55, down: 0.2, up: 0.28 }
 
 render(topBarTemplate('klubhus'), document.getElementById('app')!)
 const canvas = document.querySelector<HTMLCanvasElement>('canvas.ps1-canvas')!
@@ -81,9 +80,16 @@ async function start() {
   // Where you stood before opening the book, and the camera's ease to the book or back to it.
   let standing: Pose | null = null
   let ease: { from: Pose; to: Pose; t: number; done: () => void } | null = null
+  let closeAfterEase = false // Esc came while the camera was still on its way to the book
+  // When the member last left the tab or window, so losing the lock to that keeps the book open.
+  let away = -Infinity
+  document.addEventListener('visibilitychange', () => { if (document.hidden) away = performance.now() })
+  window.addEventListener('blur', () => { away = performance.now() })
 
   let prompted: string | null = null
   const prompt = (text: string | null) => { if (text !== prompted) showPrompt(prompted = text) }
+  let dotted = false
+  const reticle = (on: boolean) => { if (on !== dotted) showReticle(dotted = on) }
 
   const ray = new THREE.Raycaster()
   const centreRay = () => {
@@ -107,15 +113,19 @@ async function start() {
     controls.setMovement(false)
     target = null
     bookAimed = false
+    closeAfterEase = false
     prompt(BOOK_OPEN)
-    easeTo(to, () => controls.setLookRange({
-      yaw: [to.yaw - LOOK.yaw, to.yaw + LOOK.yaw], pitch: [to.pitch - LOOK.down, to.pitch + LOOK.up],
-    }))
+    easeTo(to, () => {
+      controls.setLookRange({ yaw: [to.yaw - LOOK.yaw, to.yaw + LOOK.yaw], pitch: [to.pitch - LOOK.down, to.pitch + LOOK.up] })
+      if (closeAfterEase) closeBook()
+    })
   }
 
   /** Back to where you stood; the book shuts once you are there. */
   function closeBook() {
-    if (!book.isOpen() || ease || !standing) return
+    if (!book.isOpen() || !standing) return
+    if (ease) { closeAfterEase = true; return } // still opening: close once there
+    closeAfterEase = false
     controls.setLookRange(null)
     easeTo(standing, () => {
       book.close()
@@ -141,9 +151,13 @@ async function start() {
     prompt(locked || open() || !entered ? null : AGAIN) // a locked frame puts the aim's prompt back
     // Esc while reading: the browser takes the key and only releases the mouse, so losing the lock
     // closes the book. Our own unlock opens a dialog first, so `open()` tells it apart. Leaving the
-    // tab or window also releases the mouse and keeps the book open; wait a moment for the blur.
-    if (!locked && book.isOpen() && !open()) setTimeout(() => {
-      if (!controls.isLocked() && !open() && !document.hidden && document.hasFocus()) closeBook()
+    // tab or window also releases the mouse and keeps the book open: wait a moment for the blur or
+    // the hidden tab, in whatever order they come (a background tab's timer may fire much later).
+    if (locked || !book.isOpen() || open()) return
+    const lost = performance.now()
+    setTimeout(() => {
+      if (controls.isLocked() || open() || document.hidden || !document.hasFocus() || away > lost - 100) return
+      closeBook()
     }, 100)
   })
 
@@ -238,7 +252,7 @@ async function start() {
       if (open()) closeTop()
       else if (book.isOpen() && !locked) closeBook()
     } else if (book.isOpen()) {
-      if (locked && PAGE_KEYS[e.code]) book.turn(PAGE_KEYS[e.code])
+      if (locked && PAGE_KEYS[e.code] && !e.repeat) book.turn(PAGE_KEYS[e.code]) // one page a press
     } else if (e.code === 'KeyE' && locked) {
       if (target) pullOut()
       else if (bookAimed) openBook()
@@ -269,6 +283,7 @@ async function start() {
         prompt(target ? PROMPT : bookAimed ? BOOK_SHUT : null)
       }
     } else if (!ease) { target = null; bookAimed = false }
+    reticle(controls.isLocked() && book.isOpen() && !ease)
     draw(club.scene, camera)
     requestAnimationFrame(loop)
   })

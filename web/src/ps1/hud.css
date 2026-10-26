@@ -31,6 +31,18 @@
 .ps1-hint { top: 50%; translate: 0 -50%; white-space: nowrap; font-size: clamp(16px, 1.5vw, 20px); }
 .ps1-prompt { bottom: 48px; }
 
+/* White with a dark edge, so it reads on light and dark pages alike. */
+.ps1-reticle {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 6px;
+  height: 6px;
+  translate: -50% -50%;
+  background: #fff;
+  box-shadow: 0 0 0 1px #000;
+}
+
 .ps1-overlay {
   position: absolute;
   inset: 0;

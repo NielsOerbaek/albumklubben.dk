@@ -332,8 +332,9 @@ export async function createBookView(spreads: Spread[], where: ClubLayout['book'
       return null
     },
     viewPose() {
-      // Standing at the table's room side, leaning over the spread and looking down into it.
-      const pitch = -1.12, dist = 0.74
+      // Standing at the table's room side, leaning in, the spread ahead and a little below: aiming
+      // at any poster or cover takes little turning (about ±0.5 yaw).
+      const pitch = -0.8, dist = 0.85
       const centre = new THREE.Vector3(0, thick, 0.03).applyMatrix4(object.matrixWorld)
       const position = centre.clone().add(new THREE.Vector3(Math.cos(pitch) * dist, -Math.sin(pitch) * dist, 0))
       return { position, yaw: Math.PI / 2, pitch }

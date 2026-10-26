@@ -4,12 +4,12 @@ import './hud.css'
 export const FIRST_HINT = 'Klik for at gå ind · WASD for at gå · mus for at se dig om · Esc for at slippe'
 
 let root: HTMLElement | null = null
-const layer = (name: 'hint' | 'prompt' | 'overlay') => {
+const layer = (name: 'hint' | 'prompt' | 'overlay' | 'reticle') => {
   if (!root) {
     root = document.createElement('div')
     root.className = 'ps1-hud'
     render(html`<div class="ps1-hint" hidden></div><div class="ps1-prompt" hidden></div>
-      <div class="ps1-overlay" hidden></div>`, root)
+      <div class="ps1-reticle" hidden></div><div class="ps1-overlay" hidden></div>`, root)
     document.body.append(root)
   }
   return root.querySelector<HTMLElement>(`.ps1-${name}`)!
@@ -35,6 +35,11 @@ export function showHint(text: string) {
 /** A short prompt near the bottom, e.g. what pressing a key does here. `null` hides it. */
 export function showPrompt(text: string | null) {
   setText(layer('prompt'), text)
+}
+
+/** A small dot at the view's centre: what a click points at. */
+export function showReticle(on: boolean) {
+  layer('reticle').hidden = !on
 }
 
 /** Crisp DOM content (e.g. the album card) above the canvas. `null` removes it. */
