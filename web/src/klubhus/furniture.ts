@@ -89,7 +89,7 @@ function buildTable(scene: THREE.Scene, t: ClubLayout['table']) {
   const top = 0.14
   const terrazzo = terrazzoTex()
   scene.add(at(tiled(litBox(w, top, d, '#ffffff', terrazzo, FLOOR_LIT), 0.3), cx, TABLE.h - top / 2, cz))
-  const stemH = TABLE.h - top, upper = stemH * 0.45, len = d - 0.3
+  const stemH = TABLE.h - top, upper = stemH * 0.45, len = d // the stems run the slab's full length
   const stem = '#d2cfc8' // the same terrazzo, a touch darker in the slab's shadow
   for (const s of [-1, 1]) {
     const x = cx + s * w * 0.25

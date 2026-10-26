@@ -18,10 +18,11 @@ export function flapPath(from: string, to: string): string[] {
   return path
 }
 
-/** Upper case, accents folded to their base letter, æøå kept, anything else a blank flap. */
+/** Upper case, accents folded to their base letter, æøå kept, quotes as ', anything else a blank flap. */
 export function fold(text: string): string {
   return [...text.toUpperCase()].map((ch) => {
     if (FLAPS.includes(ch)) return ch
+    if ('’‘“”«»"`´'.includes(ch)) return "'" // every quote mark is the board's one apostrophe
     const base = ch.normalize('NFD').replace(/\p{M}/gu, '')
     return [...base].every((c) => FLAPS.includes(c)) ? base : ' '
   }).join('')

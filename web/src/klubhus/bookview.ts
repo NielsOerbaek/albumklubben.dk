@@ -126,7 +126,7 @@ function buildPages(spread: Spread, pw: number, ph: number): Pages {
       if (tex) R.g.drawImage(tex.image as CanvasImageSource, x, y, w, h)
     })
     R.tex.needsUpdate = true
-  })
+  }).catch((err) => console.error(err)) // the page stays paper rather than an unhandled rejection
 
   return {
     left: L.tex, right: R.tex, posters, albums, cells,
@@ -140,7 +140,8 @@ function buildPages(spread: Spread, pw: number, ph: number): Pages {
 }
 
 export async function createBookView(spreads: Spread[], where: ClubLayout['book']): Promise<BookView> {
-  const pw = where.d, ph = where.w // a page is as wide as the shut book is deep, as tall as it is wide
+  // A page is as wide as the shut book is deep and PAGE_ASPECT as tall, so its canvas, cells and aim agree.
+  const pw = where.d, ph = pw * PAGE_ASPECT
   const n = spreads.length
   const thick = THREE.MathUtils.clamp(0.05 + n * 0.006, 0.08, 0.16)
   const object = at(new THREE.Group(), where.x, TABLE.h, where.z, Math.PI / 2)
@@ -161,7 +162,7 @@ export async function createBookView(spreads: Spread[], where: ClubLayout['book'
   spreadGroup.add(at(new THREE.Mesh(new THREE.BoxGeometry(2 * pw + 0.03, BOARD, ph + 0.03, 2, 1, 2),
     [cloth(0.72), cloth(0.72), cloth(1), cloth(0.4), cloth(0.86), cloth(0.8)]), 0, BOARD / 2, 0))
   const blockGeo = new THREE.BoxGeometry(pw, 1, ph).translate(0, 0.5, 0)
-  const blockMats = [mat('#ffffff', edge, 0.72), mat('#ffffff', edge, 0.72), mat(PAPER), mat(PAPER, null, 0.4), mat('#ffffff', edge, 0.86), mat('#ffffff', edge, 0.8)]
+  const blockMats = [mat('#ffffff', edge, 0.6), mat('#ffffff', edge, 0.6), mat(PAPER), mat(PAPER, null, 0.4), mat('#ffffff', edge, 0.7), mat('#ffffff', edge, 0.66)]
   const blocks = [-1, 1].map((s) => {
     const b = at(new THREE.Mesh(blockGeo, blockMats), s * pw / 2, BOARD, 0)
     spreadGroup.add(b)
@@ -174,10 +175,11 @@ export async function createBookView(spreads: Spread[], where: ClubLayout['book'
   const rightPosters = at(new THREE.Group(), 0, 0, 0) // the current spread's poster planes go in here
   spreadGroup.add(leftPage, rightPage, rightPosters)
 
-  /** The pages' heights for spread i: the left block grows as you read on. */
+  /** The pages' heights for spread i: the left block grows a little as you read on, never by more
+   *  than a couple of centimetres, so the open spread lies (nearly) flat. */
   const pagesTop = (i: number) => {
     const all = thick - 2 * BOARD
-    const left = all * (0.1 + 0.8 * (n > 1 ? i / (n - 1) : 0))
+    const left = all * (0.4 + 0.2 * (n > 1 ? i / (n - 1) : 0))
     return [BOARD + left, BOARD + all - left] as const
   }
   const pageY = { left: 0, right: 0 }
@@ -249,6 +251,7 @@ export async function createBookView(spreads: Spread[], where: ClubLayout['book'
   let index = 0
   let opened = false
   let anim: { dir: 1 | -1; t: number } | null = null
+  let sheetY: [from: number, to: number] = [0, 0]
 
   function show(i: number) {
     setHeights(i)
@@ -300,9 +303,10 @@ export async function createBookView(spreads: Spread[], where: ClubLayout['book'
       index = to
       anim = { dir, t: 0 }
       sheet.visible = true
-      const [l, r] = pagesTop(from)
-      sheet.userData.y0 = Math.max(l, r) + 0.003
-      bend(dir > 0 ? 0 : Math.PI, sheet.userData.y0)
+      // The sheet lifts off the side it lies on and comes down on the other side's height.
+      const [l0, r0] = pagesTop(from), [l1, r1] = pagesTop(to)
+      sheetY = dir > 0 ? [r0, l1] : [l0, r1]
+      bend(dir > 0 ? 0 : Math.PI, sheetY[0] + 0.003)
       return true
     },
     spread: () => index,
@@ -338,7 +342,7 @@ export async function createBookView(spreads: Spread[], where: ClubLayout['book'
       if (!anim) return
       anim.t = Math.min(1, anim.t + dt / TURN_TIME)
       const e = ease(anim.t)
-      bend(Math.PI * (anim.dir > 0 ? e : 1 - e), sheet.userData.y0)
+      bend(Math.PI * (anim.dir > 0 ? e : 1 - e), sheetY[0] + (sheetY[1] - sheetY[0]) * e + 0.003)
       if (anim.t >= 1) finish()
     },
   }

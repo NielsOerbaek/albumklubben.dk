@@ -186,7 +186,7 @@ export function buildRoom(scene: THREE.Scene, layout: ClubLayout) {
   // Floor, ceiling and the three plain walls (the -X wall is the windows).
   const floor = plane(W, L, mat('#ffffff', floorTex()), 2, 2)
   floor.rotation.x = -Math.PI / 2
-  const ceiling = plane(W, L, mat('#ffffff', concreteTex('#9a9993', 23), 0.56), 1.5, 1.5)
+  const ceiling = plane(W, L, mat('#ffffff', concreteTex('#8f8e88', 23), 0.56), 1.5, 1.5)
   ceiling.rotation.x = Math.PI / 2
   ceiling.position.y = H
   scene.add(floor, ceiling)
@@ -213,7 +213,7 @@ function buildCeiling(scene: THREE.Scene, { width: W, length: L, ceiling: H, sta
   const wellZ = stairs.maxZ
   const inWell = (x0: number, x1: number, z: number) => z < wellZ && x1 > stairs.minX && x0 < hw
 
-  const beamMap = concreteTex('#a8a7a0', 31)
+  const beamMap = concreteTex('#9c9b94', 31)
   const beamZ: number[] = []
   for (let z = hl - BEAM.pitch / 2; z > -hl; z -= BEAM.pitch) beamZ.push(z)
   for (const z of beamZ) {
@@ -222,15 +222,19 @@ function buildCeiling(scene: THREE.Scene, { width: W, length: L, ceiling: H, sta
   }
 
   // The ducts, just under the beams, each with a couple of drops: a short neck down to a round
-  // diffuser. Duct faces are shaded as a tube: brightest underneath and on the window side.
-  const DUCT_LIT: Shades = [0.8, 0.8, 0.55, 1, 0.82, 0.96] // laid along X, then turned to run along Z
-  const DROP_LIT: Shades = [0.82, 0.96, 0.55, 1, 0.9, 0.9]
+  // diffuser. Duct faces are shaded as a silver tube in the room's light: its window side brightest,
+  // its underside and room side in shadow, and a dark band on the beams above it where it shades them.
+  const DUCT_LIT: Shades = [0.8, 0.8, 0.45, 0.62, 0.56, 0.8] // laid along X, then turned to run along Z
+  const DROP_LIT: Shades = [0.62, 0.86, 0.5, 0.72, 0.7, 0.7]
   const duct = ductTex(), dropMap = ductTex(true)
   const grille = mat('#ffffff', grilleTex(), 0.95)
   const ductY = beamBottom - DUCT / 2 - 0.03
   for (const [x, drops] of [[-3.45, [hl - 5, -hl + 6.5]], [3.3, [hl - 3, 0.5]]] as const) {
     const end = inWell(x - DUCT / 2, x + DUCT / 2, wellZ - 0.01) ? wellZ : -hl
     const len = hl - end
+    const shadow = plane(DUCT + 0.3, len, mat('#5c5d5a'), DUCT + 0.3, len, 0.6)
+    shadow.rotation.x = Math.PI / 2 // facing down, just under the beams
+    scene.add(at(shadow, x, beamBottom - 0.004, (hl + end) / 2))
     const run = litBox(len, DUCT, DUCT, '#ffffff', duct, DUCT_LIT)
     repeatU(run.geometry, len / 0.12)
     scene.add(at(run, x, ductY, (hl + end) / 2, Math.PI / 2))

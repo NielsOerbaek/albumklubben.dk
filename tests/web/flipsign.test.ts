@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { boardAt, boardLines, FLAPS, flapPath } from '../../web/src/klubhus/flipsign.ts'
+import { boardAt, boardLines, FLAPS, flapPath, fold } from '../../web/src/klubhus/flipsign.ts'
 import type { Album, Meeting } from '../../shared/types.ts'
 
 const album = (artist: string, title: string, position: number) =>
@@ -49,6 +49,10 @@ describe('boardLines', () => {
   it('keeps æøå, folds accents and blanks what the board lacks', () => {
     const [, line] = boardLines(meeting({ albums: [album('Mø', 'Æblé #1 (Ñü)', 1)] }), 26, 6)
     expect(line).toBe(pad('MØ: ÆBLE  1  NU'))
+  })
+
+  it('turns every kind of quote mark into the apostrophe', () => {
+    expect(fold('’Tis «Le» “Roi” "x" ‘y’')).toBe("'TIS 'LE' 'ROI' 'X' 'Y'")
   })
 
   it('never shows null or undefined for a bare meeting', () => {

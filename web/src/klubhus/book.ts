@@ -45,7 +45,7 @@ export function posterCells(aspects: number[]): Cell[] {
  *  where the album covers go (canvas pixels, square); the caller draws the covers. */
 export function drawLeftPage(g: CanvasRenderingContext2D, s: Spread, size: { w: number; h: number }): { albums: (Cell & { album: Album })[] } {
   const { w, h } = size
-  const k = Math.max(1, Math.floor(w / 200))
+  const k = Math.max(1, Math.floor(w / 100)) // two texels a dot on a 200 px page, so it reads from above
   const m = Math.round(w * MARGIN)
   const perLine = Math.max(1, Math.floor((w - 2 * m) / (6 * k)))
   const { meeting } = s
@@ -57,7 +57,9 @@ export function drawLeftPage(g: CanvasRenderingContext2D, s: Spread, size: { w: 
   let y = m / k
   const line = (text: string, tall = false) => {
     const rows: string[] = []
-    for (const word of fold(text).split(' ').filter(Boolean)) {
+    // A word longer than a line is cut into line-long pieces rather than running off the page.
+    const words = fold(text).split(' ').filter(Boolean).flatMap((w) => w.match(new RegExp(`.{1,${perLine}}`, 'gu')) ?? [])
+    for (const word of words) {
       const last = rows.length - 1
       if (last >= 0 && rows[last].length + 1 + word.length <= perLine) rows[last] += ' ' + word
       else rows.push(word)
