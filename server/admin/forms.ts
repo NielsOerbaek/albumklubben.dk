@@ -48,10 +48,11 @@ export function parseAlbumForm(f: Fields): Parsed<Omit<AlbumInput, 'coverPath'>>
     genre: text(f, 'genre'), gender: text(f, 'gender'), status: text(f, 'status'),
     pickedByName: optional(f, 'picked_by_name'), pickedByWorkplace: optional(f, 'picked_by_workplace'),
     story: optional(f, 'story'), cardColor: text(f, 'card_color').toLowerCase(),
+    tracklist: optional({ tracklist: (f.tracklist ?? '').replace(/\r\n?/g, '\n') }, 'tracklist'),
   })
 }
 
-/** Only the caption is a text field; image and video come from the upload. */
-export function parsePosterForm(f: Fields): { ok: true; value: Pick<PosterInput, 'caption'> } {
-  return { ok: true, value: { caption: optional(f, 'caption') } }
+/** Caption and about are the text fields; image and video come from the upload. */
+export function parsePosterForm(f: Fields): { ok: true; value: Pick<PosterInput, 'caption' | 'about'> } {
+  return { ok: true, value: { caption: optional(f, 'caption'), about: optional(f, 'about') } }
 }

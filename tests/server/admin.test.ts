@@ -284,3 +284,17 @@ describe('admin CMS', () => {
     expect(getMeeting(c.db, m.id)!.albums[0].coverUrl).not.toBe(a.coverUrl)
   })
 })
+
+describe('admin tracklist and about', () => {
+  it('saves an album tracklist and a poster about text', async () => {
+    const c = setup()
+    const { cookie } = await login(c.app)
+    const m = await newMeeting(c, cookie)
+    const body = multipart(albumFields({ tracklist: 'Intro 1:02\r\nOutro' }))
+    await c.app.inject({ method: 'POST', url: `/admin/meetings/${m.id}/albums/new`, headers: { ...body.headers, cookie }, payload: body.payload })
+    expect(getMeeting(c.db, m.id)!.albums[0].tracklist).toBe('Intro 1:02\nOutro')
+    const pb = multipart([{ name: 'about', value: 'Om plakaten' }, { name: 'image', filename: 'p.png', type: 'image/png', data: await png() }])
+    await c.app.inject({ method: 'POST', url: `/admin/meetings/${m.id}/posters/new`, headers: { ...pb.headers, cookie }, payload: pb.payload })
+    expect(getMeeting(c.db, m.id)!.posters[0].about).toBe('Om plakaten')
+  })
+})

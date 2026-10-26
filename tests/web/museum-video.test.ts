@@ -6,7 +6,7 @@ import type { Poster } from '../../shared/types.ts'
 let nextId = 1
 /** A poster hanging at (x, z) and facing along (normalX, normalZ). */
 function poster(x: number, z: number, normalX: number, normalZ: number, video = true): WallItem {
-  const p: Poster = { id: nextId++, meetingId: 1, position: 1, imageUrl: '/uploads/posters/p.png', caption: null,
+  const p: Poster = { id: nextId++, meetingId: 1, position: 1, imageUrl: '/uploads/posters/p.png', caption: null, about: null,
     videoUrl: video ? '/uploads/videos/p.mp4' : null }
   return { kind: 'poster', meetingNumber: 1, poster: p, x, y: 1.6, z, normalX, normalZ, width: 0.79, height: 1.4 }
 }

@@ -1,4 +1,4 @@
-import { copyFileSync, mkdirSync, readFileSync } from 'node:fs'
+import { copyFileSync, existsSync, mkdirSync, readFileSync } from 'node:fs'
 import { dirname, extname, join } from 'node:path'
 import type { Database } from './db.ts'
 import { createAlbum, createMeeting, createPoster, isEmpty, updateAlbum } from './repo.ts'
@@ -16,6 +16,8 @@ export function seed(db: Database, dataDir: string, uploadDir: string) {
   if (!isEmpty(db)) throw new Error('Databasen er ikke tom')
   const meetings = readJson(dataDir, 'meetings.json')
   const albums = readJson(dataDir, 'albums.json')
+  const tracklists: { artist: string; title: string; tracklist: string }[] =
+    existsSync(join(dataDir, 'tracklists.json')) ? readJson(dataDir, 'tracklists.json') : []
   const counts = { meetings: 0, albums: 0, posters: 0 }
 
   db.transaction(() => {
@@ -30,6 +32,7 @@ export function seed(db: Database, dataDir: string, uploadDir: string) {
           genre: a.genre ?? '', gender: a.gender ?? '', status: a.status ?? '',
           pickedByName: a.pickedBy?.name ?? null, pickedByWorkplace: a.pickedBy?.workplace ?? null,
           story: a.story ?? null, cardColor: a.cardColor, coverPath: null,
+          tracklist: tracklists.find(t => t.artist === a.artist && t.title === a.title)?.tracklist ?? null,
         }
         const id = createAlbum(db, meetingId, input)
         if (a.cover) input.coverPath = copy(dataDir, uploadDir, a.cover, `covers/${id}${extname(a.cover)}`)
@@ -40,7 +43,7 @@ export function seed(db: Database, dataDir: string, uploadDir: string) {
       for (const f of m.media) {
         n++
         const imagePath = copy(dataDir, uploadDir, f.file, `posters/${m.number}-${n}${extname(f.file)}`)
-        createPoster(db, meetingId, { imagePath, caption: f.caption ?? null, videoPath: null })
+        createPoster(db, meetingId, { imagePath, caption: f.caption ?? null, about: f.about ?? null, videoPath: null })
         counts.posters++
       }
     }

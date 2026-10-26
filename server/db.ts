@@ -29,7 +29,8 @@ CREATE TABLE IF NOT EXISTS albums (
   picked_by_workplace TEXT,
   story TEXT,
   card_color TEXT NOT NULL,
-  cover_path TEXT
+  cover_path TEXT,
+  tracklist TEXT
 );
 CREATE TABLE IF NOT EXISTS posters (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -37,15 +38,23 @@ CREATE TABLE IF NOT EXISTS posters (
   position INTEGER NOT NULL,
   image_path TEXT NOT NULL,
   caption TEXT,
-  video_path TEXT
+  video_path TEXT,
+  about TEXT
 );
 CREATE INDEX IF NOT EXISTS albums_meeting ON albums(meeting_id, position);
 CREATE INDEX IF NOT EXISTS posters_meeting ON posters(meeting_id, position);
 `
 
+function addColumn(db: Database, table: string, column: string) {
+  const cols = db.prepare(`PRAGMA table_info(${table})`).all() as { name: string }[]
+  if (!cols.some(c => c.name === column)) db.exec(`ALTER TABLE ${table} ADD COLUMN ${column} TEXT`)
+}
+
 export function openDb(path: string): Database {
   const db = new BetterSqlite3(path)
   db.pragma('foreign_keys = ON')
   db.exec(SCHEMA)
+  addColumn(db, 'albums', 'tracklist')
+  addColumn(db, 'posters', 'about')
   return db
 }

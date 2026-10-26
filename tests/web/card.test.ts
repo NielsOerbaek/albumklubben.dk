@@ -7,7 +7,8 @@ import type { Album } from '../../shared/types.ts'
 const jeff: Album = { id: 1, meetingId: 1, position: 0, artist: 'Jeff Buckley', title: 'Grace', year: 1994,
   origin: 'USA, Californien, Anaheim', country: 'USA', lat: null, lng: null, genre: 'Alternativ Rock',
   gender: 'Mand', status: 'Døde d. 29.maj 1997 (30år)', pickedByName: 'Medlem 9',
-  pickedByWorkplace: 'Arbejdsplads B', story: 'En stemme.', cardColor: '#262d66', coverUrl: null }
+  pickedByWorkplace: 'Arbejdsplads B', story: 'En stemme.', cardColor: '#262d66', coverUrl: null,
+  tracklist: null }
 
 const draw = (t: unknown) => { const d = document.createElement('div'); render(t as never, d); return d }
 

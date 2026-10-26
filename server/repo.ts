@@ -12,12 +12,12 @@ const toAlbum = (r: Row): Album => ({
   year: r.year, origin: r.origin, country: r.country, lat: r.lat, lng: r.lng, genre: r.genre,
   gender: r.gender, status: r.status, pickedByName: r.picked_by_name,
   pickedByWorkplace: r.picked_by_workplace, story: r.story, cardColor: r.card_color,
-  coverUrl: url(r.cover_path),
+  coverUrl: url(r.cover_path), tracklist: r.tracklist,
 })
 
 const toPoster = (r: Row): Poster => ({
   id: r.id, meetingId: r.meeting_id, position: r.position, imageUrl: url(r.image_path)!,
-  caption: r.caption, videoUrl: url(r.video_path),
+  caption: r.caption, about: r.about, videoUrl: url(r.video_path),
 })
 
 function load(db: Database, where: string, ...args: number[]): Meeting[] {
@@ -64,15 +64,15 @@ export function deleteMeeting(db: Database, id: number): string[] {
 
 const ALBUM_COLS = `artist = ?, title = ?, year = ?, origin = ?, country = ?, lat = ?, lng = ?,
   genre = ?, gender = ?, status = ?, picked_by_name = ?, picked_by_workplace = ?, story = ?,
-  card_color = ?, cover_path = ?`
+  card_color = ?, cover_path = ?, tracklist = ?`
 const albumArgs = (i: AlbumInput) => [i.artist, i.title, i.year, i.origin, i.country, i.lat, i.lng,
-  i.genre, i.gender, i.status, i.pickedByName, i.pickedByWorkplace, i.story, i.cardColor, i.coverPath]
+  i.genre, i.gender, i.status, i.pickedByName, i.pickedByWorkplace, i.story, i.cardColor, i.coverPath, i.tracklist]
 
 export function createAlbum(db: Database, meetingId: number, i: AlbumInput): number {
   const pos = nextPosition(db, 'albums', meetingId)
   const id = db.prepare(`INSERT INTO albums (meeting_id, position, artist, title, year, origin, country,
-    lat, lng, genre, gender, status, picked_by_name, picked_by_workplace, story, card_color, cover_path)
-    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`)
+    lat, lng, genre, gender, status, picked_by_name, picked_by_workplace, story, card_color, cover_path, tracklist)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`)
     .run(meetingId, pos, ...albumArgs(i)).lastInsertRowid
   return Number(id)
 }
@@ -83,13 +83,13 @@ export function updateAlbum(db: Database, id: number, i: AlbumInput): void {
 
 export function createPoster(db: Database, meetingId: number, i: PosterInput): number {
   const pos = nextPosition(db, 'posters', meetingId)
-  return Number(db.prepare(`INSERT INTO posters (meeting_id, position, image_path, caption, video_path)
-    VALUES (?, ?, ?, ?, ?)`).run(meetingId, pos, i.imagePath, i.caption, i.videoPath).lastInsertRowid)
+  return Number(db.prepare(`INSERT INTO posters (meeting_id, position, image_path, caption, about, video_path)
+    VALUES (?, ?, ?, ?, ?, ?)`).run(meetingId, pos, i.imagePath, i.caption, i.about, i.videoPath).lastInsertRowid)
 }
 
 export function updatePoster(db: Database, id: number, i: PosterInput): void {
-  db.prepare('UPDATE posters SET image_path = ?, caption = ?, video_path = ? WHERE id = ?')
-    .run(i.imagePath, i.caption, i.videoPath, id)
+  db.prepare('UPDATE posters SET image_path = ?, caption = ?, about = ?, video_path = ? WHERE id = ?')
+    .run(i.imagePath, i.caption, i.about, i.videoPath, id)
 }
 
 function remove(db: Database, table: 'albums' | 'posters', id: number, ...cols: string[]): string[] {
