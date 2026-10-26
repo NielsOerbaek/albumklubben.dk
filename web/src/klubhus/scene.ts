@@ -144,14 +144,15 @@ const rugTex = () => painted(48, 64, (g) => {
   speckle(g, 48, 64, 0.1, 53)
 })
 
-/** A small cream plaque with the poster's meeting, in the flip sign's type. 8 mm a texel. */
-const PLAQUE_TEXEL = 0.008
+/** A cream plaque with the poster's meeting, in the flip sign's type: 5×7 glyphs, 2 texels of margin.
+ *  16 mm a texel keeps every stroke at least a pixel wide from 3 m, in 400 lines; "MØDE 123" is 0.82 m. */
+const PLAQUE_TEXEL = 0.016
 const plaqueTex = (n: number) => {
-  const text = `MØDE ${n}`, w = text.length * 6 + 5
+  const text = `MØDE ${n}`, w = text.length * 6 + 3
   return painted(w, 11, (g) => {
     g.fillStyle = '#e9e1cf'; g.fillRect(0, 0, w, 11)
     g.fillStyle = '#121316'
-    drawPixelText(g, text, 3, 2)
+    drawPixelText(g, text, 2, 2)
   })
 }
 
@@ -421,8 +422,8 @@ export async function buildClub(layout: ClubLayout): Promise<Club> {
     g.add(at(shadedBox(w + 2 * FRAME, h + 2 * FRAME, FRAME, image ? '#161514' : '#2a2724'), 0, 0, FRAME / 2))
     let plaque = plaques.get(slot.meetingNumber)
     if (!plaque) plaques.set(slot.meetingNumber, plaque = plaqueTex(slot.meetingNumber))
-    const pw = (plaque.image as HTMLCanvasElement).width * PLAQUE_TEXEL
-    g.add(at(plane(pw, 11 * PLAQUE_TEXEL, mat('#ffffff', plaque)), 0, -h / 2 - FRAME - 0.07, 0.01))
+    const { width: pw, height: ph } = plaque.image as HTMLCanvasElement
+    g.add(at(plane(pw * PLAQUE_TEXEL, ph * PLAQUE_TEXEL, mat('#ffffff', plaque)), 0, -h / 2 - FRAME - 0.03 - ph * PLAQUE_TEXEL / 2, 0.01))
     if (image) {
       const picture = at(plane(w, h, ps1Material({ map: image, ...FOG }), w, h, 0.2), 0, 0, FRAME + 0.012)
       const backing = at(plane(w, h, mat('#000000')), 0, 0, FRAME + 0.006)

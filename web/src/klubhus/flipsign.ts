@@ -36,10 +36,14 @@ export function boardLines(m: Meeting, cols: number, rows: number): string[] {
   return Array.from({ length: rows }, (_, i) => fold(lines[i] ?? '').slice(0, cols).padEnd(cols, ' '))
 }
 
+/** Each glyph's flaps from blank, worked out once. */
+const fromBlank = new Map<string, string[]>()
+
 /** What the board shows `t` seconds after it was triggered from blank. */
 export function boardAt(lines: string[], t: number): string[] {
   return lines.map((line) => [...line].map((to, col) => {
-    const path = flapPath(' ', to)
+    let path = fromBlank.get(to)
+    if (!path) fromBlank.set(to, path = flapPath(' ', to))
     const steps = Math.min(path.length, Math.max(0, Math.floor((t - col * STAGGER) * RATE)))
     return steps ? path[steps - 1] : ' '
   }).join(''))
