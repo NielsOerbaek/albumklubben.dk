@@ -108,3 +108,14 @@ test('the centred album is shown below the band', () => {
   const { d } = mount(archive())
   expect(d.querySelector('.album-view')!.textContent).toContain('Kunstner 44, Album 44')
 })
+
+test('arrow keys still work when a clicked cover has focus, and the slider keeps its own keys', () => {
+  const { d, centre } = mount(archive())
+  const cover = [...d.querySelectorAll<HTMLButtonElement>('.cf-cover')].find((c) => c.getAttribute('aria-label') === 'Kunstner 40, Album 40')!
+  cover.click()
+  cover.focus()
+  cover.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowLeft', bubbles: true }))
+  expect(centre()).toBe('Kunstner 39, Album 39')
+  d.querySelector('.cf-slider')!.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowLeft', bubbles: true }))
+  expect(centre()).toBe('Kunstner 39, Album 39')
+})

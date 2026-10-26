@@ -2,7 +2,8 @@
 .cf-band { position: relative; background: #000; padding: 0 var(--pad) 22px; overflow: hidden;
   user-select: none; -webkit-user-select: none; }
 .cf-band:focus { outline: none; }
-.cf-band:focus-visible { outline: 2px solid var(--focus); outline-offset: -2px; }
+/* Keyboard focus marks the centre cover, not the whole band. */
+.cf-band:focus-visible .cf-cover[aria-current='true'] { outline: 2px solid var(--focus); outline-offset: 4px; }
 .cf-stage { position: relative; height: 350px; perspective: 900px; perspective-origin: 50% 150px;
   touch-action: pan-y; cursor: grab; zoom: 1.3; }
 .cf-stage:active { cursor: grabbing; }
@@ -11,6 +12,7 @@
   transition: transform .3s ease;
   -webkit-box-reflect: below 2px linear-gradient(transparent 60%, rgb(255 255 255 / .25)); }
 .cf-cover[aria-current='true'] { cursor: default; }
+.cf-cover:focus-visible { outline: none; }
 .cf-cover img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; display: block; }
 .cf-nocover { position: absolute; inset: 0; padding: 18px; font-size: 18px; line-height: 1.25; color: #fff;
   text-align: left; background: #111; }

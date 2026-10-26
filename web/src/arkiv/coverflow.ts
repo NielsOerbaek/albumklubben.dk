@@ -59,7 +59,7 @@ function controls(s: State, act: Actions): TemplateResult {
   </div>`
 }
 
-function cover(e: Entry, offset: number, onClick: () => void): TemplateResult {
+function cover(e: Entry, offset: number, onClick: (ev: MouseEvent) => void): TemplateResult {
   const p = coverPose(offset)
   const { album } = e
   return html`<button class="cf-cover" tabindex="-1" aria-label=${label(album)}
@@ -87,7 +87,8 @@ export function coverflowView(s: State, act: Actions): TemplateResult {
   }
 
   const onKey = (e: KeyboardEvent) => {
-    if (e.target !== e.currentTarget) return // the slider handles its own keys
+    dragged = false // a drag's click never came; let Enter or Space on a cover through
+    if (e.target instanceof HTMLInputElement) return // the slider handles its own keys
     const step = { ArrowLeft: -1, ArrowRight: 1 }[e.key]
     if (!step) return
     e.preventDefault()
@@ -143,7 +144,9 @@ export function coverflowView(s: State, act: Actions): TemplateResult {
   return html`<div class="cf-band" tabindex="0" role="group" aria-roledescription="karrusel"
       aria-label="Albums. Brug piletasterne til at bladre." @keydown=${onKey} @wheel=${onWheel}>
       <div class="cf-stage" @pointerdown=${onDown} @pointermove=${onMove} @pointerup=${onUp} @pointercancel=${onUp}>
-        ${repeat(shown, (e) => e.album.id, (e, k) => cover(e, lo + k - idx, () => {
+        ${repeat(shown, (e) => e.album.id, (e, k) => cover(e, lo + k - idx, (ev) => {
+          // Keep focus on the band, so the arrow keys work and no ring lands on a side cover.
+          ;(ev.currentTarget as HTMLElement).closest<HTMLElement>('.cf-band')?.focus({ preventScroll: true })
           if (dragged) { dragged = false; return }
           go(lo + k)
         }))}
