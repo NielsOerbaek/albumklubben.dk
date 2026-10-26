@@ -227,11 +227,15 @@ describe('admin CMS', () => {
     await c.app.inject({ method: 'POST', url: `/admin/meetings/${m.id}/albums/new`, headers: { ...body.headers, cookie }, payload: body.payload })
     const cover = getMeeting(c.db, m.id)!.albums[0].coverUrl!
     expect((await c.app.inject(cover.replace('/uploads/', '/tex/128/'))).statusCode).toBe(200)
-    const cached = `.cache/128/${cover.replace('/uploads/', '').replaceAll('/', '_')}.png`
+    expect((await c.app.inject(cover.replace('/uploads/', '/thumb/512/'))).statusCode).toBe(200)
+    const name = `${cover.replace('/uploads/', '').replaceAll('/', '_')}.png`
+    const cached = `.cache/128/${name}`, thumb = `.cache/thumb-512/${name}`
     expect(existsSync(join(c.uploadDir, cached))).toBe(true)
+    expect(existsSync(join(c.uploadDir, thumb))).toBe(true)
     expect((await c.app.inject(`/uploads/${cached}`)).statusCode).toBe(404)
     await c.app.inject({ method: 'POST', url: `/admin/meetings/${m.id}/delete`, headers: { ...URLENC, cookie }, payload: form({ confirm: 'ja' }) })
     expect(existsSync(join(c.uploadDir, cached))).toBe(false)
+    expect(existsSync(join(c.uploadDir, thumb))).toBe(false)
   })
 
   it('stores a rotated phone photo upright', async () => {

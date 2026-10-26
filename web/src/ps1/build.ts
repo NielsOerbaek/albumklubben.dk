@@ -9,13 +9,16 @@ import type { Album } from '../../../shared/types.ts'
 /** Shared PS1 materials for one fog setting, and boxes shaded with them. */
 export function createBuilder(fog: { fogColor: THREE.ColorRepresentation; fogNear: number; fogFar: number }) {
   const mats = new Map<string, THREE.ShaderMaterial>()
-  function mat(color: THREE.ColorRepresentation, map: THREE.Texture | null = null, shade = 1) {
+  function mat(color: THREE.ColorRepresentation, map: THREE.Texture | null = null, shade = 1, decal = false) {
     const c = new THREE.Color(color).multiplyScalar(shade)
-    const key = `${c.getHexString()}|${map?.uuid ?? ''}`
+    const key = `${c.getHexString()}|${map?.uuid ?? ''}|${decal}`
     let m = mats.get(key)
-    if (!m) mats.set(key, m = ps1Material({ map, color: c, ...fog }))
+    if (!m) mats.set(key, m = ps1Material({ map, color: c, decal, ...fog }))
     return m
   }
+
+  /** A material for something hung a few millimetres in front of a surface (see `ps1Material`). */
+  const decal = (color: THREE.ColorRepresentation, map: THREE.Texture | null = null) => mat(color, map, 1, true)
 
   /** A box with flat fake lighting: lit top, dimmer fronts, darker sides. */
   function shadedBox(w: number, h: number, d: number, color: THREE.ColorRepresentation, map: THREE.Texture | null = null) {
@@ -25,7 +28,7 @@ export function createBuilder(fog: { fogColor: THREE.ColorRepresentation; fogNea
     return new THREE.Mesh(geo, [side, side, mat(color, map, 1), mat(color, map, 0.4), front, front])
   }
 
-  return { mat, shadedBox }
+  return { mat, decal, shadedBox }
 }
 
 /** A plane `w` × `h` whose texture repeats every `tileW` × `tileH` metres, cut every `step` metres. */

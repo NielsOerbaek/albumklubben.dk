@@ -7,7 +7,7 @@ const target = process.env.API_TARGET ?? 'http://127.0.0.1:3600'
 export default defineConfig({
   root,
   server: {
-    proxy: Object.fromEntries(['/api', '/uploads', '/tex', '/admin'].map((p) => [p, target])),
+    proxy: Object.fromEntries(['/api', '/uploads', '/tex', '/thumb', '/admin'].map((p) => [p, target])),
   },
   build: {
     outDir: resolve(import.meta.dirname, 'dist'),

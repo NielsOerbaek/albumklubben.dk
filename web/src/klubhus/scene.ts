@@ -156,7 +156,9 @@ const plaqueTex = (n: number) => {
   })
 }
 
-const { mat, shadedBox } = createBuilder(FOG)
+const { mat, decal, shadedBox } = createBuilder(FOG)
+/** For a face left out of a mesh: three.js skips draw groups whose material is not visible. */
+const hidden = new THREE.ShaderMaterial({ visible: false })
 
 // ---------------------------------------------------------------------------------------------
 // Crates.
@@ -314,7 +316,7 @@ export async function buildClub(layout: ClubLayout): Promise<Club> {
   // The door, behind you when you come in, and a shop window onto the street. Each is one
   // painted plane on the wall, so nothing can poke through anything at a grazing angle.
   const front = (w: number, h: number, x: number, y: number, tex: THREE.Texture) =>
-    scene.add(at(plane(w, h, mat('#ffffff', tex)), x, y, hd - 0.012, Math.PI))
+    scene.add(at(plane(w, h, decal('#ffffff', tex)), x, y, hd - 0.012, Math.PI))
   front(1.0, 2.15, layout.spawn.x, 1.075, doorTex())
   const doormat = plane(1.1, 0.6, mat('#3a2a22'))
   doormat.rotation.x = -Math.PI / 2
@@ -337,9 +339,13 @@ export async function buildClub(layout: ClubLayout): Promise<Club> {
   for (const b of layout.bins) {
     const len = b.maxZ - b.minZ, cz = (b.minZ + b.maxZ) / 2
     const side = Math.sign(b.minX + b.maxX)
-    scene.add(at(shadedBox(BIN.d, BIN.h, len, '#ffffff', binWood), side * (hw - BIN.d / 2), BIN.h / 2, cz))
-    const face = plane(len - 0.1, BIN.h - 0.2, mat('#ffffff', spines), 1.6, 1.9)
-    scene.add(at(face, side * (hw - BIN.d - 0.005), BIN.h / 2, cz, -side * Math.PI / 2))
+    // The spines are the bin's front: the box leaves that face out, and the plane is cut on the
+    // box's own 0.5 m grid, so the two share their snapped vertices and nothing can fight.
+    const body = shadedBox(BIN.d, BIN.h, len, '#ffffff', binWood)
+    body.material = body.material.map((m, i) => (i === (side < 0 ? 0 : 1) ? hidden : m))
+    scene.add(at(body, side * (hw - BIN.d / 2), BIN.h / 2, cz))
+    const face = plane(len, BIN.h, mat('#ffffff', spines), 1.6, 1.9, 0.5)
+    scene.add(at(face, side * (hw - BIN.d), BIN.h / 2, cz, -side * Math.PI / 2))
   }
 
   // The counter, with a till and a turntable playing the newest record.
@@ -404,9 +410,9 @@ export async function buildClub(layout: ClubLayout): Promise<Club> {
   const board = createFlipBoard(layout.latest ? boardLines(layout.latest, BOARD.cols, BOARD.rows)
     : Array.from({ length: BOARD.rows }, () => ' '.repeat(BOARD.cols)))
   scene.add(at(shadedBox(sign.w + 0.1, sign.h + 0.1, 0.06, '#1c1b19'), sign.x, sign.y, -hd + 0.03))
-  scene.add(at(plane(sign.w, sign.h, mat('#ffffff', board.texture), sign.w, sign.h, 0.2), sign.x, sign.y, -hd + 0.075))
+  scene.add(at(plane(sign.w, sign.h, decal('#ffffff', board.texture), sign.w, sign.h, 0.2), sign.x, sign.y, -hd + 0.075))
   const nameH = 0.24
-  scene.add(at(plane(nameH * 6.4, nameH, mat('#ffffff', signTex())), sign.x, sign.y + sign.h / 2 + 0.05 + 0.03 + nameH / 2, -hd + 0.02))
+  scene.add(at(plane(nameH * 6.4, nameH, decal('#ffffff', signTex())), sign.x, sign.y + sign.h / 2 + 0.05 + 0.03 + nameH / 2, -hd + 0.02))
 
   // Posters, each fitted inside its slot at its own shape, in a thin black frame, with its meeting
   // on a plaque underneath. A poster whose image would not load leaves an empty frame and its plaque.
@@ -423,10 +429,10 @@ export async function buildClub(layout: ClubLayout): Promise<Club> {
     let plaque = plaques.get(slot.meetingNumber)
     if (!plaque) plaques.set(slot.meetingNumber, plaque = plaqueTex(slot.meetingNumber))
     const { width: pw, height: ph } = plaque.image as HTMLCanvasElement
-    g.add(at(plane(pw * PLAQUE_TEXEL, ph * PLAQUE_TEXEL, mat('#ffffff', plaque)), 0, -h / 2 - FRAME - 0.03 - ph * PLAQUE_TEXEL / 2, 0.01))
+    g.add(at(plane(pw * PLAQUE_TEXEL, ph * PLAQUE_TEXEL, decal('#ffffff', plaque)), 0, -h / 2 - FRAME - 0.03 - ph * PLAQUE_TEXEL / 2, 0.01))
     if (image) {
-      const picture = at(plane(w, h, ps1Material({ map: image, ...FOG }), w, h, 0.2), 0, 0, FRAME + 0.012)
-      const backing = at(plane(w, h, mat('#000000')), 0, 0, FRAME + 0.006)
+      const picture = at(plane(w, h, ps1Material({ map: image, decal: true, ...FOG }), w, h, 0.2), 0, 0, FRAME + 0.012)
+      const backing = at(plane(w, h, decal('#000000')), 0, 0, FRAME + 0.006)
       backing.visible = false
       g.add(picture, backing)
       posterMeshes.push({ item: slot, picture, image, aspect, backing })

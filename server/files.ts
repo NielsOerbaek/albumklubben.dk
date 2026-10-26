@@ -6,7 +6,9 @@ import { pipeline } from 'node:stream/promises'
 import sharp from 'sharp'
 
 export const CACHE_SIZES = ['64', '128', '256', '512']
-/** File name of a derivative in .cache/<size>/ for the upload at relative path rel. */
+/** Directory under .cache/ for one kind and size of derivative: `128` for /tex, `thumb-128` for /thumb. */
+export const cacheDirName = (route: 'tex' | 'thumb', size: string) => (route === 'tex' ? size : `thumb-${size}`)
+/** File name of a derivative in its .cache/ directory for the upload at relative path rel. */
 export const cacheName = (rel: string) => rel.replaceAll('/', '_') + '.png'
 
 const IMAGE_FORMATS: Record<string, string> = { jpeg: 'jpg', png: 'png', webp: 'webp' }
@@ -45,6 +47,8 @@ export async function saveVideo(uploadDir: string, stream: Readable, filename: s
 export function removeFiles(uploadDir: string, paths: string[]): void {
   for (const p of paths) {
     rmSync(join(uploadDir, p), { force: true })
-    for (const size of CACHE_SIZES) rmSync(join(uploadDir, '.cache', size, cacheName(p)), { force: true })
+    for (const size of CACHE_SIZES) {
+      for (const route of ['tex', 'thumb'] as const) rmSync(join(uploadDir, '.cache', cacheDirName(route, size), cacheName(p)), { force: true })
+    }
   }
 }

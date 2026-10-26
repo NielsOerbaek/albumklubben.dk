@@ -80,6 +80,19 @@ describe('api', () => {
     expect((await app.inject(url)).statusCode).toBe(200) // from cache
   })
 
+  it('/thumb/512/<cover> is a smooth PNG at most 512 px, apart from the /tex copy', async () => {
+    const { app } = setup()
+    const cover = await firstCover(app)
+    const res = await app.inject(cover.replace('/uploads/', '/thumb/512/'))
+    expect(res.statusCode).toBe(200)
+    expect(res.headers['content-type']).toBe('image/png')
+    expect((await sharp(res.rawPayload).metadata()).width).toBeLessThanOrEqual(512)
+    const tex = await app.inject(cover.replace('/uploads/', '/tex/512/'))
+    expect(Buffer.compare(res.rawPayload, tex.rawPayload)).not.toBe(0)
+    expect((await app.inject('/thumb/100/covers/x.png')).statusCode).toBe(400)
+    expect((await app.inject('/thumb/128/%2e%2e/%2e%2e/package.json')).statusCode).toBe(404)
+  })
+
   it('/tex/100/... is 400, traversal is 404', async () => {
     const { app } = setup()
     const path = (await firstCover(app)).replace('/uploads/', '')

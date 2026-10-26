@@ -10,6 +10,9 @@
 .cf-cover { position: absolute; left: calc(50% - 110px); top: 40px; width: 220px; height: 220px;
   padding: 0; border: 0; border-radius: 0; background: #111; cursor: pointer;
   transition: transform .3s ease;
+  /* Each cover keeps its own layer, so nothing is redrawn (and nothing jumps) when a move ends.
+     The image never changes either: one smooth 512 px copy, whether the cover is centred or not. */
+  will-change: transform; backface-visibility: hidden;
   -webkit-box-reflect: below 2px linear-gradient(transparent 60%, rgb(255 255 255 / .25)); }
 .cf-cover[aria-current='true'] { cursor: default; }
 .cf-cover:focus-visible { outline: none; }

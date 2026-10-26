@@ -52,6 +52,9 @@ export function ps1Material(opts: {
   fogNear: number
   fogFar: number
   snap?: number
+  /** Drawn just in front of another surface (a poster on a wall): pulled towards the camera in the
+   *  depth test, so the snapped vertices of the surface behind cannot poke through it. */
+  decal?: boolean
 }): THREE.ShaderMaterial {
   const map = { value: opts.map ?? white }
   return new THREE.ShaderMaterial({
@@ -67,5 +70,6 @@ export function ps1Material(opts: {
       fogFar: { value: opts.fogFar },
       snap: { value: opts.snap ?? PS1_HEIGHT / 2 },
     },
+    ...(opts.decal ? { polygonOffset: true, polygonOffsetFactor: -4, polygonOffsetUnits: -4 } : {}),
   })
 }

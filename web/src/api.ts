@@ -10,3 +10,8 @@ export async function fetchArchive(): Promise<Archive> {
 export function textureUrl(url: string, size: 64 | 128 | 256 | 512): string {
   return url.replace(/^\/uploads\//, `/tex/${size}/`)
 }
+
+/** Maps `/uploads/x` to the smoothly downscaled `/thumb/<size>/x`. */
+export function thumbUrl(url: string, size: 64 | 128 | 256 | 512): string {
+  return url.replace(/^\/uploads\//, `/thumb/${size}/`)
+}

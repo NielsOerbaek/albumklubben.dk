@@ -1,7 +1,7 @@
-import { html, nothing, type TemplateResult } from 'lit-html'
+import { html, type TemplateResult } from 'lit-html'
 import { repeat } from 'lit-html/directives/repeat.js'
 import { albumTemplate } from '../album.ts'
-import { textureUrl } from '../api.ts'
+import { thumbUrl } from '../api.ts'
 import { filtered, recentLabel, recentYears, type Filter } from './filters.ts'
 import type { Actions, Entry, State } from './main.ts'
 import './coverflow.css'
@@ -66,8 +66,7 @@ function cover(e: Entry, offset: number, onClick: (ev: MouseEvent) => void): Tem
     aria-current=${offset === 0 ? 'true' : 'false'} @click=${onClick}
     style="transform:translateX(${p.x}px) translateZ(${p.z}px) rotateY(${p.rotateY}deg);z-index:${p.zIndex}">
     ${album.coverUrl
-      ? html`<img src=${textureUrl(album.coverUrl, 256)} alt="" draggable="false">
-        ${offset === 0 ? html`<img class="cf-full" src=${album.coverUrl} alt="" draggable="false">` : nothing}`
+      ? html`<img src=${thumbUrl(album.coverUrl, 512)} alt="" draggable="false">`
       : html`<span class="cf-nocover">${album.artist}<br>${album.title}</span>`}
   </button>`
 }
