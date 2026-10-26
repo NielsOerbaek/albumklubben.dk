@@ -13,8 +13,3 @@ export function pixelate<T extends THREE.Texture>(tex: T): T {
 export async function loadPixelTexture(url: string): Promise<THREE.Texture> {
   return pixelate(await new THREE.TextureLoader().loadAsync(url))
 }
-
-/** A video as a hard-pixel texture. The caller plays and pauses the video. */
-export function videoTexture(video: HTMLVideoElement): THREE.VideoTexture {
-  return pixelate(new THREE.VideoTexture(video))
-}

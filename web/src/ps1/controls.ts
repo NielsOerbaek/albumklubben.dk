@@ -7,7 +7,8 @@ const KEYS: Record<string, [number, number]> = { KeyW: [0, 1], KeyS: [0, -1], Ke
 
 /** First-person walking: click for pointer lock, WASD, mouse look, Shift for double speed,
  *  Esc releases (the browser does that). No head bob. Callers that open an overlay call
- *  `unlock()`, and `lock()` from a click or key handler to walk on (browsers need a gesture). */
+ *  `unlock()`, and `lock()` from a click or key handler to walk on (browsers need a gesture).
+ *  `setMovement(false)` freezes walking, `setLookRange` clamps the look, `setPose` moves the camera. */
 export function createWalkControls(
   camera: THREE.PerspectiveCamera,
   dom: HTMLElement,
@@ -22,6 +23,14 @@ export function createWalkControls(
   camera.rotation.order = 'YXZ'
   camera.position.y = opts.eyeHeight ?? 1.6
   const down = new Set<string>()
+  let moving = true
+  let range: { yaw: [number, number]; pitch: [number, number] } | null = null
+  const clampLook = () => {
+    pitch = THREE.MathUtils.clamp(pitch, -MAX_PITCH, MAX_PITCH)
+    if (!range) return
+    yaw = THREE.MathUtils.clamp(yaw, ...range.yaw)
+    pitch = THREE.MathUtils.clamp(pitch, ...range.pitch)
+  }
   const listeners: ((locked: boolean) => void)[] = []
 
   const isLocked = () => document.pointerLockElement === dom
@@ -36,7 +45,8 @@ export function createWalkControls(
     // Chromium sometimes reports a huge jump right after locking; skip it.
     if (Math.abs(e.movementX) > 300 || Math.abs(e.movementY) > 300) return
     yaw -= e.movementX * SENSITIVITY
-    pitch = THREE.MathUtils.clamp(pitch - e.movementY * SENSITIVITY, -MAX_PITCH, MAX_PITCH)
+    pitch -= e.movementY * SENSITIVITY
+    clampLook()
   }
   const onKeyDown = (e: KeyboardEvent) => { if (isLocked()) down.add(e.code) }
   const onKeyUp = (e: KeyboardEvent) => down.delete(e.code)
@@ -56,6 +66,7 @@ export function createWalkControls(
   return {
     update(dt: number) {
       camera.rotation.set(pitch, yaw, 0)
+      if (!moving) return
       let side = 0, fwd = 0
       for (const code of down) {
         const k = KEYS[code]
@@ -78,6 +89,17 @@ export function createWalkControls(
     unlock,
     onLockChange(cb: (locked: boolean) => void) { listeners.push(cb) },
     setBoxes(b: Box2[]) { boxes = b },
+    /** While off, WASD is ignored; the mouse still looks. */
+    setMovement(enabled: boolean) { moving = enabled; down.clear() },
+    /** Clamps yaw and pitch (radians) while set; `null` frees them. */
+    setLookRange(r: { yaw: [number, number]; pitch: [number, number] } | null) { range = r; clampLook() },
+    /** Puts the camera at `position`, looking along `yaw` and `pitch`. */
+    setPose(position: THREE.Vector3, y: number, p: number) {
+      camera.position.copy(position)
+      yaw = y
+      pitch = THREE.MathUtils.clamp(p, -MAX_PITCH, MAX_PITCH)
+      camera.rotation.set(pitch, yaw, 0)
+    },
     dispose() {
       unlock()
       dom.removeEventListener('click', lock)
