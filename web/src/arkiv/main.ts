@@ -9,7 +9,8 @@ import { filtered, type Filter } from './filters.ts'
 import { coverflowView } from './coverflow.ts'
 import { mapView } from './map.ts'
 import { latestMeetingWithAlbums } from '../../../shared/latest.ts'
-import { wallView, type Sort } from './wall.ts'
+import { statsView } from './stats.ts'
+import { albumDialog } from '../album.ts'
 
 /** An album together with the number of the meeting it belongs to. */
 export interface Entry { album: Album; n: number }
@@ -22,8 +23,9 @@ export interface State {
   showTracks: boolean
   filter: Filter
   mapView: MapView
-  panelOpen: boolean
-  sort: Sort
+  /** The album held up in a dialog from Kortet or Tal; separate from the Cover Flow selection. */
+  dialogId: number | null
+  dialogTracks: boolean
 }
 
 export interface Actions {
@@ -36,7 +38,7 @@ const SECTIONS = [['hylden', 'Hylden'], ['kortet', 'Kortet'], ['tal', 'Tal']] as
 type Section = (typeof SECTIONS)[number][0]
 
 const state: State = {
-  entries: [], latest: null, selId: null, showTracks: false, filter: 'alle', mapView: 'world', panelOpen: false, sort: 'meeting',
+  entries: [], latest: null, selId: null, showTracks: false, filter: 'alle', mapView: 'world', dialogId: null, dialogTracks: false,
 }
 let status: 'loading' | 'error' | 'ready' = 'loading'
 
@@ -71,13 +73,20 @@ const actions: Actions = {
 const head = (title: string, line: string) =>
   html`<header class="sec-head"><h2>${title}</h2><p class="muted">${line}</p></header>`
 
+function dialog(): TemplateResult | typeof nothing {
+  const e = state.entries.find((x) => x.album.id === state.dialogId)
+  if (!e) return nothing
+  return albumDialog({ album: e.album, meetingNumber: e.n, showTracks: state.dialogTracks, size: 'medium',
+    onToggle: () => actions.set({ dialogTracks: !state.dialogTracks }), onClose: () => actions.set({ dialogId: null }) })
+}
+
 function body(): TemplateResult {
   if (status === 'loading') return html`<p class="note">Henter albums…</p>`
   if (status === 'error') return html`<p class="note">Arkivet kunne ikke hentes. Prøv at genindlæse siden.</p>`
   if (!state.entries.length) return html`<p class="note">Der er ingen albums i arkivet endnu.</p>`
   return html`<section id="hylden" class="sec">${coverflowView(state, actions)}</section>
     <section id="kortet" class="sec">${head('Kortet', mapLine())}${mapView(state, actions)}</section>
-    <section id="tal" class="sec">${head('Tal', 'Alle albums, sorteret som du vil')}${wallView(state, actions)}</section>`
+    <section id="tal" class="sec">${head('Tal', 'Arkivet i tal')}${statsView(state, actions)}</section>${dialog()}`
 }
 
 function draw() {
@@ -101,6 +110,9 @@ function scrollToSection(behavior: ScrollBehavior) {
   else document.getElementById(id)?.scrollIntoView({ block: 'start', behavior })
 }
 
+window.addEventListener('keydown', (e) => {
+  if (e.key === 'Escape' && state.dialogId != null) actions.set({ dialogId: null })
+})
 window.addEventListener('hashchange', () => {
   draw()
   scrollToSection('smooth')

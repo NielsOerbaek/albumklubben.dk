@@ -38,7 +38,7 @@ const archive = (danish = (id: number) => id % 5 === 0): Entry[] =>
 
 function mount(entries: Entry[]) {
   const s: State = { entries, latest: entries.at(-1)!.n, selId: entries.at(-1)!.album.id, showTracks: false,
-    filter: 'alle', mapView: 'world', panelOpen: false, sort: 'meeting' }
+    filter: 'alle', mapView: 'world', dialogId: null, dialogTracks: false }
   const d = document.createElement('div')
   document.body.append(d)
   const draw = () => render(coverflowView(s, act), d)

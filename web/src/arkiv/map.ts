@@ -1,5 +1,4 @@
 import { html, nothing, type TemplateResult } from 'lit-html'
-import { albumTemplate } from '../album.ts'
 import { textureUrl } from '../api.ts'
 import { mapAspect, project, type MapView } from '../../../shared/projection.ts'
 import type { Actions, Entry, State } from './main.ts'
@@ -21,8 +20,7 @@ function pins(s: State, open: (e: Entry) => void) {
     if (!pos) { hidden++; return [] }
     const group = groups.get(spotKey(e))!
     const dx = (group.indexOf(e) - (group.length - 1) / 2) * SPACING
-    const sel = e.album.id === s.selId && s.panelOpen
-    return [html`<button class="pin ${sel ? 'sel' : ''}" aria-label=${label(e.album)} title=${label(e.album)}
+    return [html`<button class="pin" aria-label=${label(e.album)} title=${label(e.album)}
       style="left:calc(${pos.x}% + ${dx}px);top:${pos.y}%;--ring:${e.album.cardColor}"
       @click=${() => open(e)}>
       ${e.album.coverUrl ? html`<img src=${textureUrl(e.album.coverUrl, 128)} alt="">` : nothing}
@@ -32,46 +30,28 @@ function pins(s: State, open: (e: Entry) => void) {
 }
 
 export function mapView(s: State, act: Actions): TemplateResult {
-  const open = (e: Entry) => act.set({ selId: e.album.id, showTracks: false, panelOpen: true })
+  const open = (e: Entry) => act.set({ dialogId: e.album.id, dialogTracks: false })
   const { out, hidden } = pins(s, open)
   const unplaced = s.entries.filter((e) => e.album.lat == null || e.album.lng == null)
-  const sel = s.entries.find((e) => e.album.id === s.selId)
-  const same = sel?.album.country
-    ? s.entries.filter((e) => e.album.country === sel.album.country && e !== sel).length
-    : 0
 
-  return html`<main class="atlas ${s.panelOpen && sel ? 'with-panel' : ''}">
-    <section class="mapcol">
-      <div class="chips">
-        ${VIEWS.map(([id, text]) =>
-          html`<button class="pill ${s.mapView === id ? 'on' : ''}" aria-pressed=${s.mapView === id}
-            @click=${() => act.set({ mapView: id })}>${text}</button>`)}
-      </div>
-      <div class="mapbox" style="--aspect:${mapAspect(s.mapView)}">
-        <img class="basemap" src="/maps/${s.mapView}.svg" alt="">
-        ${out}
-      </div>
-      <p class="muted small">Klik på et cover. Byerne er omtrentlige.${hidden
-        ? ` ${hidden === 1 ? '1 album ligger' : `${hidden} albums ligger`} uden for dette kort.` : ''}</p>
-      ${unplaced.length
-        ? html`<div class="unplaced"><h2>Uden sted</h2>
-            <div class="row">${unplaced.map((e) => html`<button class="cov small-cov" style="--ring:${e.album.cardColor}"
-              aria-label=${label(e.album)} title=${label(e.album)} @click=${() => open(e)}>
-              ${e.album.coverUrl ? html`<img src=${textureUrl(e.album.coverUrl, 128)} alt="">` : nothing}
-            </button>`)}</div></div>`
-        : nothing}
-    </section>
-    ${s.panelOpen && sel
-      ? html`<aside class="panel">
-          <button class="close" aria-label="Luk" @click=${() => act.set({ panelOpen: false })}>×</button>
-          ${albumTemplate({ album: sel.album, meetingNumber: sel.n, showTracks: s.showTracks, size: 'medium',
-            onToggle: () => act.set({ showTracks: !s.showTracks }) })}
-          ${sel.album.country
-            ? html`<p class="muted small">${same ? `${plural(same)} fra ${sel.album.country}` : `Det eneste album fra ${sel.album.country}`}</p>`
-            : nothing}
-        </aside>`
+  return html`<div class="atlas">
+    <div class="chips">
+      ${VIEWS.map(([id, text]) =>
+        html`<button class="pill ${s.mapView === id ? 'on' : ''}" aria-pressed=${s.mapView === id}
+          @click=${() => act.set({ mapView: id })}>${text}</button>`)}
+    </div>
+    <div class="mapbox" style="--aspect:${mapAspect(s.mapView)}">
+      <img class="basemap" src="/maps/${s.mapView}.svg" alt="">
+      ${out}
+    </div>
+    <p class="muted small">Klik på et cover. Byerne er omtrentlige.${hidden
+      ? ` ${hidden === 1 ? '1 album ligger' : `${hidden} albums ligger`} uden for dette kort.` : ''}</p>
+    ${unplaced.length
+      ? html`<div class="unplaced"><h3>Uden sted</h3>
+          <div class="row">${unplaced.map((e) => html`<button class="cov small-cov" style="--ring:${e.album.cardColor}"
+            aria-label=${label(e.album)} title=${label(e.album)} @click=${() => open(e)}>
+            ${e.album.coverUrl ? html`<img src=${textureUrl(e.album.coverUrl, 128)} alt="">` : nothing}
+          </button>`)}</div></div>`
       : nothing}
-  </main>`
+  </div>`
 }
-
-const plural = (n: number) => (n === 1 ? '1 andet album' : `${n} andre albums`)

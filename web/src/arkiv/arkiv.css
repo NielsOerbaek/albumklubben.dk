@@ -17,7 +17,7 @@ body.arkiv { min-height: 100vh; }
 .sec { scroll-margin-top: calc(var(--bar) + 44px); }
 .sec + .sec { border-top: 1px solid var(--line); }
 .sec-head { padding: 40px var(--pad) 0; }
-.sec-head h2 { margin: 0; font-size: clamp(30px, 2.75vw, 39px); line-height: 1.15; font-weight: 300; }
+.sec-head h2 { margin: 0; font-size: clamp(44px, 5vw, 72px); line-height: 1.15; font-weight: 300; }
 .sec-head p { margin: 6px 0 0; font-size: 16px; }
 .cov { width: 96px; height: 96px; padding: 0; overflow: hidden; cursor: pointer;
   background: #111; border: 0; outline: 3px solid transparent; outline-offset: 0; transition: opacity .2s ease; }
@@ -25,48 +25,36 @@ body.arkiv { min-height: 100vh; }
 .cov img { width: 100%; height: 100%; object-fit: cover; display: block; }
 .row { display: flex; gap: 4px; flex-wrap: wrap; }
 
-/* Kortet */
-.atlas { display: flex; flex-wrap: wrap; gap: 32px; padding: 20px var(--pad) 40px; align-items: flex-start; }
-.mapcol { flex: 999 1 560px; min-width: 0; display: flex; flex-direction: column; gap: 16px; }
-.mapbox { position: relative; width: 100%; aspect-ratio: var(--aspect); max-width: calc((100vh - 240px) * var(--aspect)); min-width: min(100%, 480px); overflow: hidden; background: #111; }
+/* Kortet: the map spans the content width. */
+.atlas { display: flex; flex-direction: column; gap: 16px; padding: 20px var(--pad) 48px; }
+.mapbox { position: relative; width: 100%; aspect-ratio: var(--aspect); overflow: hidden; background: #111; }
 .basemap { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
-.pin { position: absolute; width: 36px; height: 36px; padding: 0; border-radius: 0; overflow: hidden;
+.pin { position: absolute; width: 44px; height: 44px; padding: 0; border-radius: 0; overflow: hidden;
   transform: translate(-50%, -50%); cursor: pointer; background: #111; z-index: 1;
   border: 3px solid var(--ring); transition: width .2s, height .2s; }
-.pin:hover { z-index: 4; width: 52px; height: 52px; }
-.pin.sel { width: 60px; height: 60px; z-index: 5; }
+.pin:hover { z-index: 4; width: 64px; height: 64px; }
 .pin img { width: 100%; height: 100%; object-fit: cover; display: block; }
-.mapcol p { margin: 0; }
-.unplaced h2 { margin: 8px 0 12px; font-size: 26px; font-weight: 300; }
+.atlas p { margin: 0; }
+.unplaced h3 { margin: 8px 0 12px; font-size: 26px; font-weight: 300; }
 .small-cov { width: 56px; height: 56px; outline: 3px solid var(--ring); }
-.panel { flex: 1 1 320px; max-width: 520px; min-width: 0; position: relative; display: flex;
-  flex-direction: column; gap: 16px; padding-top: 40px; }
-.panel .close { position: absolute; top: 0; right: 0; width: 32px; height: 32px; border-radius: 50%;
-  border: 1px solid #fff; background: transparent; font-size: 20px; line-height: 1; cursor: pointer; }
-.panel .album-view { flex-direction: column; align-items: stretch; }
-.panel .album-record { width: 100%; }
-.panel p { margin: 0; }
 
-/* Væggen */
-.sortbar { padding: 20px var(--pad) 0; display: flex; flex-wrap: wrap; gap: 24px; align-items: center;
-  justify-content: space-between; }
-.detail { margin: 20px var(--pad) 0; }
-.grid { padding: 20px var(--pad) 48px; display: grid; gap: 6px;
-  grid-template-columns: repeat(auto-fill, minmax(112px, 1fr)); }
+/* Tal: big headline figures, then one row of cover columns per dimension. */
+.headline { display: flex; flex-wrap: wrap; gap: 24px 80px; padding: 32px var(--pad) 8px; }
+.figure { display: flex; flex-direction: column; }
+.figure .num { font-size: clamp(56px, 8vw, 120px); line-height: 1; font-weight: 300; }
+.figure .muted { font-size: 14px; text-transform: uppercase; margin-top: 6px; }
+.dim { margin: 0 0 16px; font-size: 26px; font-weight: 300; }
 .tile { position: relative; padding: 0; overflow: hidden; cursor: pointer;
   background: #111; border: 0; outline: 3px solid transparent; transition: opacity .15s ease; }
-.tile:not(.mini) { aspect-ratio: 1; }
 .tile:hover { opacity: .85; }
-.tile[aria-current='true'] { outline-color: #fff; outline-offset: -3px; }
 .tile:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
 .tile img { width: 100%; height: 100%; object-fit: cover; display: block; }
-.badge { position: absolute; left: 0; top: 0; padding: 2px 7px; background: #000; color: #fff; font-size: 12px; }
-.columns { padding: 20px var(--pad) 48px; overflow-x: auto; }
-.colrow { display: flex; gap: 18px; align-items: flex-end; min-height: 420px; }
+.columns { padding: 32px var(--pad) 16px; overflow-x: auto; }
+.colrow { display: flex; gap: 18px; align-items: flex-end; }
 .column { flex: 0 0 auto; display: flex; flex-direction: column; gap: 6px; align-items: center; }
 .mini-grid { display: grid; grid-template-columns: repeat(3, 52px); gap: 3px; align-content: end; }
 .tile.mini { width: 52px; height: 52px; }
-.clabel { font-size: 16px; margin-top: 4px; }
+.clabel { font-size: 16px; margin-top: 4px; display: flex; flex-direction: column; align-items: center; }
 
 @media (max-width: 700px) {
   .sections .where { display: none; }
