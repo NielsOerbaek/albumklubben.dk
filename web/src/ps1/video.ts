@@ -38,6 +38,8 @@ export interface VideoPoster<T extends Placed = Placed> {
   item: T
   picture: THREE.Mesh<THREE.BufferGeometry, THREE.ShaderMaterial>
   image: THREE.Texture
+  /** The picture's width / height at scale 1: the still image's own shape, fitted inside the item. */
+  aspect: number
   /** A black card behind the picture, shown while a video of another shape plays. */
   backing: THREE.Object3D
 }
@@ -55,7 +57,7 @@ export function createVideoWall<T extends Placed>(posters: VideoPoster<T>[]) {
     const { video, texture } = videos.get(p)!
     if (active !== p || video.readyState < 2) return
     const va = video.videoWidth / video.videoHeight || 1
-    const pa = p.item.width / p.item.height
+    const pa = p.aspect
     p.picture.scale.set(Math.min(1, va / pa), Math.min(1, pa / va), 1)
     p.picture.material.uniforms.map.value = texture
     p.backing.visible = true

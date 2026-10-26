@@ -39,6 +39,8 @@ export interface ClubLayout {
   coffeeTable: Box2
   /** The flip sign on the back wall, centred at (x, y). */
   sign: { x: number; y: number; w: number; h: number }
+  /** The meeting the flip sign shows: the latest with albums. */
+  latest: Meeting | null
   posters: PosterSlot[]
 }
 
@@ -180,7 +182,7 @@ export function buildClubLayout(meetings: Meeting[]): ClubLayout {
   ]
 
   return {
-    width, depth, crates, tables, bins, counter, couch, rug, coffeeTable, sign, posters,
+    width, depth, crates, tables, bins, counter, couch, rug, coffeeTable, sign, posters, latest: latest ?? null,
     boxes: [...walls, ...tables, ...bins, counter, couch, coffeeTable],
     // Just inside the door, turned a little towards the aisles and the counter.
     spawn: { x: -hw + SIDE + 0.4, z: hd - SPAWN_IN, yaw: -0.35 },

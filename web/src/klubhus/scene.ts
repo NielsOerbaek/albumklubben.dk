@@ -2,8 +2,12 @@ import * as THREE from 'three'
 import { at, coverTexture, createBuilder, plane } from '../ps1/build.ts'
 import { fitText, fontsReady, painted, rng, speckle } from '../ps1/paint.ts'
 import { ps1Material } from '../ps1/material.ts'
+import { loadPixelTexture } from '../ps1/textures.ts'
+import type { VideoPoster } from '../ps1/video.ts'
+import { textureUrl } from '../api.ts'
 import type { Album } from '../../../shared/types.ts'
-import { BIN, COUNTER, TABLE, type ClubLayout, type CrateSpec } from './layout.ts'
+import { BIN, COFFEE_TABLE, COUCH, COUNTER, TABLE, type ClubLayout, type CrateSpec, type PosterSlot } from './layout.ts'
+import { BOARD, boardLines, createFlipBoard, drawPixelText, type FlipBoard } from './flipsign.ts'
 
 export const FOG = { fogColor: 0x1e1610, fogNear: 3, fogFar: 15 }
 export const WALL_H = 2.8
@@ -115,6 +119,41 @@ const dividerTex = (label: string) => painted(96, 128, (g) => {
   fitText(g, lines.reduce((a, b) => (g.measureText(a).width > g.measureText(b).width ? a : b)), 88, 19)
   lines.forEach((line, i) => g.fillText(line, 48, 13 + i * 19))
 })
+
+/** Corduroy in fine grey ribs, tinted by the material, worn paler in patches. */
+const corduroyTex = () => painted(64, 32, (g) => {
+  g.fillStyle = '#ffffff'; g.fillRect(0, 0, 64, 32)
+  g.fillStyle = '#d6d0c8'
+  for (let x = 1; x < 64; x += 2) g.fillRect(x, 0, 1, 32)
+  const r = rng(41)
+  g.fillStyle = 'rgb(255 255 255 / 0.18)'
+  for (let i = 0; i < 5; i++) g.fillRect(Math.floor(r() * 56), Math.floor(r() * 26), 4 + Math.floor(r() * 8), 3 + Math.floor(r() * 4))
+  speckle(g, 64, 32, 0.08, 43)
+}, true)
+
+/** A dark wine rug with a border and a row of diamonds down the middle. */
+const rugTex = () => painted(48, 64, (g) => {
+  g.fillStyle = '#2a1311'; g.fillRect(0, 0, 48, 64)
+  g.fillStyle = '#4e1f1b'; g.fillRect(4, 4, 40, 56)
+  g.fillStyle = '#8a6a42'
+  g.fillRect(6, 6, 36, 1); g.fillRect(6, 57, 36, 1); g.fillRect(6, 6, 1, 52); g.fillRect(41, 6, 1, 52)
+  g.fillStyle = '#6e2a22'
+  for (const cy of [16, 32, 48]) {
+    for (let i = 1; i <= 7; i++) { g.fillRect(24 - i, cy - 7 + i, 2 * i, 1); g.fillRect(24 - i, cy + 7 - i, 2 * i, 1) }
+  }
+  speckle(g, 48, 64, 0.1, 53)
+})
+
+/** A small cream plaque with the poster's meeting, in the flip sign's type. 8 mm a texel. */
+const PLAQUE_TEXEL = 0.008
+const plaqueTex = (n: number) => {
+  const text = `MØDE ${n}`, w = text.length * 6 + 5
+  return painted(w, 11, (g) => {
+    g.fillStyle = '#e9e1cf'; g.fillRect(0, 0, w, 11)
+    g.fillStyle = '#121316'
+    drawPixelText(g, text, 3, 2)
+  })
+}
 
 const { mat, shadedBox } = createBuilder(FOG)
 
@@ -228,15 +267,26 @@ function buildCrate(spec: CrateSpec, baseY: number, crateWood: THREE.Texture): {
 }
 
 // ---------------------------------------------------------------------------------------------
-// The shop.
+// The club.
 
-export interface Shop {
+export interface Club {
   scene: THREE.Scene
   crates: CrateView[]
-  update(dt: number): void
+  /** One per hung poster whose image loaded, ready for createVideoWall. */
+  posterMeshes: VideoPoster<PosterSlot>[]
+  board: FlipBoard
+  /** `player` is where you stand, or null to leave the flip sign as it is. */
+  update(dt: number, player: { x: number; z: number } | null): void
 }
 
-export async function buildShop(layout: ClubLayout): Promise<Shop> {
+const SIGN_NEAR = 5 // the flip sign flips when you come this close to the back wall...
+const SIGN_REARM = 8 // ...and again once you have been this far away
+const FRAME = 0.025 // a poster frame's border and depth
+
+export async function buildClub(layout: ClubLayout): Promise<Club> {
+  // The posters load while the room is built; the club opens with them hung.
+  const posterImages = Promise.all(layout.posters.map((slot) =>
+    loadPixelTexture(textureUrl(slot.poster.imageUrl, 256)).catch(() => null)))
   await fontsReady()
   const { width: W, depth: D } = layout
   const hw = W / 2, hd = D / 2
@@ -307,9 +357,81 @@ export async function buildShop(layout: ClubLayout): Promise<Shop> {
   platter.add(at(new THREE.Mesh(new THREE.CylinderGeometry(0.05, 0.05, 0.014, 8), mat(newest?.cardColor ?? '#c33')), 0, 0, 0))
   scene.add(at(platter, deckX - 0.04, COUNTER.h + 0.087, ccz))
 
-  // The sign on the back wall. (The flip sign and the posters come with their own meshes.)
-  const sign = plane(4, 0.62, mat('#ffffff', signTex()))
-  scene.add(at(sign, 0, WALL_H - 0.4, -hd + 0.02))
+  // The listening corner: a worn corduroy couch facing the back wall, on a rug, with a low table
+  // and the newest records lying on it.
+  const rug = layout.rug
+  const rugMesh = plane(rug.maxX - rug.minX, rug.maxZ - rug.minZ, mat('#ffffff', rugTex()))
+  rugMesh.rotation.x = -Math.PI / 2
+  scene.add(at(rugMesh, (rug.minX + rug.maxX) / 2, 0.004, (rug.minZ + rug.maxZ) / 2))
+
+  const cord = corduroyTex()
+  const couch = layout.couch
+  const couchX = (couch.minX + couch.maxX) / 2
+  // Arms and a low back frame round a base; two seat cushions, and two back cushions leaning on the
+  // frame and standing above it, so the couch reads as one from behind too.
+  const ARM = 0.22, LEGS = 0.08, BASE = 0.26, SEAT = 0.15, FRAME_D = 0.16, CUSHION_D = 0.14
+  const inner = COUCH.w - 2 * ARM, mid = (couch.minZ + couch.maxZ) / 2
+  const seatTop = LEGS + BASE
+  for (const s of [-1, 1]) {
+    scene.add(at(shadedBox(ARM, 0.62 - LEGS, COUCH.d, '#8a6326', cord), couchX + s * (COUCH.w - ARM) / 2, LEGS + (0.62 - LEGS) / 2, mid))
+    for (const z of [couch.minZ + 0.06, couch.maxZ - 0.06]) scene.add(at(shadedBox(0.06, LEGS, 0.06, '#2a1a10'), couchX + s * (COUCH.w / 2 - 0.08), LEGS / 2, z))
+  }
+  scene.add(at(shadedBox(inner, BASE, COUCH.d, '#7d5a22', cord), couchX, LEGS + BASE / 2, mid))
+  scene.add(at(shadedBox(inner, 0.72 - seatTop, FRAME_D, '#7a5620', cord), couchX, (seatTop + 0.72) / 2, couch.maxZ - FRAME_D / 2))
+  const seatD = COUCH.d - FRAME_D - CUSHION_D
+  const backH = COUCH.h - seatTop - SEAT
+  for (const s of [-1, 1]) {
+    const tint = s < 0 ? '#b08a38' : '#a8823a'
+    scene.add(at(shadedBox(inner / 2 - 0.015, SEAT, seatD - 0.02, tint, cord), couchX + s * inner / 4, seatTop + SEAT / 2, couch.minZ + seatD / 2))
+    const back = at(shadedBox(inner / 2 - 0.02, backH, CUSHION_D, tint, cord), couchX + s * inner / 4, seatTop + SEAT + backH / 2, couch.maxZ - FRAME_D - CUSHION_D / 2 + 0.02)
+    back.rotation.x = -0.12 // leaning back
+    scene.add(back)
+  }
+
+  const ct = layout.coffeeTable
+  const ctx = (ct.minX + ct.maxX) / 2, ctz = (ct.minZ + ct.maxZ) / 2
+  const darkWood = woodTex('#5c3b22', '#472c18', 31)
+  scene.add(at(shadedBox(COFFEE_TABLE.w, 0.04, COFFEE_TABLE.d, '#ffffff', darkWood), ctx, COFFEE_TABLE.h - 0.02, ctz))
+  for (const sx of [-1, 1]) for (const sz of [-1, 1]) {
+    scene.add(at(shadedBox(0.05, COFFEE_TABLE.h - 0.04, 0.05, '#c9b8a6', darkWood), ctx + sx * (COFFEE_TABLE.w / 2 - 0.06), (COFFEE_TABLE.h - 0.04) / 2, ctz + sz * (COFFEE_TABLE.d / 2 - 0.06)))
+  }
+  layout.latest?.albums.slice(0, 2).forEach((album, i) => scene.add(at(shadedBox(0.31, 0.006, 0.31, album.cardColor),
+    ctx - 0.18 + i * 0.3, COFFEE_TABLE.h + 0.003 + i * 0.006, ctz + (i ? 0.03 : -0.02), i ? -0.35 : 0.2)))
+
+  // The flip sign on the back wall, in a black case, with the club's name over it.
+  const { sign } = layout
+  const board = createFlipBoard(layout.latest ? boardLines(layout.latest, BOARD.cols, BOARD.rows)
+    : Array.from({ length: BOARD.rows }, () => ' '.repeat(BOARD.cols)))
+  scene.add(at(shadedBox(sign.w + 0.1, sign.h + 0.1, 0.06, '#1c1b19'), sign.x, sign.y, -hd + 0.03))
+  scene.add(at(plane(sign.w, sign.h, mat('#ffffff', board.texture), sign.w, sign.h, 0.2), sign.x, sign.y, -hd + 0.075))
+  const nameH = 0.24
+  scene.add(at(plane(nameH * 6.4, nameH, mat('#ffffff', signTex())), sign.x, sign.y + sign.h / 2 + 0.05 + 0.03 + nameH / 2, -hd + 0.02))
+
+  // Posters, each fitted inside its slot at its own shape, in a thin black frame, with its meeting
+  // on a plaque underneath. A poster whose image would not load leaves an empty frame and its plaque.
+  const images = await posterImages
+  const plaques = new Map<number, THREE.Texture>()
+  const posterMeshes: VideoPoster<PosterSlot>[] = []
+  layout.posters.forEach((slot, i) => {
+    const image = images[i]
+    const img = image?.image as { width: number; height: number } | undefined
+    const aspect = img ? img.width / img.height : slot.width / slot.height
+    const w = Math.min(slot.width, slot.height * aspect), h = w / aspect
+    const g = at(new THREE.Group(), slot.x, slot.y, slot.z, Math.atan2(slot.normalX, slot.normalZ))
+    g.add(at(shadedBox(w + 2 * FRAME, h + 2 * FRAME, FRAME, image ? '#161514' : '#2a2724'), 0, 0, FRAME / 2))
+    let plaque = plaques.get(slot.meetingNumber)
+    if (!plaque) plaques.set(slot.meetingNumber, plaque = plaqueTex(slot.meetingNumber))
+    const pw = (plaque.image as HTMLCanvasElement).width * PLAQUE_TEXEL
+    g.add(at(plane(pw, 11 * PLAQUE_TEXEL, mat('#ffffff', plaque)), 0, -h / 2 - FRAME - 0.07, 0.01))
+    if (image) {
+      const picture = at(plane(w, h, ps1Material({ map: image, ...FOG }), w, h, 0.2), 0, 0, FRAME + 0.012)
+      const backing = at(plane(w, h, mat('#000000')), 0, 0, FRAME + 0.006)
+      backing.visible = false
+      g.add(picture, backing)
+      posterMeshes.push({ item: slot, picture, image, aspect, backing })
+    }
+    scene.add(g)
+  })
 
   // Crates: the genre crates on the tables, Nyt on the counter.
   const crateWood = woodTex('#c79a62', '#a57a46', 23)
@@ -319,12 +441,21 @@ export async function buildShop(layout: ClubLayout): Promise<Shop> {
     return view
   })
 
+  let armed = true
   return {
     scene,
     crates,
-    update(dt) {
+    posterMeshes,
+    board,
+    update(dt, player) {
       platter.rotation.y -= dt * 3.5 // 33 rpm
       for (const crate of crates) crate.update(dt)
+      if (player) {
+        const fromBack = player.z + hd
+        if (armed && fromBack < SIGN_NEAR) { board.trigger(); armed = false }
+        else if (fromBack > SIGN_REARM) armed = true
+      }
+      board.update(dt)
     },
   }
 }

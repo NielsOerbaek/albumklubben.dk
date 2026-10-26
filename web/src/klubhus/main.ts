@@ -9,7 +9,7 @@ import { createPs1Renderer } from '../ps1/renderer.ts'
 import { createWalkControls } from '../ps1/controls.ts'
 import { FIRST_HINT, showHint, showOverlay, showPrompt, smallScreenGuard } from '../ps1/hud.ts'
 import { buildClubLayout } from './layout.ts'
-import { buildShop, type CrateView } from './scene.ts'
+import { buildClub, type CrateView } from './scene.ts'
 import type { Album } from '../../../shared/types.ts'
 
 const REACH = 1.4 // metres from a crate's centre
@@ -44,7 +44,7 @@ async function start() {
   showHint('Henter pladerne')
   const archive = await fetchArchive()
   const layout = buildClubLayout(archive.meetings)
-  const shop = await buildShop(layout)
+  const club = await buildClub(layout)
   const meetingNumber = new Map(archive.meetings.map((m) => [m.id, m.number]))
 
   const { render: draw } = createPs1Renderer(canvas)
@@ -128,16 +128,16 @@ async function start() {
     const dt = Math.min(Math.max((now - last) / 1000, 0), 0.1)
     last = now
     controls.update(dt)
-    shop.update(dt)
+    club.update(dt, camera.position)
     if (controls.isLocked()) {
-      const next = crateInView(shop.crates, camera)
+      const next = crateInView(club.crates, camera)
       if (next !== target) showPrompt(next ? PROMPT : null)
       target = next
     } else target = null
-    draw(shop.scene, camera)
+    draw(club.scene, camera)
     requestAnimationFrame(loop)
   })
 
   // For the screenshot script and the browser console.
-  if (import.meta.env.DEV) Object.assign(window, { __crate: { camera, controls, shop, layout, pullOut: (c: CrateView) => { target = c; pullOut() } } })
+  if (import.meta.env.DEV) Object.assign(window, { __crate: { camera, controls, club, layout, pullOut: (c: CrateView) => { target = c; pullOut() } } })
 }
