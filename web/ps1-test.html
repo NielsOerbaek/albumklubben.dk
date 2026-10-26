@@ -13,7 +13,7 @@
 import * as THREE from 'three'
 import { createPs1Renderer } from '/src/ps1/renderer.ts'
 import { ps1Material } from '/src/ps1/material.ts'
-import { loadPixelTexture, videoTexture } from '/src/ps1/textures.ts'
+import { loadPixelTexture } from '/src/ps1/textures.ts'
 import { createWalkControls } from '/src/ps1/controls.ts'
 import { FIRST_HINT, showHint, showPrompt, smallScreenGuard } from '/src/ps1/hud.ts'
 import marvin from '../data/covers/02-marvin-gaye-what-s-going-on.jpg?url'
@@ -118,18 +118,6 @@ async function start() {
   table(2.2, -1.5, [coverC, coverA, coverB])
   table(0, -3.8, [coverB, coverC, coverA])
 
-  // A "video" poster on the far wall: a canvas stream played by a real <video>.
-  const src = document.createElement('canvas')
-  src.width = 64; src.height = 48
-  const sg = src.getContext('2d')
-  const video = document.createElement('video')
-  video.muted = true
-  video.srcObject = src.captureStream(30)
-  video.play()
-  const screen = new THREE.Mesh(new THREE.PlaneGeometry(1.6, 1.2, 2, 2), ps1Material({ map: videoTexture(video), ...fog }))
-  screen.position.set(0, 1.6, -D / 2 + 0.01)
-  scene.add(screen)
-
   const controls = createWalkControls(camera, canvas, { boxes })
   showHint(FIRST_HINT)
   controls.onLockChange(locked => showPrompt(locked ? null : 'Klik for at gå videre'))
@@ -137,13 +125,6 @@ async function start() {
   let last = performance.now()
   renderLoop(last)
   function renderLoop(now) {
-    const t = now / 1000
-    for (let x = 0; x < 64; x += 8) {
-      sg.fillStyle = `hsl(${(x * 5 + t * 90) % 360} 70% 55%)`
-      sg.fillRect(x, 0, 8, 48)
-    }
-    sg.fillStyle = '#f3efe6'
-    sg.fillRect((t * 30) % 64, 20, 6, 6)
     controls.update((now - last) / 1000)
     last = now
     render(scene, camera)

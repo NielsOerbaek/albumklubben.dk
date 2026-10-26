@@ -18,7 +18,7 @@ export type Shades = [px: number, nx: number, top: number, bottom: number, pz: n
 /** On the floor: lit from above and from the windows at -X. */
 export const FLOOR_LIT: Shades = [0.62, 0.95, 1, 0.4, 0.8, 0.7]
 /** Hung from the ceiling: lit from below by the tubes and the daylight. */
-export const CEILING_LIT: Shades = [0.5, 0.7, 0.42, 0.86, 0.6, 0.56]
+const CEILING_LIT: Shades = [0.5, 0.7, 0.42, 0.86, 0.6, 0.56]
 
 /** A box with a shade per face; cut every 0.5 m like `shadedBox`, so the affine warp stays small. */
 export function litBox(w: number, h: number, d: number, color: THREE.ColorRepresentation, map: THREE.Texture | null, shades: Shades) {
@@ -51,7 +51,7 @@ function repeatU<G extends THREE.BufferGeometry>(geo: G, n: number) {
 // ---------------------------------------------------------------------------------------------
 // Textures, painted on small canvases so they stay hard-pixelled.
 
-export const concreteTex = (base: string, seed: number) => painted(32, 32, (g) => {
+const concreteTex = (base: string, seed: number) => painted(32, 32, (g) => {
   g.fillStyle = base; g.fillRect(0, 0, 32, 32)
   const r = rng(seed)
   g.fillStyle = 'rgb(0 0 0 / 0.05)'
