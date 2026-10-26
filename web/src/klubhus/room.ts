@@ -34,6 +34,13 @@ const glow = (color: THREE.ColorRepresentation, map: THREE.Texture | null = null
 const shear = <G extends THREE.BufferGeometry>(geo: G, k: number) =>
   geo.applyMatrix4(new THREE.Matrix4().makeShear(k, 0, 0, 0, 0, 0)) // three's `xy` is y += xy·x
 
+/** Flattens every vertex above `max` down to it, so nothing pokes through the ceiling. */
+function clampY<G extends THREE.BufferGeometry>(geo: G, max: number) {
+  const pos = geo.attributes.position as THREE.BufferAttribute
+  for (let i = 0; i < pos.count; i++) pos.setY(i, Math.min(pos.getY(i), max))
+  return geo
+}
+
 /** Repeats a texture `n` times along the geometry's u. */
 function repeatU<G extends THREE.BufferGeometry>(geo: G, n: number) {
   const uv = geo.attributes.uv as THREE.BufferAttribute
@@ -103,27 +110,38 @@ const meshTex = () => painted(8, 8, (g) => {
   g.fillRect(0, 0, 8, 1); g.fillRect(0, 0, 1, 8)
 }, true)
 
-/** The stair's glass wall: nothing but a few streaks of reflection. */
-const streakTex = () => painted(32, 64, (g) => {
+/** The stair's glass wall: nothing but a few long, straight diagonal glints, in dashes. */
+const streakTex = () => painted(64, 128, (g) => {
   g.fillStyle = '#ffffff'
-  for (const [x0, len] of [[4, 18], [9, 10], [22, 24]]) {
-    for (let i = 0; i < len; i++) g.fillRect(x0 + Math.floor(i / 2), 8 + i * 2, 1, 2)
+  for (const [x0, y0, len] of [[6, 20, 70], [14, 26, 40], [40, 60, 56]]) {
+    for (let i = 0; i < len; i++) if (i % 9 < 6) g.fillRect(x0 + Math.floor(i / 2), y0 + i, 1, 1)
   }
 })
 
-/** Spiral duct: silver ribs across its length. */
-const ductTex = () => painted(8, 4, (g) => {
-  g.fillStyle = '#cdd1d3'; g.fillRect(0, 0, 8, 4)
-  g.fillStyle = '#a9afb2'; g.fillRect(0, 0, 1, 4)
-  g.fillStyle = '#e8ebec'; g.fillRect(1, 0, 2, 4)
+/** Spiral duct, painted round: across each face a bright centre band fading to dark edges, so a box
+ *  reads as a silver tube; faint slanted ribs along it. The length runs along u, or along v if `upright`. */
+const DUCT_PROFILE = ['#8e9498', '#a8aeb1', '#c3c8ca', '#dadddf', '#eceeef', '#f7f8f8', '#eceeef', '#d3d7d9']
+const ductTex = (upright = false) => painted(upright ? 8 : 4, upright ? 4 : 8, (g) => {
+  DUCT_PROFILE.forEach((c, i) => {
+    g.fillStyle = c
+    if (upright) g.fillRect(i, 0, 1, 4)
+    else g.fillRect(0, i, 4, 1)
+  })
+  g.fillStyle = 'rgb(0 0 0 / 0.1)'
+  for (let i = 0; i < 8; i++) {
+    const rib = Math.floor(i / 2) // one texel across every two along: a slight spiral
+    if (upright) g.fillRect(i, rib, 1, 1)
+    else g.fillRect(rib, i, 1, 1)
+  }
 }, true)
 
-/** A round grille on the end of a drop. */
-const grilleTex = () => painted(16, 16, (g) => {
-  g.fillStyle = '#b9bdbf'; g.fillRect(0, 0, 16, 16)
-  g.fillStyle = '#6f7477'
-  for (let r = 2; r < 8; r += 2) {
-    g.beginPath(); g.arc(8, 8, r, 0, Math.PI * 2); g.lineWidth = 1; g.strokeStyle = '#6f7477'; g.stroke()
+/** A round ceiling diffuser seen from below: concentric grille rings in a rim, transparent outside. */
+const grilleTex = () => painted(24, 24, (g) => {
+  for (let y = 0; y < 24; y++) for (let x = 0; x < 24; x++) {
+    const r = Math.hypot(x - 11.5, y - 11.5)
+    if (r > 11.8) continue
+    g.fillStyle = r > 10.2 ? '#e1e4e5' : r < 2.5 ? '#c7cbcd' : Math.round(r / 1.5) % 2 ? '#d4d7d9' : '#7b8184'
+    g.fillRect(x, y, 1, 1)
   }
 })
 
@@ -158,7 +176,7 @@ const doorTex = () => painted(32, 64, (g) => {
 
 const BEAM = { h: 0.32, d: 0.22, pitch: 1.2 }
 const DUCT = 0.36
-const TUBE_Y = 2.97
+const TUBE_DROP = 0.11 // the tubes hang this far below the beams
 
 export function buildRoom(scene: THREE.Scene, layout: ClubLayout) {
   const { width: W, length: L, ceiling: H } = layout
@@ -188,39 +206,59 @@ export function buildRoom(scene: THREE.Scene, layout: ClubLayout) {
 }
 
 /** Ribbed beams across the room, two spiral ducts along it, rows of tubes and the cable trays. */
-function buildCeiling(scene: THREE.Scene, { width: W, length: L, ceiling: H }: ClubLayout, beamBottom: number) {
-  const hl = L / 2
+function buildCeiling(scene: THREE.Scene, { width: W, length: L, ceiling: H, stairs }: ClubLayout, beamBottom: number) {
+  const hw = W / 2, hl = L / 2
+  // The stairwell (over the stairs) is kept clear: no beams, ducts, trays or tubes, so the flight
+  // can rise into its opening. Anything along the room on that side stops at its edge.
+  const wellZ = stairs.maxZ
+  const inWell = (x0: number, x1: number, z: number) => z < wellZ && x1 > stairs.minX && x0 < hw
+
   const beamMap = concreteTex('#b3b2ac', 31)
   const beamZ: number[] = []
   for (let z = hl - BEAM.pitch / 2; z > -hl; z -= BEAM.pitch) beamZ.push(z)
-  for (const z of beamZ) scene.add(at(litBox(W, BEAM.h, BEAM.d, '#ffffff', beamMap, CEILING_LIT), 0, H - BEAM.h / 2, z))
+  for (const z of beamZ) {
+    const w = inWell(-hw, hw, z + BEAM.d / 2) ? stairs.minX + hw : W
+    scene.add(at(litBox(w, BEAM.h, BEAM.d, '#ffffff', beamMap, CEILING_LIT), -hw + w / 2, H - BEAM.h / 2, z))
+  }
 
-  // The ducts, just under the beams, each with a couple of drops ending in a round grille.
-  const duct = ductTex(), grille = grilleTex()
+  // The ducts, just under the beams, each with a couple of drops: a short neck down to a round
+  // diffuser. Duct faces are shaded as a tube: brightest underneath and on the window side.
+  const DUCT_LIT: Shades = [0.8, 0.8, 0.55, 1, 0.82, 0.96] // laid along X, then turned to run along Z
+  const DROP_LIT: Shades = [0.82, 0.96, 0.55, 1, 0.9, 0.9]
+  const duct = ductTex(), dropMap = ductTex(true)
+  const grille = mat('#ffffff', grilleTex(), 0.95)
   const ductY = beamBottom - DUCT / 2 - 0.03
   for (const [x, drops] of [[-3.45, [hl - 5, -hl + 6.5]], [3.3, [hl - 3, 0.5]]] as const) {
-    const run = litBox(L, DUCT, DUCT, '#ffffff', duct, CEILING_LIT)
-    repeatU(run.geometry, L / 0.18)
-    scene.add(at(run, x, ductY, 0, Math.PI / 2))
+    const end = inWell(x - DUCT / 2, x + DUCT / 2, wellZ - 0.01) ? wellZ : -hl
+    const len = hl - end
+    const run = litBox(len, DUCT, DUCT, '#ffffff', duct, DUCT_LIT)
+    repeatU(run.geometry, len / 0.12)
+    scene.add(at(run, x, ductY, (hl + end) / 2, Math.PI / 2))
+    if (end > -hl) { // it turns up into the slab at the stairwell's edge
+      scene.add(at(litBox(DUCT, H - ductY, DUCT, '#ffffff', dropMap, DROP_LIT), x, (H + ductY) / 2, end + DUCT / 2))
+    }
     for (const z of drops) {
-      const drop = litBox(DUCT * 0.8, 0.5, DUCT * 0.8, '#ffffff', duct, CEILING_LIT)
-      scene.add(at(drop, x, ductY - 0.25, z))
-      const cap = litBox(0.5, 0.05, 0.5, '#ffffff', grille, CEILING_LIT)
-      scene.add(at(cap, x, ductY - 0.52, z))
+      const neck = 0.16, bottom = ductY - DUCT / 2 - neck
+      scene.add(at(litBox(0.26, neck, 0.26, '#ffffff', dropMap, DROP_LIT), x, bottom + neck / 2, z))
+      const disc = plane(0.46, 0.46, grille)
+      disc.rotation.x = Math.PI / 2 // facing down
+      scene.add(at(disc, x, bottom - 0.002, z))
     }
   }
 
   // Cable trays: grey steel mesh, a floor and two low sides, along the room beside the ducts.
   const mesh = meshTex()
   for (const x of [-2.75, 2.45]) {
-    const bottom = plane(0.3, L, mat('#8a8f92', mesh, 0.9), 0.1, 0.15, 0.5)
+    const end = inWell(x - 0.15, x + 0.15, wellZ - 0.01) ? wellZ : -hl
+    const len = hl - end, cz = (hl + end) / 2
+    const bottom = plane(0.3, len, mat('#8a8f92', mesh, 0.9), 0.1, 0.15, 0.5)
     bottom.rotation.x = Math.PI / 2
-    scene.add(at(bottom, x, beamBottom - 0.07, 0))
+    scene.add(at(bottom, x, beamBottom - 0.07, cz))
     for (const s of [-1, 1]) {
-      const side = plane(L, 0.07, mat('#8a8f92', mesh, 0.8), 0.15, 0.07, 0.5)
-      scene.add(at(side, x + s * 0.15, beamBottom - 0.035, 0, s * Math.PI / 2))
-      const back = plane(L, 0.07, mat('#8a8f92', mesh, 0.7), 0.15, 0.07, 0.5)
-      scene.add(at(back, x + s * 0.15, beamBottom - 0.035, 0, -s * Math.PI / 2))
+      const side = plane(len, 0.07, mat('#8a8f92', mesh, 0.8), 0.15, 0.07, 0.5)
+      scene.add(at(side, x + s * 0.15, beamBottom - 0.035, cz, s * Math.PI / 2))
+      const back = plane(len, 0.07, mat('#8a8f92', mesh, 0.7), 0.15, 0.07, 0.5)
+      scene.add(at(back, x + s * 0.15, beamBottom - 0.035, cz, -s * Math.PI / 2))
     }
   }
 
@@ -229,11 +267,13 @@ function buildCeiling(scene: THREE.Scene, { width: W, length: L, ceiling: H }: C
 
   // Fluorescent tubes across the room, in every other gap between the beams: two long runs each,
   // a white glowing tube under a slim grey housing.
+  const tubeY = beamBottom - TUBE_DROP
   for (let i = 0; i < beamZ.length - 1; i += 2) {
     const z = beamZ[i] - BEAM.pitch / 2
     for (const x of [-1.45, 1.35]) {
-      scene.add(at(litBox(2.5, 0.04, 0.1, '#8c9194', null, CEILING_LIT), x, TUBE_Y + 0.04, z))
-      scene.add(at(new THREE.Mesh(new THREE.BoxGeometry(2.4, 0.04, 0.05, 5), glow('#ffffff')), x, TUBE_Y, z))
+      if (inWell(x - 1.25, x + 1.25, z)) continue
+      scene.add(at(litBox(2.5, 0.04, 0.1, '#8c9194', null, CEILING_LIT), x, tubeY + 0.04, z))
+      scene.add(at(new THREE.Mesh(new THREE.BoxGeometry(2.4, 0.04, 0.05, 5), glow('#ffffff')), x, tubeY, z))
     }
   }
 }
@@ -314,19 +354,27 @@ function buildStairs(scene: THREE.Scene, layout: ClubLayout) {
   const concrete = concreteTex('#a8a7a1', 43)
 
   // The flight: a sheared slab under a row of steps, so it reads as one concrete mass.
+  const top = H - 0.01 // everything stops under the ceiling; the flight runs on into the opening
   const slab = litBox(run, 0.25, flight, '#ffffff', concrete, FLOOR_LIT)
   slab.geometry.translate(run / 2, -0.125, 0)
-  shear(slab.geometry, k)
+  clampY(shear(slab.geometry, k), top)
   scene.add(at(slab, x0, 0, zFront - flight / 2))
   const n = Math.round(H / 0.19)
   for (let i = 0; i < n; i++) {
-    scene.add(at(litBox(run / n, H / n, flight, '#ffffff', concrete, FLOOR_LIT), x0 + (i + 0.5) * run / n, (i + 0.5) * H / n, zFront - flight / 2))
+    const h = Math.min(H / n, top - i * H / n)
+    scene.add(at(litBox(run / n, h, flight, '#ffffff', concrete, FLOOR_LIT), x0 + (i + 0.5) * run / n, i * H / n + h / 2, zFront - flight / 2))
   }
+
+  // The opening the flight climbs into: a dark slot in the ceiling over its upper half.
+  const holeX0 = x0 + run * 0.45, holeX1 = s.maxX + COLUMN_SIZE
+  const hole = plane(holeX1 - holeX0, flight + 0.3, mat('#55595b', null, 1, true))
+  hole.rotation.x = Math.PI / 2
+  scene.add(at(hole, (holeX0 + holeX1) / 2, H - 0.005, zFront - flight / 2 + 0.1))
 
   // The stringer on the room side, then the mesh railing on it and a handrail on top.
   const stringer = litBox(run, 0.45, 0.12, '#ffffff', concrete, FLOOR_LIT)
   stringer.geometry.translate(run / 2, -0.12, 0)
-  shear(stringer.geometry, k)
+  clampY(shear(stringer.geometry, k), top)
   scene.add(at(stringer, x0, 0, zFront + 0.06))
   const railH = 0.9
   const rail = new THREE.Mesh(new THREE.PlaneGeometry(run, railH, Math.ceil(run / 0.4), 2), mat('#e8eaeb', meshTex()))
@@ -334,24 +382,24 @@ function buildStairs(scene: THREE.Scene, layout: ClubLayout) {
   const uv = rail.geometry.attributes.uv as THREE.BufferAttribute
   for (let i = 0; i < uv.count; i++) uv.setY(i, uv.getY(i) * railH / 0.1)
   rail.geometry.translate(run / 2, 0.1 + railH / 2, 0)
-  shear(rail.geometry, k)
+  clampY(shear(rail.geometry, k), top)
   scene.add(at(rail, x0, 0, zFront + 0.07))
-  const handrail = litBox(run, 0.04, 0.05, '#c9cdcf', null, FLOOR_LIT)
-  handrail.geometry.translate(run / 2, 0.1 + railH, 0)
+  const handLen = Math.min(run, (top - 0.12 - railH) / k) // it ends where it would reach the ceiling
+  const handrail = litBox(handLen, 0.04, 0.05, '#c9cdcf', null, FLOOR_LIT)
+  handrail.geometry.translate(handLen / 2, 0.1 + railH, 0)
   shear(handrail.geometry, k)
   scene.add(at(handrail, x0, 0, zFront + 0.07))
 
-  // The glass: a slim steel frame and a few streaks, across the front and down the side.
-  const streaks = mat('#eef3f4', streakTex())
-  const frame = '#6c7174'
+  // The glass: frameless panes in a thin pale floor channel, a few glints, one post at the corner.
+  const streaks = mat('#f2f6f7', streakTex())
+  const frame = '#b4b9bc'
   const glass = (len: number, cx: number, cz: number, ry: number) => {
     const g = at(new THREE.Group(), cx, 0, cz, ry)
-    g.add(at(plane(len, H, streaks, 1.6, H), 0, H / 2, 0))
-    for (const y of [0.03, H - 0.03]) g.add(at(litBox(len, 0.06, 0.06, frame, null, FLOOR_LIT), 0, y, 0))
-    const posts = Math.max(1, Math.round(len / 1.5))
-    for (let i = 0; i <= posts; i++) g.add(at(litBox(0.05, H, 0.05, frame, null, FLOOR_LIT), -len / 2 + i * len / posts, H / 2, 0))
+    g.add(at(plane(len, H, streaks, 2.4, H), 0, H / 2, 0))
+    g.add(at(litBox(len, 0.04, 0.04, frame, null, FLOOR_LIT), 0, 0.02, 0))
     scene.add(g)
   }
+  scene.add(at(litBox(0.035, H, 0.035, frame, null, FLOOR_LIT), s.minX, H / 2, s.maxZ))
   // Behind the flight, the glass of the next room: darker, so the stair stands out against it.
   const back = s.maxX + COLUMN_SIZE - s.minX
   scene.add(at(plane(back, H, mat('#c3cbce', streakTex(), 1, true), 1.6, H), s.minX + back / 2, H / 2, s.minZ + 0.01))
@@ -373,6 +421,6 @@ function buildCollage(scene: THREE.Scene, layout: ClubLayout) {
       const m = new THREE.Mesh(geo, decal('#ffffff', tex))
       m.rotation.x = -Math.PI / 2 // the picture's top toward the far end, upright from the door
       scene.add(at(m, p.x, 0.002, p.z))
-    }).catch(() => {}) // a missing image leaves the plain floor
+    }, () => {}) // a missing image leaves the plain floor
   }
 }
