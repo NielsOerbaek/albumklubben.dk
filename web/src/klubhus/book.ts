@@ -12,7 +12,7 @@ const GAP = 0.04
 
 /** One spread per four posters, newest meeting first; meetings without posters are left out. */
 export function bookSpreads(meetings: Meeting[]): Spread[] {
-  return [...meetings].reverse().flatMap((meeting) => {
+  return [...meetings].sort((a, b) => b.number - a.number).flatMap((meeting) => {
     const sorted = [...meeting.posters].sort((a, b) => a.position - b.position)
     const out: Spread[] = []
     for (let i = 0; i < sorted.length; i += 4) out.push({ meeting, posters: sorted.slice(i, i + 4), continued: i > 0 })
@@ -58,7 +58,7 @@ export function drawLeftPage(g: CanvasRenderingContext2D, s: Spread, size: { w: 
   const line = (text: string, tall = false) => {
     const rows: string[] = []
     // A word longer than a line is cut into line-long pieces rather than running off the page.
-    const words = fold(text).split(' ').filter(Boolean).flatMap((w) => w.match(new RegExp(`.{1,${perLine}}`, 'gu')) ?? [])
+    const words = fold(text).split(' ').filter(Boolean).flatMap((long) => long.match(new RegExp(`.{1,${perLine}}`, 'gu')) ?? [])
     for (const word of words) {
       const last = rows.length - 1
       if (last >= 0 && rows[last].length + 1 + word.length <= perLine) rows[last] += ' ' + word

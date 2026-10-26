@@ -50,6 +50,8 @@ const PER_CRATE = 12
 export const COLUMN_SIZE = 0.45
 export const TABLE = { w: 1, h: 0.75 }
 export const BENCH = { d: 0.5, h: 0.45 }
+/** The shelf planks' depth off the +X wall; the bays are solid that deep. */
+export const SHELF_D = 0.4
 const CEILING = 3.4
 const WIDTH = 9
 const MIN_LENGTH = 18 // a near-empty club still reads as the long room (2x its width)
@@ -158,7 +160,8 @@ export function buildClubLayout(meetings: Meeting[]): ClubLayout {
     width: WIDTH, length, ceiling: CEILING, columns, windowBench, table, crates, book, shelves, sofa, chairs,
     coffeeTable, screen, stairs, floorCollage, freeWall, latest,
     boxes: [...walls, ...columns.map((c) => box(c.x, c.z, COLUMN_SIZE, COLUMN_SIZE)), windowBench, table,
-      ...sofa, ...chairs, coffeeTable, stand, stairs],
+      ...sofa, ...chairs, coffeeTable, stand, stairs,
+      ...shelves.map((s) => ({ minX: hw - SHELF_D, maxX: hw, minZ: s.z0, maxZ: s.z1 }))],
     spawn: { x: (STRIP_X.from + STRIP_X.to) / 2, z: hl - 1, yaw: 0 },
   }
 }

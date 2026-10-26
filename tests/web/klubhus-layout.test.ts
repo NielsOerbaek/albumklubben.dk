@@ -1,6 +1,6 @@
 import { readFileSync } from 'node:fs'
 import { describe, expect, it } from 'vitest'
-import { buildClubLayout, type ClubLayout } from '../../web/src/klubhus/layout.ts'
+import { buildClubLayout, SHELF_D, type ClubLayout } from '../../web/src/klubhus/layout.ts'
 import type { Box2 } from '../../web/src/ps1/collide.ts'
 import { GENRE_ORDER, genreFamily } from '../../shared/genre.ts'
 import type { Album, Archive, Meeting } from '../../shared/types.ts'
@@ -43,7 +43,8 @@ describe('buildClubLayout', () => {
         for (const b of l.boxes.slice(i + 1)) expect(overlap(a, b), `${name} ${i}`).toBe(false)
       }
       for (const b of [l.windowBench, l.table, l.stairs, l.coffeeTable, ...l.sofa, ...l.chairs, ...l.columns.map((c) => ({
-        minX: c.x - 0.225, maxX: c.x + 0.225, minZ: c.z - 0.225, maxZ: c.z + 0.225 }))]) {
+        minX: c.x - 0.225, maxX: c.x + 0.225, minZ: c.z - 0.225, maxZ: c.z + 0.225 })), ...l.shelves.map((s) => ({
+        minX: l.width / 2 - SHELF_D, maxX: l.width / 2, minZ: s.z0, maxZ: s.z1 }))]) {
         expect(l.boxes, name).toContainEqual(b)
       }
     }

@@ -178,6 +178,12 @@ const BEAM = { h: 0.32, d: 0.22, pitch: 1.2 }
 const DUCT = 0.36
 const TUBE_DROP = 0.11 // the tubes hang this far below the beams
 
+/** Where the flight starts (x0) and where the ceiling opens over its upper part (holeX0). */
+const stairX = (s: ClubLayout['stairs']) => {
+  const x0 = s.minX + 0.1
+  return { x0, holeX0: x0 + (s.maxX - x0) * 0.45 }
+}
+
 export function buildRoom(scene: THREE.Scene, layout: ClubLayout) {
   const { width: W, length: L, ceiling: H } = layout
   const hw = W / 2, hl = L / 2
@@ -186,7 +192,7 @@ export function buildRoom(scene: THREE.Scene, layout: ClubLayout) {
   // Floor, ceiling and the three plain walls (the -X wall is the windows).
   const floor = plane(W, L, mat('#ffffff', floorTex()), 2, 2)
   floor.rotation.x = -Math.PI / 2
-  const ceiling = plane(W, L, mat('#ffffff', concreteTex('#8f8e88', 23), 0.56), 1.5, 1.5)
+  const ceiling = plane(W, L, mat('#ffffff', concreteTex('#8f8e88', 23), 0.47), 1.5, 1.5)
   ceiling.rotation.x = Math.PI / 2
   ceiling.position.y = H
   scene.add(floor, ceiling)
@@ -208,16 +214,17 @@ export function buildRoom(scene: THREE.Scene, layout: ClubLayout) {
 /** Ribbed beams across the room, two spiral ducts along it, rows of tubes and the cable trays. */
 function buildCeiling(scene: THREE.Scene, { width: W, length: L, ceiling: H, stairs }: ClubLayout, beamBottom: number) {
   const hw = W / 2, hl = L / 2
-  // The stairwell (over the stairs) is kept clear: no beams, ducts, trays or tubes, so the flight
-  // can rise into its opening. Anything along the room on that side stops at its edge.
+  // The stairwell (over the stairs) is kept clear of ducts, trays and tubes, so the flight can rise
+  // into its opening; anything along the room on that side stops at its edge. The beams across it
+  // run on to the opening itself.
   const wellZ = stairs.maxZ
   const inWell = (x0: number, x1: number, z: number) => z < wellZ && x1 > stairs.minX && x0 < hw
 
-  const beamMap = concreteTex('#9c9b94', 31)
+  const beamMap = concreteTex('#8d8c85', 31)
   const beamZ: number[] = []
   for (let z = hl - BEAM.pitch / 2; z > -hl; z -= BEAM.pitch) beamZ.push(z)
   for (const z of beamZ) {
-    const w = inWell(-hw, hw, z + BEAM.d / 2) ? stairs.minX + hw : W
+    const w = inWell(-hw, hw, z + BEAM.d / 2) ? stairX(stairs).holeX0 + hw : W // up to the opening
     scene.add(at(litBox(w, BEAM.h, BEAM.d, '#ffffff', beamMap, CEILING_LIT), -hw + w / 2, H - BEAM.h / 2, z))
   }
 
@@ -232,7 +239,7 @@ function buildCeiling(scene: THREE.Scene, { width: W, length: L, ceiling: H, sta
   for (const [x, drops] of [[-3.45, [hl - 5, -hl + 6.5]], [3.3, [hl - 3, 0.5]]] as const) {
     const end = inWell(x - DUCT / 2, x + DUCT / 2, wellZ - 0.01) ? wellZ : -hl
     const len = hl - end
-    const shadow = plane(DUCT + 0.3, len, mat('#5c5d5a'), DUCT + 0.3, len, 0.6)
+    const shadow = plane(DUCT + 0.6, len, mat('#55564f'), DUCT + 0.6, len, 0.6)
     shadow.rotation.x = Math.PI / 2 // facing down, just under the beams
     scene.add(at(shadow, x, beamBottom - 0.004, (hl + end) / 2))
     const run = litBox(len, DUCT, DUCT, '#ffffff', duct, DUCT_LIT)
@@ -354,7 +361,7 @@ function buildWindows(scene: THREE.Scene, layout: ClubLayout, beamBottom: number
  *  on a concrete stringer, with a steel mesh railing, behind a glass wall seen as a frame and streaks. */
 function buildStairs(scene: THREE.Scene, layout: ClubLayout) {
   const { ceiling: H, stairs: s } = layout
-  const x0 = s.minX + 0.1, run = s.maxX - x0
+  const { x0, holeX0 } = stairX(s), run = s.maxX - x0
   const k = H / run // the slope
   const zFront = s.maxZ - 0.15 // the flight's room side, just behind the glass
   const flight = 1.1
@@ -373,7 +380,7 @@ function buildStairs(scene: THREE.Scene, layout: ClubLayout) {
   }
 
   // The opening the flight climbs into: a dark slot in the ceiling over its upper half.
-  const holeX0 = x0 + run * 0.45, holeX1 = s.maxX + COLUMN_SIZE
+  const holeX1 = s.maxX + COLUMN_SIZE
   const hole = plane(holeX1 - holeX0, flight + 0.3, mat('#55595b', null, 1, true))
   hole.rotation.x = Math.PI / 2
   scene.add(at(hole, (holeX0 + holeX1) / 2, H - 0.005, zFront - flight / 2 + 0.1))

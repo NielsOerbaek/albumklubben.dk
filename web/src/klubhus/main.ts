@@ -26,6 +26,7 @@ const BOOK_REACH = 1.6 // metres on the floor plan from the book's centre
 const EASE_TIME = 0.5 // seconds, to the open book and back
 // The look while reading, around the view pose: enough to aim at every poster and cover on a spread.
 const LOOK = { yaw: 0.55, down: 0.2, up: 0.28 }
+const CENTRE = new THREE.Vector2(0, 0) // the view's centre, for the aim ray
 
 render(topBarTemplate('klubhus'), document.getElementById('app')!)
 const canvas = document.querySelector<HTMLCanvasElement>('canvas.ps1-canvas')!
@@ -59,7 +60,8 @@ async function start() {
   showHint('Henter pladerne')
   const archive = await fetchArchive()
   const layout = buildClubLayout(archive.meetings)
-  const club = await buildClub(layout, bookSpreads(archive.meetings))
+  const spreads = bookSpreads(archive.meetings)
+  const club = await buildClub(layout, spreads)
   const meetingById = new Map(archive.meetings.map((m) => [m.id, m]))
   const book = club.book
 
@@ -94,18 +96,18 @@ async function start() {
   const ray = new THREE.Raycaster()
   const centreRay = () => {
     camera.updateMatrixWorld()
-    ray.setFromCamera(new THREE.Vector2(0, 0), camera)
+    ray.setFromCamera(CENTRE, camera)
     return ray
   }
-  /** Within reach of the shut book, the view's centre on it. */
-  const bookInView = () => Math.hypot(layout.book.x - camera.position.x, layout.book.z - camera.position.z) <= BOOK_REACH
+  /** Within reach of the shut book, the view's centre on it. A book with no posters stays shut. */
+  const bookInView = () => spreads.length > 0 && Math.hypot(layout.book.x - camera.position.x, layout.book.z - camera.position.z) <= BOOK_REACH
     && centreRay().intersectObject(book.object).some((h) => shown(h.object))
 
   const pose = (): Pose => ({ position: camera.position.clone(), yaw: camera.rotation.y, pitch: camera.rotation.x })
   const easeTo = (to: Pose, done: () => void) => { ease = { from: pose(), to, t: 0, done } }
 
   function openBook() {
-    if (book.isOpen() || ease) return
+    if (book.isOpen() || ease || !spreads.length) return
     standing = pose()
     const v = book.viewPose()
     const to = { position: v.position, yaw: towards(standing.yaw, v.yaw), pitch: v.pitch }

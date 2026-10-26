@@ -3,7 +3,7 @@ import { at, coverTexture } from '../ps1/build.ts'
 import { painted, rng } from '../ps1/paint.ts'
 import { ps1Material } from '../ps1/material.ts'
 import type { Album } from '../../../shared/types.ts'
-import { TABLE, type ClubLayout } from './layout.ts'
+import { SHELF_D, TABLE, type ClubLayout } from './layout.ts'
 import { chipboardTex, FLOOR_LIT, FOG, kit, litBox } from './room.ts'
 
 // The library's furniture: the terrazzo table, the shelves, the tan sofa and the chrome chairs,
@@ -158,7 +158,6 @@ function buildCoffeeTable(scene: THREE.Scene, t: ClubLayout['coffeeTable']) {
 
 const SHELF_Y = [0.32, 0.8, 1.28, 1.76, 2.24] // the planks' tops
 const EYE = 2 // the shelf at eye height gets the latest covers
-const SHELF_D = 0.4
 const REC = 0.31
 
 /** One material per album, shared by every copy on the shelves; the cover arrives when loaded. */
