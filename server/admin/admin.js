@@ -12,6 +12,10 @@ document.addEventListener('click', async event => {
   status.textContent = 'Henter ...'
   try {
     const res = await fetch('/admin/musicbrainz?' + new URLSearchParams({ artist, title }))
+    if (res.redirected || !(res.headers.get('content-type') || '').includes('json')) {
+      status.textContent = 'Du er logget ud. Log ind igen og prøv igen.'
+      return
+    }
     const body = await res.json()
     if (!res.ok) { status.textContent = body.error || 'Noget gik galt.'; return }
     area.value = body.tracklist

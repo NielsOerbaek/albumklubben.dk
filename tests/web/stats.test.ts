@@ -34,7 +34,7 @@ test('headline numbers', () => {
 })
 
 test('four rows with shares; a tile opens the dialog', () => {
-  const s: State = { entries, latest: 22, selId: 1, showTracks: false, filter: 'alle', mapView: 'world', dialogId: null, dialogTracks: false }
+  const s: State = { entries, selId: 1, showTracks: false, filter: 'alle', mapView: 'world', dialogId: null, dialogTracks: false }
   const d = document.createElement('div')
   document.body.append(d)
   const draw = () => render(statsView(s, act), d)

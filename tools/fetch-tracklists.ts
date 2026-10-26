@@ -15,6 +15,10 @@ if (!values.db) {
 }
 const cachePath = values.cache!
 const cache: Entry[] = existsSync(cachePath) ? JSON.parse(readFileSync(cachePath, 'utf8')) : []
+if (!existsSync(values.db)) {
+  console.error(`Databasen findes ikke: ${values.db}`)
+  process.exit(1)
+}
 const db = openDb(values.db)
 const albums = db.prepare(`SELECT id, artist, title FROM albums WHERE tracklist IS NULL OR tracklist = '' ORDER BY id`)
   .all() as { id: number; artist: string; title: string }[]

@@ -67,8 +67,10 @@
 }
 .tracks.cols-2 { --u: 3.2cqw; }
 .tracks.dense { --u: 2.8cqw; line-height: 1.25; }
+.tracks.cols-3 { --u: 2cqw; line-height: 1.15; padding: 6cqw; }
 .tracks-head { margin: 0 0 1.2em; font-size: 0.85em; opacity: 0.8; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .tracks.cols-2 .tracks-body { column-count: 2; column-gap: 1.6em; }
+.tracks.cols-3 .tracks-body { column-count: 3; column-gap: 1em; }
 .disc { break-inside: auto; }
 .disc + .disc { margin-top: 0.8em; }
 .disc h4 { margin: 0 0 0.3em; font-size: 1em; font-weight: 600; break-after: avoid; }

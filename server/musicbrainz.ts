@@ -4,7 +4,7 @@ const GAP_MS = 1000
 
 export interface LookupOptions { fetch?: typeof fetch; wait?: (ms: number) => Promise<void> }
 
-// One queue for the whole process, so the CLI and the CMS share the 1 request/second limit.
+// One queue per process (the CLI and the CMS are separate processes, so each keeps its own 1 request/second pace).
 let queue: Promise<unknown> = Promise.resolve()
 let lastAt = 0
 
@@ -16,7 +16,8 @@ function get<T>(path: string, params: Record<string, string>, opts: LookupOption
     if (delay > 0) await wait(delay)
     lastAt = Date.now()
     const url = `${BASE}${path}?${new URLSearchParams({ ...params, fmt: 'json' })}`
-    const res = await doFetch(url, { headers: { 'User-Agent': USER_AGENT, Accept: 'application/json' } })
+    const res = await doFetch(url, { headers: { 'User-Agent': USER_AGENT, Accept: 'application/json' },
+      signal: AbortSignal.timeout(10_000) })
     if (!res.ok) throw new Error(`MusicBrainz svarede ${res.status}`)
     return (await res.json()) as T
   }

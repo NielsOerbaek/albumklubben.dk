@@ -8,7 +8,6 @@ import type { MapView } from '../../../shared/projection.ts'
 import { filtered, type Filter } from './filters.ts'
 import { coverflowView } from './coverflow.ts'
 import { mapView } from './map.ts'
-import { latestMeetingWithAlbums } from '../../../shared/latest.ts'
 import { statsView } from './stats.ts'
 import { albumDialog } from '../album.ts'
 
@@ -17,8 +16,6 @@ export interface Entry { album: Album; n: number }
 
 export interface State {
   entries: Entry[]
-  /** Number of the latest meeting with albums. */
-  latest: number | null
   selId: number | null
   showTracks: boolean
   filter: Filter
@@ -38,7 +35,7 @@ const SECTIONS = [['hylden', 'Hylden'], ['kortet', 'Kortet'], ['tal', 'Tal']] as
 type Section = (typeof SECTIONS)[number][0]
 
 const state: State = {
-  entries: [], latest: null, selId: null, showTracks: false, filter: 'alle', mapView: 'world', dialogId: null, dialogTracks: false,
+  entries: [], selId: null, showTracks: false, filter: 'alle', mapView: 'world', dialogId: null, dialogTracks: false,
 }
 let status: 'loading' | 'error' | 'ready' = 'loading'
 
@@ -121,7 +118,6 @@ draw()
 fetchArchive().then(
   (archive) => {
     state.entries = archive.meetings.flatMap((m) => m.albums.map((album) => ({ album, n: m.number })))
-    state.latest = latestMeetingWithAlbums(archive.meetings)?.number ?? null
     state.selId = state.entries.at(-1)?.album.id ?? null
     status = 'ready'
     draw()

@@ -99,6 +99,16 @@ describe('findTracklist', () => {
     expect(await findTracklist('a', 'b', { fetch: onlySingle.fn, wait: noWait })).toBeNull()
   })
 
+  it('sends a timeout signal, and a timeout rejects like a network error', async () => {
+    let signal: AbortSignal | null | undefined
+    const timedOut = (async (_u: unknown, init?: RequestInit) => {
+      signal = init?.signal
+      throw new DOMException('The operation timed out', 'TimeoutError')
+    }) as typeof fetch
+    await expect(findTracklist('a', 'b', { fetch: timedOut, wait: noWait })).rejects.toThrow('timed out')
+    expect(signal).toBeInstanceOf(AbortSignal)
+  })
+
   it('throws on an HTTP error', async () => {
     await expect(findTracklist('a', 'b', { fetch: fakeFetch({ status: 503 }).fn, wait: noWait })).rejects.toThrow('503')
   })

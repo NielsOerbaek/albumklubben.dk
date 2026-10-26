@@ -16,7 +16,7 @@ const pages = [
   ['landing', '/'],
   ['arkiv-hylden', '/arkiv#hylden'],
   ['arkiv-kortet', '/arkiv#kortet'],
-  ['arkiv-vaeggen', '/arkiv#vaeggen'],
+  ['arkiv-tal', '/arkiv#tal'],
   ['klubhuset', '/klubhuset', true],
   ['admin-login', '/admin/login'],
 ]

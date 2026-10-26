@@ -67,6 +67,8 @@ test('long tracklists use two columns and disc headings', () => {
   const one = view({ ...drukqs, tracklist: disc(5) }, true)
   expect(one.querySelector('.cols-2')).toBeNull()
   expect(text(one)).not.toContain('Disk')
+  expect(d.querySelector('.cols-3')).toBeNull()
+  expect(view({ ...drukqs, tracklist: disc(40) }, true).querySelector('.cols-3')).not.toBeNull()
 })
 
 test('hostile story stays text', () => {

@@ -37,7 +37,7 @@ const archive = (danish = (id: number) => id % 5 === 0): Entry[] =>
     n: Math.floor(i / 2) + 1 }))
 
 function mount(entries: Entry[]) {
-  const s: State = { entries, latest: entries.at(-1)!.n, selId: entries.at(-1)!.album.id, showTracks: false,
+  const s: State = { entries, selId: entries.at(-1)!.album.id, showTracks: false,
     filter: 'alle', mapView: 'world', dialogId: null, dialogTracks: false }
   const d = document.createElement('div')
   document.body.append(d)

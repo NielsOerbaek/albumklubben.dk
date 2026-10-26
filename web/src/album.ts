@@ -36,10 +36,10 @@ function infoTemplate(album: Album, meetingNumber: number): TemplateResult {
 }
 
 /** The back of the record: the tracklist on the album's colour. */
-export function tracksTemplate(album: Album): TemplateResult {
+function tracksTemplate(album: Album): TemplateResult {
   const discs = parseTracklist(album.tracklist)
   const count = discs.reduce((n, d) => n + d.length, 0)
-  return html`<div class="tracks ${count > 14 ? 'cols-2' : ''} ${count > 24 ? 'dense' : ''}"
+  return html`<div class="tracks ${count > 14 ? 'cols-2' : ''} ${count > 24 ? 'dense' : ''} ${count > 36 ? 'cols-3' : ''}"
     style="--card-bg:${album.cardColor};--card-ink:${inkFor(album.cardColor)}">
     <p class="tracks-head">${label(album)}</p>
     <div class="tracks-body">
