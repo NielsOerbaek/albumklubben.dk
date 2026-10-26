@@ -6,12 +6,14 @@
   font-family: var(--font);
   font-weight: 300;
 }
-.album-record { flex: 0 0 auto; width: min(520px, 100%); display: flex; flex-direction: column; gap: 12px; align-items: flex-start; }
-.album-view.medium .album-record { width: min(400px, 100%); }
-.album-info { flex: 1 1 0; min-width: 0; }
+.album-view { flex-wrap: wrap; }
+.album-record { flex: 0 0 auto; width: clamp(280px, 40vw, 520px); max-width: 100%; display: flex; flex-direction: column; gap: 12px; align-items: flex-start; }
+.album-view.medium .album-record { width: clamp(220px, 28vw, 360px); }
+.album-info { flex: 1 1 280px; min-width: 260px; }
 @media (max-width: 700px) {
   .album-view { flex-direction: column; align-items: stretch; }
   .album-record, .album-view.medium .album-record { width: 100%; }
+  .album-info { min-width: 0; flex: 0 0 auto; }
 }
 
 .record {
@@ -45,28 +47,27 @@
   -webkit-backface-visibility: hidden;
   overflow: hidden;
 }
-.record-back { transform: rotateY(180deg); }
+.record-back { transform: rotateY(180deg); container-type: inline-size; }
 .record-front img { display: block; width: 100%; height: 100%; object-fit: cover; }
 .record-nocover { display: block; padding: 8%; font-size: 24px; background: #111; color: #fff; height: 100%; box-sizing: border-box; }
 @media (prefers-reduced-motion: reduce) { .record-inner { transition: none; } }
 
 /* The tracklist. Sizes follow the square's width (container query units). */
 .tracks {
-  container-type: inline-size;
   width: 100%;
   height: 100%;
   box-sizing: border-box;
-  padding: 7%;
+  padding: 7cqw;
   overflow: hidden;
   background: var(--card-bg);
   color: var(--card-ink);
-  --u: 3.6cqw;
+  --u: 3.6cqw; /* cqw resolves against .record-back, the container */
   font-size: var(--u);
   line-height: 1.35;
 }
-.tracks.cols-2 { --u: 2.9cqw; }
-.tracks.dense { --u: 2.3cqw; line-height: 1.25; }
-.tracks-head { margin: 0 0 1.2em; font-size: 0.85em; opacity: 0.8; }
+.tracks.cols-2 { --u: 3.2cqw; }
+.tracks.dense { --u: 2.8cqw; line-height: 1.25; }
+.tracks-head { margin: 0 0 1.2em; font-size: 0.85em; opacity: 0.8; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .tracks.cols-2 .tracks-body { column-count: 2; column-gap: 1.6em; }
 .disc { break-inside: auto; }
 .disc + .disc { margin-top: 0.8em; }
@@ -74,12 +75,11 @@
 .disc ol { margin: 0; padding: 0; list-style: none; }
 .disc li { display: flex; gap: 0.6em; break-inside: avoid; }
 .disc .no { flex: 0 0 1.6em; opacity: 0.7; }
-.disc .name { flex: 1 1 auto; min-width: 0; overflow-wrap: anywhere; }
+.disc .name { flex: 1 1 0; min-width: 0; overflow-wrap: break-word; }
 .disc .len { flex: 0 0 auto; text-align: right; font-variant-numeric: tabular-nums; }
 
 /* The info panel keeps the old card's look. */
 .album-info {
-  container-type: inline-size;
   box-sizing: border-box;
   padding: clamp(20px, 5%, 40px);
   background: var(--card-bg, #262d66);
@@ -108,6 +108,7 @@
   overflow-y: auto;
   padding: calc(var(--bar, 48px) + 24px) var(--pad, 24px) 40px;
   background: rgb(0 0 0 / 0.82);
+  pointer-events: auto;
   font-family: var(--font);
   font-weight: 300;
   color: #fff;
