@@ -1,11 +1,9 @@
 import * as THREE from 'three'
-import { textureUrl } from '../api.ts'
 import { at, coverTexture, createBuilder, plane } from '../ps1/build.ts'
 import { fitText, fontsReady, painted, rng, speckle } from '../ps1/paint.ts'
 import { ps1Material } from '../ps1/material.ts'
-import { loadPixelTexture } from '../ps1/textures.ts'
-import type { Album, Poster } from '../../../shared/types.ts'
-import { COUNTER, SHELF_DEPTH, TABLE, type CrateSpec, type ShopLayout } from './layout.ts'
+import type { Album } from '../../../shared/types.ts'
+import { BIN, COUNTER, TABLE, type ClubLayout, type CrateSpec } from './layout.ts'
 
 export const FOG = { fogColor: 0x1e1610, fogNear: 3, fogFar: 15 }
 export const WALL_H = 2.8
@@ -232,46 +230,13 @@ function buildCrate(spec: CrateSpec, baseY: number, crateWood: THREE.Texture): {
 // ---------------------------------------------------------------------------------------------
 // The shop.
 
-/** Lays posters out in rows on the back wall, as large as fits. Returns their centres and sizes.
- *  If even the smallest size overflows the wall, the oldest rows are left off. */
-function posterRows(aspects: number[], wallW: number, bottom: number, top: number) {
-  const gap = 0.07
-  for (let k = 18; k >= 4; k--) {
-    const h = k * 0.05
-    const maxRows = Math.floor((top - bottom + gap) / (h + gap))
-    const rows: number[][] = [[]]
-    let used = 0
-    for (const [i, a] of aspects.entries()) {
-      const w = h * a
-      if (used && used + gap + w > wallW) { rows.push([]); used = 0 }
-      used += (used ? gap : 0) + w
-      rows.at(-1)!.push(i)
-    }
-    if (rows.length > maxRows && k > 4) continue
-    rows.splice(0, rows.length - maxRows)
-    const out: { i: number; x: number; y: number; w: number; h: number }[] = []
-    rows.forEach((row, r) => {
-      const rowW = row.reduce((s, i) => s + h * aspects[i], 0) + gap * (row.length - 1)
-      let x = -rowW / 2
-      const y = top - h / 2 - r * (h + gap)
-      for (const i of row) {
-        const w = h * aspects[i]
-        out.push({ i, x: x + w / 2, y, w, h })
-        x += w + gap
-      }
-    })
-    return out
-  }
-  return []
-}
-
 export interface Shop {
   scene: THREE.Scene
   crates: CrateView[]
   update(dt: number): void
 }
 
-export async function buildShop(layout: ShopLayout, posters: Poster[]): Promise<Shop> {
+export async function buildShop(layout: ClubLayout): Promise<Shop> {
   await fontsReady()
   const { width: W, depth: D } = layout
   const hw = W / 2, hd = D / 2
@@ -315,15 +280,15 @@ export async function buildShop(layout: ShopLayout, posters: Poster[]): Promise<
     scene.add(at(shadedBox(w, 0.04, d, '#c49a6c', tableWood), cx, TABLE.h - 0.02, cz))
   }
 
-  // Wall shelves full of spines.
+  // Waist-high record bins along the side walls, spines showing on the room side.
   const spines = spinesTex(layout.crates.flatMap((c) => c.albums.map((a) => a.cardColor)))
-  const shelfWood = woodTex('#4a2f1c', '#3a2416', 9)
-  for (const s of layout.shelves) {
-    const len = s.maxZ - s.minZ, cz = (s.minZ + s.maxZ) / 2
-    const side = Math.sign(s.minX + s.maxX)
-    scene.add(at(shadedBox(SHELF_DEPTH, 2.1, len, '#ffffff', shelfWood), side * (hw - SHELF_DEPTH / 2), 1.05, cz))
-    const face = plane(len - 0.1, 1.9, mat('#ffffff', spines), 1.6, 1.9)
-    scene.add(at(face, side * (hw - SHELF_DEPTH - 0.005), 1.05, cz, -side * Math.PI / 2))
+  const binWood = woodTex('#4a2f1c', '#3a2416', 9)
+  for (const b of layout.bins) {
+    const len = b.maxZ - b.minZ, cz = (b.minZ + b.maxZ) / 2
+    const side = Math.sign(b.minX + b.maxX)
+    scene.add(at(shadedBox(BIN.d, BIN.h, len, '#ffffff', binWood), side * (hw - BIN.d / 2), BIN.h / 2, cz))
+    const face = plane(len - 0.1, BIN.h - 0.2, mat('#ffffff', spines), 1.6, 1.9)
+    scene.add(at(face, side * (hw - BIN.d - 0.005), BIN.h / 2, cz, -side * Math.PI / 2))
   }
 
   // The counter, with a till and a turntable playing the newest record.
@@ -342,22 +307,9 @@ export async function buildShop(layout: ShopLayout, posters: Poster[]): Promise<
   platter.add(at(new THREE.Mesh(new THREE.CylinderGeometry(0.05, 0.05, 0.014, 8), mat(newest?.cardColor ?? '#c33')), 0, 0, 0))
   scene.add(at(platter, deckX - 0.04, COUNTER.h + 0.087, ccz))
 
-  // The sign and the meeting posters on the back wall.
+  // The sign on the back wall. (The flip sign and the posters come with their own meshes.)
   const sign = plane(4, 0.62, mat('#ffffff', signTex()))
   scene.add(at(sign, 0, WALL_H - 0.4, -hd + 0.02))
-  const loaded = await Promise.all(posters.map((p) =>
-    loadPixelTexture(textureUrl(p.imageUrl, 256)).catch(() => null)))
-  const hung = posters.flatMap((p, i) => (loaded[i] ? [{ p, tex: loaded[i]! }] : []))
-  const aspects = hung.map(({ tex }) => {
-    const img = tex.image as { width: number; height: number }
-    return img.width / img.height
-  })
-  for (const { i, x, y, w, h } of posterRows(aspects, W - 2 * SHELF_DEPTH - 0.6, 1.05, WALL_H - 0.75)) {
-    const poster = plane(w, h, mat('#ffffff', hung[i].tex))
-    poster.position.set(x, y, -hd + 0.015 + (i % 2) * 0.002)
-    poster.rotation.z = (rng(hung[i].p.id * 31)() - 0.5) * 0.05
-    scene.add(poster)
-  }
 
   // Crates: the genre crates on the tables, Nyt on the counter.
   const crateWood = woodTex('#c79a62', '#a57a46', 23)

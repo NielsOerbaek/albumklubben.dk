@@ -8,7 +8,7 @@ import { topBarTemplate } from '../topbar.ts'
 import { createPs1Renderer } from '../ps1/renderer.ts'
 import { createWalkControls } from '../ps1/controls.ts'
 import { FIRST_HINT, showHint, showOverlay, showPrompt, smallScreenGuard } from '../ps1/hud.ts'
-import { buildShopLayout } from './layout.ts'
+import { buildClubLayout } from './layout.ts'
 import { buildShop, type CrateView } from './scene.ts'
 import type { Album } from '../../../shared/types.ts'
 
@@ -43,8 +43,8 @@ function crateInView(crates: CrateView[], camera: THREE.PerspectiveCamera): Crat
 async function start() {
   showHint('Henter pladerne')
   const archive = await fetchArchive()
-  const layout = buildShopLayout(archive.meetings)
-  const shop = await buildShop(layout, archive.meetings.flatMap((m) => m.posters))
+  const layout = buildClubLayout(archive.meetings)
+  const shop = await buildShop(layout)
   const meetingNumber = new Map(archive.meetings.map((m) => [m.id, m.number]))
 
   const { render: draw } = createPs1Renderer(canvas)

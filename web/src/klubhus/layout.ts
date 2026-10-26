@@ -1,12 +1,28 @@
 import { GENRE_ORDER, genreFamily } from '../../../shared/genre.ts'
 import { latestMeetingWithAlbums } from '../../../shared/latest.ts'
-import type { Album, Meeting } from '../../../shared/types.ts'
+import type { Album, Meeting, Poster } from '../../../shared/types.ts'
 import type { Box2 } from '../ps1/collide.ts'
 
 /** A crate of records. Its front (where you stand to flip) faces +Z turned by `rotationY`. */
 export interface CrateSpec { id: string; label: string; albums: Album[]; x: number; z: number; rotationY: number }
 
-export interface ShopLayout {
+/** A poster's place on a wall. `x`/`z` is its centre on the wall's surface and `normalX`/`normalZ`
+ *  points into the room, so it fits `Placed` in ps1/video.ts. */
+export interface PosterSlot {
+  poster: Poster
+  meetingNumber: number
+  x: number
+  y: number
+  z: number
+  normalX: number
+  normalZ: number
+  width: number
+  height: number
+  videoUrl: string | null
+  wall: 'left' | 'right' | 'back'
+}
+
+export interface ClubLayout {
   width: number
   depth: number
   crates: CrateSpec[]
@@ -15,24 +31,58 @@ export interface ShopLayout {
   counter: Box2
   /** Table tops, three crates each. */
   tables: Box2[]
-  /** Record shelves along the side walls. */
-  shelves: Box2[]
+  /** Waist-high record bins along the side walls, under the posters. */
+  bins: Box2[]
+  /** The listening corner at the back: the couch faces the back wall (-Z) over the table and rug. */
+  couch: Box2
+  rug: Box2
+  coffeeTable: Box2
+  /** The flip sign on the back wall, centred at (x, y). */
+  sign: { x: number; y: number; w: number; h: number }
+  posters: PosterSlot[]
 }
 
 // The room spans x in [-width/2, width/2] and z in [-depth/2, depth/2]. The back wall
-// (posters, sign) is at -Z, the door and the counter are at the front (+Z).
+// (sign, current posters, the listening corner) is at -Z, the door and the counter are at the front (+Z).
 const PER_CRATE = 12
 export const TABLE = { w: 2.2, d: 0.8, h: 0.78 }
 export const COUNTER = { w: 3, d: 0.6, h: 1 }
-export const SHELF_DEPTH = 0.35
+export const BIN = { h: 1.2, d: 0.45 }
+export const SLOT = { w: 0.9, h: 0.8, gap: 0.25 }
+export const POSTER_Y = 1.95
+export const COUCH = { w: 2.2, d: 0.9, h: 0.85 }
+export const COFFEE_TABLE = { w: 1, d: 0.5, h: 0.4 }
+export const SIGN = { w: 2.4, h: 1 }
+const LOUNGE = 3.2 // the listening corner's depth, added at the back
 const CRATE_PITCH = 0.7 // crate centres along a table
 const AISLE = 2.4 // table rows, centre to centre
 const SIDE = 1.5 // side wall to the nearest table end
 const COL_GAP = 1.3 // walkway between table ends
-const BACK = 1.6 // back wall to the first row's centre
+const BACK = 1.6 // the lounge (or the poster run's extra wall) to the first row's centre
 const FRONT = 3.6 // last row's centre to the front wall: aisle, counter, room behind it
 const MIN_W = 10
 const MIN_D = 8
+const SPAWN_IN = 0.9 // the spawn's distance from the front wall
+const COUNTER_IN = 1.3 // the counter's centre from the front wall
+const DOOR_CLEAR = 0.8 // no side poster within this of the spawn, along the wall
+const COUNTER_CLEAR = 0.5
+const PITCH = SLOT.w + SLOT.gap
+// Wall the side runs lose to the lounge and the front: the left run stops short of the door, the
+// right one short of the counter. A run spans the bins, from the lounge to its front end.
+const LEFT_LOST = LOUNGE + SPAWN_IN + DOOR_CLEAR
+const RIGHT_LOST = LOUNGE + COUNTER_IN + COUNTER.d / 2 + COUNTER_CLEAR
+
+/** Slots that fit along `len` metres of wall. */
+const fits = (len: number) => Math.max(0, Math.floor((len + SLOT.gap) / PITCH + 1e-9))
+/** Wall `k` slots need. */
+const runFor = (k: number) => (k ? k * PITCH - SLOT.gap : 0)
+
+/** The least depth whose two side runs hold `n` posters. */
+function posterDepth(n: number): number {
+  let best = Infinity
+  for (let left = 0; left <= n; left++) best = Math.min(best, Math.max(LEFT_LOST + runFor(left), RIGHT_LOST + runFor(n - left)))
+  return best
+}
 
 function genreCrates(meetings: Meeting[]): Omit<CrateSpec, 'x' | 'z' | 'rotationY'>[] {
   const number = new Map(meetings.map((m) => [m.id, m.number]))
@@ -51,15 +101,31 @@ function genreCrates(meetings: Meeting[]): Omit<CrateSpec, 'x' | 'z' | 'rotation
 const box = (cx: number, cz: number, w: number, d: number): Box2 =>
   ({ minX: cx - w / 2, maxX: cx + w / 2, minZ: cz - d / 2, maxZ: cz + d / 2 })
 
-export function buildShopLayout(meetings: Meeting[]): ShopLayout {
+export function buildClubLayout(meetings: Meeting[]): ClubLayout {
   const genre = genreCrates(meetings)
   const tableCount = Math.ceil(genre.length / 3)
   const cols = tableCount < 2 ? 1 : Math.max(2, Math.ceil(Math.sqrt(tableCount)))
   const rows = Math.ceil(tableCount / cols)
 
   const width = Math.max(MIN_W, 2 * SIDE + cols * TABLE.w + (cols - 1) * COL_GAP)
-  const depth = Math.max(MIN_D, BACK + Math.max(rows - 1, 0) * AISLE + FRONT)
-  const hw = width / 2, hd = depth / 2
+  const hw = width / 2
+
+  // The current meeting's posters hang either side of the sign, as many as the back wall holds;
+  // the rest start the left wall's run, ahead of every other poster in meeting order.
+  const latest = latestMeetingWithAlbums(meetings)
+  const byPosition = (m: Meeting) => [...m.posters].sort((a, b) => a.position - b.position)
+  const number = new Map(meetings.map((m) => [m.id, m.number]))
+  const current = latest ? byPosition(latest) : []
+  const perSide = fits(hw - SIGN.w / 2 - SLOT.gap - SLOT.gap) // off the sign, off the corner
+  const back = current.slice(0, 2 * perSide)
+  const side = [...current.slice(back.length),
+    ...[...meetings].sort((a, b) => a.number - b.number).filter((m) => m !== latest).flatMap(byPosition)]
+
+  // Depth: the tables' own, plus the lounge, or more when the side walls need it for the posters.
+  // The extra goes between the lounge and the tables, so the tables keep their place by the door.
+  const tableDepth = Math.max(MIN_D, BACK + Math.max(rows - 1, 0) * AISLE + FRONT)
+  const depth = Math.max(tableDepth + LOUNGE, posterDepth(side.length))
+  const hd = depth / 2
 
   // Tables fill rows from the back, left to right, centred across the room. Crates face the front.
   const blockW = cols * TABLE.w + (cols - 1) * COL_GAP
@@ -67,23 +133,44 @@ export function buildShopLayout(meetings: Meeting[]): ShopLayout {
   const crates: CrateSpec[] = []
   for (let t = 0; t < tableCount; t++) {
     const tx = -blockW / 2 + TABLE.w / 2 + (t % cols) * (TABLE.w + COL_GAP)
-    const tz = -hd + BACK + Math.floor(t / cols) * AISLE
+    const tz = hd - tableDepth + BACK + Math.floor(t / cols) * AISLE
     tables.push(box(tx, tz, TABLE.w, TABLE.d))
     genre.slice(t * 3, t * 3 + 3).forEach((c, i) =>
       crates.push({ ...c, x: tx + (i - 1) * CRATE_PITCH, z: tz, rotationY: 0 }))
   }
 
   // The counter runs from the right wall; the shopkeeper stands between it and the front wall.
-  const counter = box(hw - COUNTER.w / 2, hd - 1.3, COUNTER.w, COUNTER.d)
-  const latest = latestMeetingWithAlbums(meetings)
+  const counter = box(hw - COUNTER.w / 2, hd - COUNTER_IN, COUNTER.w, COUNTER.d)
   if (latest) {
     crates.unshift({ id: 'nyt', label: 'Nyt', albums: latest.albums.slice(0, PER_CRATE),
-      x: counter.minX + 0.6, z: hd - 1.3, rotationY: Math.PI })
+      x: counter.minX + 0.6, z: hd - COUNTER_IN, rotationY: Math.PI })
   }
 
-  // Shelves along both side walls, stopping short of the front so the door and counter stay clear.
-  const shelfLen = depth - 2.6
-  const shelves = [-1, 1].map((s) => box(s * (hw - SHELF_DEPTH / 2), -hd + shelfLen / 2, SHELF_DEPTH, shelfLen))
+  // The listening corner: the couch faces the back wall, the coffee table (1.15 m off the wall)
+  // and the rug between them.
+  const tableZ = -hd + 1.15 + COFFEE_TABLE.d / 2
+  const coffeeTable = box(0, tableZ, COFFEE_TABLE.w, COFFEE_TABLE.d)
+  const couch = box(0, coffeeTable.maxZ + 0.5 + COUCH.d / 2, COUCH.w, COUCH.d)
+  const rug = { minX: -1.3, maxX: 1.3, minZ: -hd + 0.6, maxZ: couch.minZ }
+  const sign = { x: 0, y: POSTER_Y, ...SIGN }
+
+  // The side runs, over the bins: from the lounge to the door on the left, to the counter on the right.
+  const runBack = -hd + LOUNGE
+  const leftFront = hd - SPAWN_IN - DOOR_CLEAR
+  const rightFront = counter.minZ - COUNTER_CLEAR
+  const bins = [box(-hw + BIN.d / 2, (runBack + leftFront) / 2, BIN.d, leftFront - runBack),
+    box(hw - BIN.d / 2, (runBack + rightFront) / 2, BIN.d, rightFront - runBack)]
+  const onLeft = Math.min(side.length, fits(leftFront - runBack))
+
+  const slot = (poster: Poster, wall: PosterSlot['wall'], x: number, z: number, normalX: number, normalZ: number): PosterSlot =>
+    ({ poster, meetingNumber: number.get(poster.meetingId)!, x, y: POSTER_Y, z, normalX, normalZ,
+      width: SLOT.w, height: SLOT.h, videoUrl: poster.videoUrl, wall })
+  const out = SIGN.w / 2 + SLOT.gap + SLOT.w / 2
+  const posters = [
+    ...back.map((p, i) => slot(p, 'back', (i % 2 ? 1 : -1) * (out + Math.floor(i / 2) * PITCH), -hd, 0, 1)),
+    ...side.slice(0, onLeft).map((p, i) => slot(p, 'left', -hw, leftFront - SLOT.w / 2 - i * PITCH, 1, 0)),
+    ...side.slice(onLeft).map((p, i) => slot(p, 'right', hw, runBack + SLOT.w / 2 + i * PITCH, -1, 0)),
+  ]
 
   const walls = [
     { minX: -hw - 1, maxX: hw + 1, minZ: -hd - 1, maxZ: -hd },
@@ -93,9 +180,9 @@ export function buildShopLayout(meetings: Meeting[]): ShopLayout {
   ]
 
   return {
-    width, depth, crates, tables, shelves, counter,
-    boxes: [...walls, ...tables, ...shelves, counter],
+    width, depth, crates, tables, bins, counter, couch, rug, coffeeTable, sign, posters,
+    boxes: [...walls, ...tables, ...bins, counter, couch, coffeeTable],
     // Just inside the door, turned a little towards the aisles and the counter.
-    spawn: { x: -hw + SIDE + 0.4, z: hd - 0.9, yaw: -0.35 },
+    spawn: { x: -hw + SIDE + 0.4, z: hd - SPAWN_IN, yaw: -0.35 },
   }
 }
