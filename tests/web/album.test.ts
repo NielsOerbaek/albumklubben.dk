@@ -85,6 +85,9 @@ test('dialog: close, back and backdrop', () => {
   root.click()
   d.querySelector<HTMLElement>('.album-view')!.click()
   expect(calls).toEqual(['close', 'back', 'close'])
+  // The second click of the double click that opened it (e.g. on a poster's cover) lands on the backdrop.
+  root.dispatchEvent(new MouseEvent('click', { bubbles: true, detail: 2 }))
+  expect(calls).toEqual(['close', 'back', 'close'])
   expect(d.textContent).toContain('← Tilbage')
   const none = draw(albumDialog({ album: drukqs, meetingNumber: 6, showTracks: false, onToggle() {}, onClose() {} }))
   expect(none.querySelector('.album-back')).toBeNull()

@@ -81,9 +81,10 @@ export function albumTemplate(o: AlbumOptions): TemplateResult {
   </div>`
 }
 
-/** An album held up over the page: a backdrop that closes when clicked. */
+/** An album held up over the page: a backdrop that closes when clicked, but not with the second
+ *  click of the double click that may have opened it. */
 export function albumDialog(o: AlbumOptions & { help?: string; onClose: () => void; onBack?: () => void }): TemplateResult {
-  return html`<div class="album-dialog" @click=${(e: MouseEvent) => { if (e.target === e.currentTarget) o.onClose() }}>
+  return html`<div class="album-dialog" @click=${(e: MouseEvent) => { if (e.target === e.currentTarget && e.detail < 2) o.onClose() }}>
     <div class="album-dialog-inner">
       <div class="album-dialog-bar">
         ${o.onBack ? html`<button class="pill album-back" @click=${o.onBack}>← Tilbage</button>` : nothing}

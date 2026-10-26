@@ -86,7 +86,10 @@ async function start() {
     showPrompt(locked || open() || !entered ? null : AGAIN)
     // The first locked frame may come before this event; aim afresh so the prompt comes back.
     target = aimed = null
+    if (!locked) wall.update(null)
   })
+  // A hidden tab runs no frames, so the loop below cannot pause the wall's video itself.
+  document.addEventListener('visibilitychange', () => { if (document.hidden) wall.update(null) })
 
   function drawOverlay() {
     if (pulled) {
