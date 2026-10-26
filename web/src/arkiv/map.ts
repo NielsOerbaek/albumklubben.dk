@@ -1,5 +1,5 @@
 import { html, nothing, type TemplateResult } from 'lit-html'
-import { cardTemplate, storyTemplate } from '../card.ts'
+import { albumTemplate } from '../album.ts'
 import { textureUrl } from '../api.ts'
 import { mapAspect, project, type MapView } from '../../../shared/projection.ts'
 import type { Actions, Entry, State } from './main.ts'
@@ -32,7 +32,7 @@ function pins(s: State, open: (e: Entry) => void) {
 }
 
 export function mapView(s: State, act: Actions): TemplateResult {
-  const open = (e: Entry) => act.set({ selId: e.album.id, flipped: false, panelOpen: true })
+  const open = (e: Entry) => act.set({ selId: e.album.id, showTracks: false, panelOpen: true })
   const { out, hidden } = pins(s, open)
   const unplaced = s.entries.filter((e) => e.album.lat == null || e.album.lng == null)
   const sel = s.entries.find((e) => e.album.id === s.selId)
@@ -64,8 +64,8 @@ export function mapView(s: State, act: Actions): TemplateResult {
     ${s.panelOpen && sel
       ? html`<aside class="panel">
           <button class="close" aria-label="Luk" @click=${() => act.set({ panelOpen: false })}>×</button>
-          ${cardTemplate(sel.album, sel.n)}
-          ${storyTemplate(sel.album)}
+          ${albumTemplate({ album: sel.album, meetingNumber: sel.n, showTracks: s.showTracks, size: 'medium',
+            onToggle: () => act.set({ showTracks: !s.showTracks }) })}
           ${sel.album.country
             ? html`<p class="muted small">${same ? `${plural(same)} fra ${sel.album.country}` : `Det eneste album fra ${sel.album.country}`}</p>`
             : nothing}

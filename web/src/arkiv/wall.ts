@@ -1,5 +1,5 @@
 import { html, nothing, type TemplateResult } from 'lit-html'
-import { inkFor } from '../card.ts'
+import { albumTemplate } from '../album.ts'
 import { textureUrl } from '../api.ts'
 import { GENRE_ORDER, genreFamily } from '../../../shared/genre.ts'
 import type { Actions, Entry, State } from './main.ts'
@@ -38,25 +38,16 @@ export function columns(sort: Sort, entries: Entry[]): Column[] {
 
 const albumsText = (n: number) => `${n} ${n === 1 ? 'album' : 'albums'}`
 
-function detail(e: Entry | undefined): TemplateResult | typeof nothing {
+function detail(e: Entry | undefined, s: State, act: Actions): TemplateResult | typeof nothing {
   if (!e) return nothing
-  const a = e.album
-  const meta = [`Møde ${e.n}`, a.year, a.origin].filter((v) => v != null && v !== '').join(' · ')
-  return html`<section class="detail" style="--card-bg:${a.cardColor};--card-ink:${inkFor(a.cardColor)}">
-    ${a.coverUrl ? html`<img src=${textureUrl(a.coverUrl, 256)} alt=${label(a)}>` : nothing}
-    <div class="dtext">
-      <div class="kicker">${meta}</div>
-      <div class="dtitle">${a.title}</div>
-      <div>${[a.artist, a.genre].filter(Boolean).join(' · ')}</div>
-    </div>
-    ${a.story ? html`<div class="dstory">“${a.story}”</div>` : nothing}
-  </section>`
+  return html`<section class="detail">${albumTemplate({ album: e.album, meetingNumber: e.n, showTracks: s.showTracks,
+    size: 'medium', onToggle: () => act.set({ showTracks: !s.showTracks }) })}</section>`
 }
 
 export function wallView(s: State, act: Actions): TemplateResult {
   const tile = (e: Entry, badge: boolean) => html`<button class="tile ${badge ? '' : 'mini'}"
     aria-label=${label(e.album)} title=${label(e.album)} aria-current=${e.album.id === s.selId ? 'true' : 'false'}
-    @click=${() => act.set({ selId: e.album.id })}>
+    @click=${() => act.set({ selId: e.album.id, showTracks: false })}>
     ${e.album.coverUrl ? html`<img src=${textureUrl(e.album.coverUrl, 128)} alt="" loading="lazy">` : nothing}
     ${badge ? html`<span class="badge">${e.n === s.latest ? `Nyt · ${e.n}` : e.n}</span>` : nothing}
   </button>`
@@ -70,7 +61,7 @@ export function wallView(s: State, act: Actions): TemplateResult {
       </div>
       <button class="pill outline" @click=${act.surprise}>Overrask mig</button>
     </section>
-    ${detail(s.entries.find((e) => e.album.id === s.selId))}
+    ${detail(s.entries.find((e) => e.album.id === s.selId), s, act)}
     ${s.sort === 'meeting'
       ? html`<section class="grid">${newestFirst.map((e) => tile(e, true))}</section>`
       : html`<section class="columns"><div class="colrow">

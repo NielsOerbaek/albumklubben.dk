@@ -1,5 +1,5 @@
 import * as THREE from 'three'
-import { inkFor } from '../card.ts'
+import { inkFor } from '../album.ts'
 import { at, coverTexture, createBuilder, plane } from '../ps1/build.ts'
 import { ps1Material } from '../ps1/material.ts'
 import { fitText, fontsReady, painted, rng, speckle } from '../ps1/paint.ts'

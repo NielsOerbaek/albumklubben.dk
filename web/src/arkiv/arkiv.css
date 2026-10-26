@@ -12,18 +12,12 @@ body.arkiv { min-height: 100vh; }
 
 /* Hylden */
 .stage { display: flex; flex-wrap: wrap; gap: 0; align-items: stretch; margin-top: 16px; }
-.bigcover { flex: 0 0 auto; width: min(560px, 100%); overflow: hidden; cursor: pointer; background: var(--card-bg); }
-.bigcover > img { width: 100%; aspect-ratio: 1; object-fit: cover; display: block; }
-.nocover { aspect-ratio: 1; padding: 32px; font-size: 22px; }
 .info { flex: 1 1 420px; min-width: 0; display: flex; flex-direction: column; gap: 14px; padding: 4px var(--pad) 20px 32px; }
 .kicker { font-size: 13px; text-transform: uppercase; color: var(--muted);
   display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
 .dot { width: 10px; height: 10px; border-radius: 50%; display: inline-block; }
 .info h1 { margin: 0; font-size: clamp(30px, 2.75vw, 39px); line-height: 1.15; font-weight: 300; overflow-wrap: anywhere; }
 .artist { font-size: 26px; font-weight: 300; }
-.info .album-story { max-width: 620px; margin: 8px 0 0; padding: 20px 24px; border: 0;
-  background: #fff; color: #000; font-style: normal; font-size: 16px; line-height: 1.5; }
-.info .album-story::before { content: '“'; } .info .album-story::after { content: '”'; }
 .buttons { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 8px; }
 .shelfbar { padding: 24px var(--pad) 40px; display: flex; flex-direction: column; gap: 16px; }
 .shelf { display: flex; gap: 22px; overflow-x: auto; padding: 8px 0 14px; align-items: flex-end; }
@@ -52,23 +46,18 @@ body.arkiv { min-height: 100vh; }
 .mapcol p { margin: 0; }
 .unplaced h2 { margin: 8px 0 12px; font-size: 26px; font-weight: 300; }
 .small-cov { width: 56px; height: 56px; outline: 3px solid var(--ring); }
-.panel { flex: 1 1 320px; max-width: 460px; min-width: 0; position: relative; display: flex;
+.panel { flex: 1 1 320px; max-width: 520px; min-width: 0; position: relative; display: flex;
   flex-direction: column; gap: 16px; padding-top: 40px; }
 .panel .close { position: absolute; top: 0; right: 0; width: 32px; height: 32px; border-radius: 50%;
   border: 1px solid #fff; background: transparent; font-size: 20px; line-height: 1; cursor: pointer; }
-.panel .album-story { margin: 0; background: #fff; color: #000; border: 0; padding: 16px 20px; font-style: normal; }
+.panel .album-view { flex-direction: column; align-items: stretch; }
+.panel .album-record { width: 100%; }
 .panel p { margin: 0; }
 
 /* Væggen */
 .sortbar { padding: 20px var(--pad) 0; display: flex; flex-wrap: wrap; gap: 24px; align-items: center;
   justify-content: space-between; }
-.detail { margin: 20px var(--pad) 0; padding: 18px; background: var(--card-bg);
-  color: var(--card-ink); display: flex; gap: 20px; align-items: center; flex-wrap: wrap; }
-.detail img { width: 88px; height: 88px; object-fit: cover; display: block; }
-.dtext { flex: 1 1 360px; min-width: 0; display: flex; flex-direction: column; gap: 4px; }
-.detail .kicker { font-size: 13px; color: inherit; opacity: .85; }
-.dtitle { font-size: 26px; font-weight: 300; overflow-wrap: anywhere; }
-.dstory { flex: 1 1 360px; min-width: 0; font-size: 15px; line-height: 1.45; }
+.detail { margin: 20px var(--pad) 0; }
 .grid { padding: 20px var(--pad) 48px; display: grid; gap: 6px;
   grid-template-columns: repeat(auto-fill, minmax(112px, 1fr)); }
 .tile { position: relative; padding: 0; overflow: hidden; cursor: pointer;

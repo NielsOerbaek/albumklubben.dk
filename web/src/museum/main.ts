@@ -3,7 +3,7 @@ import { render } from 'lit-html'
 import '../base.css'
 import './museum.css'
 import { fetchArchive, textureUrl } from '../api.ts'
-import { recordOverlay } from '../record.ts'
+import { albumDialog } from '../album.ts'
 import { topBarTemplate } from '../topbar.ts'
 import { createPs1Renderer } from '../ps1/renderer.ts'
 import { createWalkControls } from '../ps1/controls.ts'
@@ -50,7 +50,7 @@ async function start() {
   const videos = createVideoWall(museum.videoPosters)
   const player = (): Player => ({ x: camera.position.x, z: camera.position.z, yaw: camera.rotation.y })
 
-  let open: { album: Album; flipped: boolean } | null = null
+  let open: { album: Album; showTracks: boolean } | null = null
   let aimed: CoverView | null = null
   let entered = false
   let prompt: string | null = null
@@ -69,17 +69,17 @@ async function start() {
 
   function drawOverlay() {
     if (!open) return showOverlay(null)
-    const { album, flipped } = open
-    showOverlay(recordOverlay({
-      album, flipped, meetingNumber: meetingNumber.get(album.meetingId)!,
-      help: 'Klik på pladen for at vende den · Esc for at lukke',
-      onTurn: () => { open!.flipped = !open!.flipped; drawOverlay() },
+    const { album, showTracks } = open
+    showOverlay(albumDialog({
+      album, showTracks, meetingNumber: meetingNumber.get(album.meetingId)!,
+      help: 'Esc for at lægge den tilbage',
+      onToggle: () => { open!.showTracks = !open!.showTracks; drawOverlay() },
       onClose: close,
     }))
   }
 
   function openCover(cover: CoverView) {
-    open = { album: cover.item.album!, flipped: true }
+    open = { album: cover.item.album!, showTracks: false }
     controls.unlock()
     setPrompt(null)
     drawOverlay()

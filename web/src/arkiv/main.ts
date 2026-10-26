@@ -18,7 +18,7 @@ export interface State {
   /** Number of the latest meeting with albums. */
   latest: number | null
   selId: number | null
-  flipped: boolean
+  showTracks: boolean
   filter: Filter
   mapView: MapView
   panelOpen: boolean
@@ -35,7 +35,7 @@ const TABS = [['hylden', 'Hylden'], ['kortet', 'Kortet'], ['vaeggen', 'Væggen']
 type Tab = (typeof TABS)[number][0]
 
 const state: State = {
-  entries: [], latest: null, selId: null, flipped: false, filter: 'alle', mapView: 'world', panelOpen: false, sort: 'meeting',
+  entries: [], latest: null, selId: null, showTracks: false, filter: 'alle', mapView: 'world', panelOpen: false, sort: 'meeting',
 }
 let status: 'loading' | 'error' | 'ready' = 'loading'
 let scrollToSelected = false
@@ -57,7 +57,7 @@ function subtitle(tab: Tab): string {
 
 const actions: Actions = {
   select(id) {
-    Object.assign(state, { selId: id, flipped: false })
+    Object.assign(state, { selId: id, showTracks: false })
     scrollToSelected = true
     draw()
   },

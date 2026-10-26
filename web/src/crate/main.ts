@@ -3,7 +3,7 @@ import { render } from 'lit-html'
 import '../base.css'
 import './crate.css'
 import { fetchArchive } from '../api.ts'
-import { recordOverlay } from '../record.ts'
+import { albumDialog } from '../album.ts'
 import { topBarTemplate } from '../topbar.ts'
 import { createPs1Renderer } from '../ps1/renderer.ts'
 import { createWalkControls } from '../ps1/controls.ts'
@@ -54,7 +54,7 @@ async function start() {
   const controls = createWalkControls(camera, canvas, { boxes: layout.boxes })
 
   let target: CrateView | null = null
-  let pulled: { album: Album; flipped: boolean } | null = null
+  let pulled: { album: Album; showTracks: boolean } | null = null
   let entered = false
 
   const walking = (on: boolean) => document.body.classList.toggle('walking', on)
@@ -66,11 +66,11 @@ async function start() {
 
   function drawOverlay() {
     if (!pulled) return showOverlay(null)
-    const { album, flipped } = pulled
-    showOverlay(recordOverlay({
-      album, flipped, meetingNumber: meetingNumber.get(album.meetingId)!,
-      help: 'Klik på pladen for at vende den · Esc for at lægge den tilbage',
-      onTurn: () => { pulled!.flipped = !pulled!.flipped; drawOverlay() },
+    const { album, showTracks } = pulled
+    showOverlay(albumDialog({
+      album, showTracks, meetingNumber: meetingNumber.get(album.meetingId)!,
+      help: 'Esc for at lægge den tilbage',
+      onToggle: () => { pulled!.showTracks = !pulled!.showTracks; drawOverlay() },
       onClose: putBack,
     }))
   }
@@ -78,7 +78,7 @@ async function start() {
   function pullOut() {
     const album = target?.frontAlbum()
     if (!album) return
-    pulled = { album, flipped: false }
+    pulled = { album, showTracks: false }
     showPrompt(null)
     controls.unlock()
     drawOverlay()

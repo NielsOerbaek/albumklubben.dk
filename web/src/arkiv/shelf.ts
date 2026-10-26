@@ -1,5 +1,5 @@
 import { html, nothing, type TemplateResult } from 'lit-html'
-import { cardTemplate, storyTemplate } from '../card.ts'
+import { albumTemplate } from '../album.ts'
 import { textureUrl } from '../api.ts'
 import type { Actions, Entry, State } from './main.ts'
 
@@ -47,25 +47,17 @@ export function shelfView(s: State, act: Actions): TemplateResult {
     ['alle', `Alle ${entries.length}`], ['nostalgi', 'Nostalgialbums'], ['dk', 'Danske'], ['old', 'Før 2000'],
   ]
   if (recent.length) filters.push(['recent', recentLabel(recent)])
-  const flip = () => act.set({ flipped: !s.flipped })
+  const flip = () => act.set({ showTracks: !s.showTracks })
   const meta = [album.year, album.country].filter((v) => v != null && v !== '').join(' · ')
 
   return html`<main class="stage">
-      <div class="bigcover" role="button" tabindex="0" aria-pressed=${s.flipped} aria-label="Vend kortet"
-        style="--card-bg:${album.cardColor}" @click=${flip}
-        @keydown=${(e: KeyboardEvent) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); flip() } }}>
-        ${s.flipped
-          ? cardTemplate(album, n)
-          : album.coverUrl ? html`<img src=${album.coverUrl} alt=${label(album)}>` : html`<div class="nocover">${label(album)}</div>`}
-      </div>
+      ${albumTemplate({ album, meetingNumber: n, showTracks: s.showTracks, onToggle: flip })}
       <section class="info">
         <div class="kicker">Møde ${n} <i class="dot" style="background:${album.cardColor}"></i> ${meta}</div>
         <h1>${album.title}</h1>
         <div class="artist">${album.artist}</div>
-        ${storyTemplate(album)}
         <div class="buttons">
           <button class="pill" @click=${() => go(idx - 1)}>← Forrige</button>
-          <button class="pill solid" @click=${flip}>${s.flipped ? 'Vis coveret' : 'Vend kortet'}</button>
           <button class="pill" @click=${() => go(idx + 1)}>Næste →</button>
           <button class="pill outline" @click=${act.surprise}>Overrask mig</button>
         </div>
