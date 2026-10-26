@@ -8,19 +8,14 @@ import { posterDialog } from '../poster.ts'
 import { topBarTemplate } from '../topbar.ts'
 import { createPs1Renderer } from '../ps1/renderer.ts'
 import { createWalkControls } from '../ps1/controls.ts'
-import { createVideoWall, nearestInView, type Player } from '../ps1/video.ts'
 import { FIRST_HINT, showHint, showOverlay, showPrompt, smallScreenGuard } from '../ps1/hud.ts'
-import { buildClubLayout, type PosterSlot } from './layout.ts'
+import { buildClubLayout } from './layout.ts'
 import { buildClub, type CrateView } from './scene.ts'
-import type { Album, Meeting } from '../../../shared/types.ts'
+import type { Album, Meeting, Poster } from '../../../shared/types.ts'
 
 const REACH = 1.4 // metres from a crate's centre
 const FACING = Math.cos(THREE.MathUtils.degToRad(35))
 const PROMPT = 'Klik eller scroll for at bladre · E for at tage pladen op'
-const POSTER_PROMPT = 'Klik eller E for at se plakaten'
-const POSTER_REACH = 2.2 // metres to a poster, on the floor plan
-const POSTER_ANGLE = 25 // degrees either side of where you look
-const POSTER_SLACK = 0.3 // metres above and below a poster that still count as looking at it
 const AGAIN = 'Klik for at gå videre'
 
 render(topBarTemplate('klubhus'), document.getElementById('app')!)
@@ -46,15 +41,6 @@ function crateInView(crates: CrateView[], camera: THREE.PerspectiveCamera): Crat
   return best
 }
 
-/** The poster you look at: near, in front, and with your gaze landing on it (or just off it). */
-function posterInView(slots: PosterSlot[], camera: THREE.PerspectiveCamera): PosterSlot | null {
-  const { x, y, z } = camera.position
-  const player: Player = { x, z, yaw: camera.rotation.y }
-  const rise = Math.tan(camera.rotation.x)
-  const aimed = slots.filter((s) => Math.abs(y + rise * Math.hypot(s.x - x, s.z - z) - s.y) <= s.height / 2 + POSTER_SLACK)
-  return nearestInView(player, aimed, POSTER_REACH, POSTER_ANGLE)
-}
-
 async function start() {
   showHint('Henter pladerne')
   const archive = await fetchArchive()
@@ -68,13 +54,10 @@ async function start() {
   camera.rotation.set(-0.12, layout.spawn.yaw, 0, 'YXZ')
   const controls = createWalkControls(camera, canvas, { boxes: layout.boxes })
 
-  const wall = createVideoWall(club.posterMeshes)
-
-  // What you aim at: a crate in reach wins over a poster.
+  // What you aim at: a crate in reach.
   let target: CrateView | null = null
-  let aimed: PosterSlot | null = null
   // The open dialogs: a poster, an album over it (or a record pulled from a crate), or both.
-  let poster: { slot: PosterSlot; meeting: Meeting } | null = null
+  let poster: { poster: Poster; meeting: Meeting } | null = null
   let pulled: { album: Album; showTracks: boolean } | null = null
   let entered = false
   const open = () => !!(poster || pulled)
@@ -85,11 +68,8 @@ async function start() {
     entered ||= locked
     showPrompt(locked || open() || !entered ? null : AGAIN)
     // The first locked frame may come before this event; aim afresh so the prompt comes back.
-    target = aimed = null
-    if (!locked) wall.update(null)
+    target = null
   })
-  // A hidden tab runs no frames, so the loop below cannot pause the wall's video itself.
-  document.addEventListener('visibilitychange', () => { if (document.hidden) wall.update(null) })
 
   function drawOverlay() {
     if (pulled) {
@@ -104,7 +84,7 @@ async function start() {
     }
     if (poster) {
       return showOverlay(posterDialog({
-        poster: poster.slot.poster,
+        poster: poster.poster,
         meeting: poster.meeting,
         onAlbum: (album) => { pulled = { album, showTracks: false }; drawOverlay() },
         onClose: closeAll,
@@ -126,8 +106,8 @@ async function start() {
     openDialog()
   }
 
-  function openPoster(slot: PosterSlot) {
-    poster = { slot, meeting: meetingById.get(slot.poster.meetingId)! }
+  function openPoster(p: Poster) {
+    poster = { poster: p, meeting: meetingById.get(p.meetingId)! }
     openDialog()
   }
 
@@ -149,7 +129,6 @@ async function start() {
   let clickFlipped: CrateView | null = null
   canvas.addEventListener('click', (e) => {
     if (!controls.isLocked() || e.detail > 1) return
-    if (!target && aimed) return openPoster(aimed)
     clickFlipped = target
     target?.flip(1)
   })
@@ -174,10 +153,8 @@ async function start() {
   }, { passive: false })
 
   document.addEventListener('keydown', (e) => {
-    if (e.code === 'KeyE' && controls.isLocked()) {
-      if (target) pullOut()
-      else if (aimed) openPoster(aimed)
-    } else if (e.code === 'Escape' && open()) closeTop()
+    if (e.code === 'KeyE' && controls.isLocked()) pullOut()
+    else if (e.code === 'Escape' && open()) closeTop()
   })
 
   showHint(FIRST_HINT)
@@ -190,12 +167,9 @@ async function start() {
     const locked = controls.isLocked()
     if (locked) {
       const crate = crateInView(club.crates, camera)
-      const slot = crate ? null : posterInView(layout.posters, camera)
-      if (crate !== target || slot !== aimed) showPrompt(crate ? PROMPT : slot ? POSTER_PROMPT : null)
+      if (crate !== target) showPrompt(crate ? PROMPT : null)
       target = crate
-      aimed = slot
-    } else target = aimed = null
-    wall.update(locked && !document.hidden ? { x: camera.position.x, z: camera.position.z, yaw: camera.rotation.y } : null)
+    } else target = null
     draw(club.scene, camera)
     requestAnimationFrame(loop)
   })

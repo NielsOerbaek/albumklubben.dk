@@ -7,13 +7,15 @@ import type { Album } from '../../../shared/types.ts'
 // Geometry helpers. Large faces are subdivided so the affine texture warp stays small.
 
 /** Shared PS1 materials for one fog setting, and boxes shaded with them. */
-export function createBuilder(fog: { fogColor: THREE.ColorRepresentation; fogNear: number; fogFar: number }) {
+export function createBuilder(fogged: { fogColor: THREE.ColorRepresentation; fogNear: number; fogFar: number }) {
   const mats = new Map<string, THREE.ShaderMaterial>()
-  function mat(color: THREE.ColorRepresentation, map: THREE.Texture | null = null, shade = 1, decal = false) {
+  const unfogged = { ...fogged, fogNear: 1e6, fogFar: 2e6 } // never reached
+  /** `fog: false` leaves the fog off (for something that glows: a tube, a screen, daylight). */
+  function mat(color: THREE.ColorRepresentation, map: THREE.Texture | null = null, shade = 1, decal = false, fog = true) {
     const c = new THREE.Color(color).multiplyScalar(shade)
-    const key = `${c.getHexString()}|${map?.uuid ?? ''}|${decal}`
+    const key = `${c.getHexString()}|${map?.uuid ?? ''}|${decal}|${fog}`
     let m = mats.get(key)
-    if (!m) mats.set(key, m = ps1Material({ map, color: c, decal, ...fog }))
+    if (!m) mats.set(key, m = ps1Material({ map, color: c, decal, ...(fog ? fogged : unfogged) }))
     return m
   }
 
