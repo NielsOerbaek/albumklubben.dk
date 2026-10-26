@@ -124,7 +124,8 @@ async function start() {
   /** Back to where you stood; the book shuts once you are there. */
   function closeBook() {
     if (!book.isOpen() || !standing) return
-    if (ease) { closeAfterEase = true; return } // still opening: close once there
+    // Still opening: close once there. (While closing, the ease runs to `standing` itself.)
+    if (ease) { if (ease.to !== standing) closeAfterEase = true; return }
     closeAfterEase = false
     controls.setLookRange(null)
     easeTo(standing, () => {

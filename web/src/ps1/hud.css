@@ -36,11 +36,11 @@
   position: absolute;
   left: 50%;
   top: 50%;
-  width: 6px;
-  height: 6px;
+  width: 8px;
+  height: 8px;
   translate: -50% -50%;
   background: #fff;
-  box-shadow: 0 0 0 1px #000;
+  box-shadow: 0 0 0 2px #000;
 }
 
 .ps1-overlay {

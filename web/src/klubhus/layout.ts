@@ -112,8 +112,9 @@ export function buildClubLayout(meetings: Meeting[]): ClubLayout {
   const colZ = Array.from({ length: n }, (_, i) => z0 - (i + 0.5) * COLUMN_PITCH)
   const columns = colZ.flatMap((z) => [-1, 1].map((s) => ({ x: s * (hw - COLUMN_SIZE / 2), z })))
 
-  // The far end: stairs in the +X corner, the screen in front of them facing the door.
-  const stairs: Box2 = { minX: 1, maxX: hw - COLUMN_SIZE, minZ: -hl, maxZ: -hl + 2.6 }
+  // The far end: stairs in the +X corner, the screen in front of them facing the door. The flight
+  // climbs along X from the room's middle, a long and shallow run (about 35°) as in photo 7.
+  const stairs: Box2 = { minX: -0.9, maxX: hw - COLUMN_SIZE, minZ: -hl, maxZ: -hl + 2.6 }
   const screen = { x: 2.5, z: -hl + 3.1, w: 1.6, h: 0.9 }
   const stand = box(screen.x, screen.z, screen.w + 0.1, 0.5)
 

@@ -266,8 +266,11 @@ function buildCeiling(scene: THREE.Scene, { width: W, length: L, ceiling: H, sta
     }
   }
 
-  // Thin sprinkler pipes along the room, just under the beams.
-  for (const x of [-0.7, 0.9]) scene.add(at(litBox(0.05, 0.05, L, '#8e9396', null, CEILING_LIT), x, beamBottom - 0.04, 0))
+  // Thin sprinkler pipes along the room, just under the beams; they stop short of the stair glass.
+  for (const x of [-0.7, 0.9]) {
+    const end = inWell(x, x, wellZ - 0.01) ? wellZ + 0.4 : -hl
+    scene.add(at(litBox(0.05, 0.05, hl - end, '#8e9396', null, CEILING_LIT), x, beamBottom - 0.04, (hl + end) / 2))
+  }
 
   // Fluorescent tubes across the room, in every other gap between the beams: two long runs each,
   // a white glowing tube under a slim grey housing.
