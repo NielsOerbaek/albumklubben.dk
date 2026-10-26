@@ -80,10 +80,8 @@ describe('buildClubLayout', () => {
     }
     for (let i = 1; i < l.crates.length; i++) expect(l.crates[i].z).toBeLessThan(l.crates[i - 1].z)
     expect(l.crates[0].z).toBeGreaterThan(l.length / 2 - 6)
-    for (const [name, ms] of cases) {
-      const lo = buildClubLayout(ms)
-      if (!lo.latest) expect(lo.crates, name).toHaveLength(0)
-    }
+    expect(buildClubLayout([]).crates).toHaveLength(0)
+    expect(buildClubLayout(meetings([1])).crates.map((c) => c.id)).toEqual(['nyt', 'Pop-1'])
   })
 
   it('lengthens the table and the room as albums arrive, never shortening', () => {
@@ -97,6 +95,8 @@ describe('buildClubLayout', () => {
       const t = l.table.maxZ - l.table.minZ
       expect(l.length).toBeGreaterThanOrEqual(prevLen)
       expect(t).toBeGreaterThanOrEqual(prevTable)
+      expect(l.table.maxZ).toBeCloseTo(l.length / 2 - 3.2)
+      expect(l.table.minZ).toBeCloseTo(-l.length / 2 + 3)
       prevLen = l.length
       prevTable = t
       grown.push(l.length)
@@ -127,6 +127,10 @@ describe('buildClubLayout', () => {
       expect(f.to - f.from, name).toBeGreaterThanOrEqual(1.5)
       expect(f.to, name).toBeGreaterThan(l.length / 2 - 4)
       for (const s of l.shelves) expect(s.z1 <= f.from || s.z0 >= f.to, name).toBe(true)
+      for (const c of l.columns) expect(c.z + 0.225 <= f.from || c.z - 0.225 >= f.to || c.x < 0, name).toBe(true)
+      for (const b of l.boxes.slice(WALLS)) {
+        if (b.maxX > l.width / 2 - 0.5) expect(b.maxZ <= f.from || b.minZ >= f.to, name).toBe(true)
+      }
     }
   })
 

@@ -52,7 +52,7 @@ export const TABLE = { w: 1, h: 0.75 }
 export const BENCH = { d: 0.5, h: 0.45 }
 const CEILING = 3.4
 const WIDTH = 9
-const MIN_LENGTH = 22 // a near-empty club still reads as the long room (2.4x its width)
+const MIN_LENGTH = 18 // a near-empty club still reads as the long room (2x its width)
 const COLUMN_PITCH = 3
 const WALL_T = 0.3
 const CRATE_PITCH = 0.7 // crate centres along the table
@@ -60,10 +60,8 @@ const CRATE_END = 0.4 // the table's door end to the first crate's edge
 const BOOK = { w: 0.7, d: 0.5 }
 const BOOK_END = 0.3 // the table's far end to the book
 const BOOK_ZONE = BOOK_END + BOOK.d + 0.15 // far end to the nearest crate edge
-const MIN_TABLE = 6
 const DOOR_END = 3.2 // the door wall to the table's near end
 const FAR_END = 3 // the table's far end to the far wall
-const FREE_WALL = { from: 0.5, to: 3 } // distances from the door wall
 const STRIP_X = { from: -1.6, to: 0.8 } // the floor collage's strip, between table and chairs
 const COLLAGE_DEPTHS = [1.6, 1.2, 0.8, 1.4]
 
@@ -89,14 +87,16 @@ export function buildClubLayout(meetings: Meeting[]): ClubLayout {
   const latest = latestMeetingWithAlbums(meetings) ?? null
   const crateCount = genre.length + (latest ? 1 : 0)
 
-  // The table grows with the crates; the room follows it.
-  const tableLen = Math.max(MIN_TABLE, CRATE_END + crateCount * CRATE_PITCH + BOOK_ZONE)
-  const length = Math.max(MIN_LENGTH, DOOR_END + tableLen + FAR_END)
+  // The crates need a table length; the room follows it, and the table then spans the room
+  // from DOOR_END to FAR_END off the far wall (crates pack from the door end, the book sits at the far end).
+  const needed = CRATE_END + crateCount * CRATE_PITCH + BOOK_ZONE
+  const length = Math.max(MIN_LENGTH, DOOR_END + needed + FAR_END)
+  const tableLen = length - DOOR_END - FAR_END
   const hw = WIDTH / 2
   const hl = length / 2
 
   const windowBench: Box2 = { minX: -hw + COLUMN_SIZE, maxX: -hw + COLUMN_SIZE + BENCH.d, minZ: -hl, maxZ: hl }
-  const tableX0 = windowBench.maxX + 0.5
+  const tableX0 = windowBench.maxX + 0.5 // the 0.5 m between bench and table is dead floor
   const table: Box2 = { minX: tableX0, maxX: tableX0 + TABLE.w, minZ: hl - DOOR_END - tableLen, maxZ: hl - DOOR_END }
   const tableX = tableX0 + TABLE.w / 2
 
@@ -124,7 +124,8 @@ export function buildClubLayout(meetings: Meeting[]): ClubLayout {
   const chairs = [zs + 1, zs + 4].map((z) => box(1.4, z, 0.8, 0.8))
   const coffeeTable = box(2.3, zs + 2.5, 0.6, 1.2)
 
-  const freeWall = { wall: '+X' as const, from: hl - FREE_WALL.to, to: hl - FREE_WALL.from }
+  // The free wall is the whole first bay from the door: the bare stretch between the two columns nearest it.
+  const freeWall = { wall: '+X' as const, from: colZ[1] + COLUMN_SIZE / 2, to: colZ[0] - COLUMN_SIZE / 2 }
   const shelves = colZ.slice(0, -1).map((z, i) => ({ z0: colZ[i + 1] + COLUMN_SIZE / 2, z1: z - COLUMN_SIZE / 2 }))
     .filter((b) => b.z1 <= freeWall.from && b.z0 >= stairs.maxZ)
 
