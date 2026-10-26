@@ -4,17 +4,23 @@ import '../base.css'
 import './klubhus.css'
 import { fetchArchive } from '../api.ts'
 import { albumDialog } from '../album.ts'
+import { posterDialog } from '../poster.ts'
 import { topBarTemplate } from '../topbar.ts'
 import { createPs1Renderer } from '../ps1/renderer.ts'
 import { createWalkControls } from '../ps1/controls.ts'
+import { createVideoWall, nearestInView, type Player } from '../ps1/video.ts'
 import { FIRST_HINT, showHint, showOverlay, showPrompt, smallScreenGuard } from '../ps1/hud.ts'
-import { buildClubLayout } from './layout.ts'
+import { buildClubLayout, type PosterSlot } from './layout.ts'
 import { buildClub, type CrateView } from './scene.ts'
-import type { Album } from '../../../shared/types.ts'
+import type { Album, Meeting } from '../../../shared/types.ts'
 
 const REACH = 1.4 // metres from a crate's centre
 const FACING = Math.cos(THREE.MathUtils.degToRad(35))
 const PROMPT = 'Klik eller scroll for at bladre · E for at tage pladen op'
+const POSTER_PROMPT = 'Klik eller E for at se plakaten'
+const POSTER_REACH = 2.2 // metres to a poster, on the floor plan
+const POSTER_ANGLE = 25 // degrees either side of where you look
+const POSTER_SLACK = 0.3 // metres above and below a poster that still count as looking at it
 const AGAIN = 'Klik for at gå videre'
 
 render(topBarTemplate('klubhus'), document.getElementById('app')!)
@@ -40,12 +46,21 @@ function crateInView(crates: CrateView[], camera: THREE.PerspectiveCamera): Crat
   return best
 }
 
+/** The poster you look at: near, in front, and with your gaze landing on it (or just off it). */
+function posterInView(slots: PosterSlot[], camera: THREE.PerspectiveCamera): PosterSlot | null {
+  const { x, y, z } = camera.position
+  const player: Player = { x, z, yaw: camera.rotation.y }
+  const rise = Math.tan(camera.rotation.x)
+  const aimed = slots.filter((s) => Math.abs(y + rise * Math.hypot(s.x - x, s.z - z) - s.y) <= s.height / 2 + POSTER_SLACK)
+  return nearestInView(player, aimed, POSTER_REACH, POSTER_ANGLE)
+}
+
 async function start() {
   showHint('Henter pladerne')
   const archive = await fetchArchive()
   const layout = buildClubLayout(archive.meetings)
   const club = await buildClub(layout)
-  const meetingNumber = new Map(archive.meetings.map((m) => [m.id, m.number]))
+  const meetingById = new Map(archive.meetings.map((m) => [m.id, m]))
 
   const { render: draw } = createPs1Renderer(canvas)
   const camera = new THREE.PerspectiveCamera(70, 1, 0.05, 40)
@@ -53,39 +68,76 @@ async function start() {
   camera.rotation.set(-0.12, layout.spawn.yaw, 0, 'YXZ')
   const controls = createWalkControls(camera, canvas, { boxes: layout.boxes })
 
+  const wall = createVideoWall(club.posterMeshes)
+
+  // What you aim at: a crate in reach wins over a poster.
   let target: CrateView | null = null
+  let aimed: PosterSlot | null = null
+  // The open dialogs: a poster, an album over it (or a record pulled from a crate), or both.
+  let poster: { slot: PosterSlot; meeting: Meeting } | null = null
   let pulled: { album: Album; showTracks: boolean } | null = null
   let entered = false
+  const open = () => !!(poster || pulled)
 
   const walking = (on: boolean) => document.body.classList.toggle('walking', on)
   controls.onLockChange((locked) => {
     walking(locked)
     entered ||= locked
-    showPrompt(locked || pulled || !entered ? null : AGAIN)
+    showPrompt(locked || open() || !entered ? null : AGAIN)
+    // The first locked frame may come before this event; aim afresh so the prompt comes back.
+    target = aimed = null
   })
 
   function drawOverlay() {
-    if (!pulled) return showOverlay(null)
-    const { album, showTracks } = pulled
-    showOverlay(albumDialog({
-      album, showTracks, meetingNumber: meetingNumber.get(album.meetingId)!,
-      help: 'Esc for at lægge den tilbage',
-      onToggle: () => { pulled!.showTracks = !pulled!.showTracks; drawOverlay() },
-      onClose: putBack,
-    }))
+    if (pulled) {
+      const { album, showTracks } = pulled
+      return showOverlay(albumDialog({
+        album, showTracks, meetingNumber: meetingById.get(album.meetingId)!.number,
+        help: poster ? 'Esc for at gå tilbage til plakaten' : 'Esc for at lægge den tilbage',
+        onToggle: () => { pulled!.showTracks = !pulled!.showTracks; drawOverlay() },
+        onClose: closeAll,
+        onBack: poster ? closeTop : undefined,
+      }))
+    }
+    if (poster) {
+      return showOverlay(posterDialog({
+        poster: poster.slot.poster,
+        meeting: poster.meeting,
+        onAlbum: (album) => { pulled = { album, showTracks: false }; drawOverlay() },
+        onClose: closeAll,
+      }))
+    }
+    showOverlay(null)
+  }
+
+  function openDialog() {
+    showPrompt(null)
+    controls.unlock()
+    drawOverlay()
   }
 
   function pullOut() {
     const album = target?.frontAlbum()
     if (!album) return
     pulled = { album, showTracks: false }
-    showPrompt(null)
-    controls.unlock()
-    drawOverlay()
+    openDialog()
   }
 
-  function putBack() {
-    pulled = null
+  function openPoster(slot: PosterSlot) {
+    poster = { slot, meeting: meetingById.get(slot.poster.meetingId)! }
+    openDialog()
+  }
+
+  /** Esc and Tilbage: the album goes back to its poster; the last dialog closes. */
+  function closeTop() {
+    if (pulled) pulled = null
+    else poster = null
+    drawOverlay()
+    if (!open()) showPrompt(AGAIN)
+  }
+
+  function closeAll() {
+    pulled = poster = null
     drawOverlay()
     showPrompt(AGAIN)
   }
@@ -94,6 +146,7 @@ async function start() {
   let clickFlipped: CrateView | null = null
   canvas.addEventListener('click', (e) => {
     if (!controls.isLocked() || e.detail > 1) return
+    if (!target && aimed) return openPoster(aimed)
     clickFlipped = target
     target?.flip(1)
   })
@@ -118,8 +171,10 @@ async function start() {
   }, { passive: false })
 
   document.addEventListener('keydown', (e) => {
-    if (e.code === 'KeyE' && controls.isLocked() && target) pullOut()
-    else if (e.code === 'Escape' && pulled) putBack()
+    if (e.code === 'KeyE' && controls.isLocked()) {
+      if (target) pullOut()
+      else if (aimed) openPoster(aimed)
+    } else if (e.code === 'Escape' && open()) closeTop()
   })
 
   showHint(FIRST_HINT)
@@ -129,15 +184,23 @@ async function start() {
     last = now
     controls.update(dt)
     club.update(dt, camera.position)
-    if (controls.isLocked()) {
-      const next = crateInView(club.crates, camera)
-      if (next !== target) showPrompt(next ? PROMPT : null)
-      target = next
-    } else target = null
+    const locked = controls.isLocked()
+    if (locked) {
+      const crate = crateInView(club.crates, camera)
+      const slot = crate ? null : posterInView(layout.posters, camera)
+      if (crate !== target || slot !== aimed) showPrompt(crate ? PROMPT : slot ? POSTER_PROMPT : null)
+      target = crate
+      aimed = slot
+    } else target = aimed = null
+    wall.update(locked && !document.hidden ? { x: camera.position.x, z: camera.position.z, yaw: camera.rotation.y } : null)
     draw(club.scene, camera)
     requestAnimationFrame(loop)
   })
 
   // For the screenshot script and the browser console.
-  if (import.meta.env.DEV) Object.assign(window, { __crate: { camera, controls, club, layout, pullOut: (c: CrateView) => { target = c; pullOut() } } })
+  if (import.meta.env.DEV) Object.assign(window, { __club: {
+    camera, controls, club, layout,
+    pullOut: (c: CrateView) => { target = c; pullOut() },
+    openPoster,
+  } })
 }

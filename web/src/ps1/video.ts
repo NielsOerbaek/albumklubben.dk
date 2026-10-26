@@ -24,7 +24,7 @@ export function nearestInView<T extends Placed>(player: Player, things: T[], max
 }
 
 /** The poster whose video should play: the nearest one with a video in front of the player. */
-export function pickActiveVideo(player: Player, items: Placed[], maxDist = 3, maxAngleDeg = 50): Placed | null {
+export function pickActiveVideo<T extends Placed>(player: Player, items: T[], maxDist = 3, maxAngleDeg = 50): T | null {
   return nearestInView(player, items.filter((i) => i.videoUrl), maxDist, maxAngleDeg)
 }
 
@@ -87,7 +87,7 @@ export function createVideoWall<T extends Placed>(posters: VideoPoster<T>[]) {
   return {
     update(player: Player | null) {
       const item = player && pickActiveVideo(player, items)
-      const next = item ? byItem.get(item as T)! : null
+      const next = item ? byItem.get(item)! : null
       if (next !== active) {
         if (active) still(active)
         active = next

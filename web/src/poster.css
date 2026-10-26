@@ -1,0 +1,55 @@
+/* A poster over the page: the full image (and its video) beside the meeting and its albums. */
+.poster-dialog {
+  position: fixed;
+  inset: 0;
+  z-index: 50;
+  overflow-y: auto;
+  padding: calc(var(--bar, 48px) + 24px) var(--pad, 24px) 40px;
+  background: rgb(0 0 0 / 0.82);
+  pointer-events: auto;
+  font-family: var(--font);
+  font-weight: 300;
+  color: #fff;
+}
+.poster-dialog-inner { width: min(1100px, 100%); margin: 0 auto; }
+.poster-dialog-bar { display: flex; justify-content: flex-end; align-items: center; min-height: 36px; margin-bottom: 12px; }
+.poster-close {
+  width: 36px; height: 36px;
+  border: 1px solid #fff; border-radius: 50%;
+  background: none; color: #fff; font-size: 22px; line-height: 1; cursor: pointer;
+}
+
+.poster-view { display: flex; flex-wrap: wrap; gap: 32px; align-items: flex-start; }
+/* As wide as the image, which fits the screen's height; the video under it takes that width
+   (width 0 so its own size does not widen the column). */
+.poster-media { flex: 0 1 auto; max-width: 100%; display: flex; flex-direction: column; gap: 16px; }
+.poster-image, .poster-video { display: block; border-radius: 0; background: #000; }
+.poster-image { max-width: 600px; max-height: calc(100vh - var(--bar, 48px) - 100px); }
+.poster-media.has-video .poster-image { max-height: 56vh; }
+.poster-video { width: 0; min-width: 100%; }
+
+.poster-text { flex: 1 1 280px; min-width: 260px; max-width: 620px; line-height: 1.4; font-size: 16px; }
+.poster-text p { margin: 0; }
+.poster-meta h3 { margin: 0; font-size: 1.35em; font-weight: 600; }
+.poster-date { margin-top: 0.3em !important; }
+.poster-theme, .poster-caption { margin-top: 0.3em !important; color: var(--muted-on-black, #9ca3af); }
+.poster-about { margin-top: 1.6em; }
+.poster-about p + p { margin-top: 0.8em; }
+
+.poster-albums { margin-top: 2em; }
+.poster-albums h4 { margin: 0 0 0.8em; font-size: 1em; font-weight: 600; }
+.poster-albums ul { display: grid; grid-template-columns: repeat(auto-fill, minmax(110px, 1fr)); gap: 10px; margin: 0; padding: 0; list-style: none; }
+.poster-albums button {
+  display: block; width: 100%; aspect-ratio: 1; padding: 0;
+  border: 0; border-radius: 0; background: #111; color: #fff; cursor: pointer; overflow: hidden;
+  font: inherit; text-align: left;
+}
+.poster-albums button:hover, .poster-albums button:focus-visible { outline: 1px solid #fff; outline-offset: 2px; }
+.poster-albums img { display: block; width: 100%; height: 100%; object-fit: cover; }
+.poster-nocover { display: block; padding: 8px; font-size: 12px; line-height: 1.25; overflow-wrap: break-word; }
+
+@media (max-width: 700px) {
+  .poster-media { width: 100%; }
+  .poster-image { max-width: 100%; max-height: none; width: 100%; }
+  .poster-text { min-width: 0; }
+}

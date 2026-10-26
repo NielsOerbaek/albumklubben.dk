@@ -52,5 +52,5 @@
   text-align: center;
 }
 
-/* The album dialog brings its own backdrop. */
-.ps1-overlay:has(.album-dialog) { background: none; }
+/* The album and poster dialogs bring their own backdrop. */
+.ps1-overlay:has(.album-dialog, .poster-dialog) { background: none; }
