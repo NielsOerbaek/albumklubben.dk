@@ -10,6 +10,7 @@ import { createPs1Renderer } from '../ps1/renderer.ts'
 import { createWalkControls } from '../ps1/controls.ts'
 import { FIRST_HINT, showHint, showOverlay, showPrompt, smallScreenGuard } from '../ps1/hud.ts'
 import { buildClubLayout } from './layout.ts'
+import { bookSpreads } from './book.ts'
 import { buildClub, type CrateView } from './scene.ts'
 import type { Album, Meeting, Poster } from '../../../shared/types.ts'
 
@@ -45,7 +46,7 @@ async function start() {
   showHint('Henter pladerne')
   const archive = await fetchArchive()
   const layout = buildClubLayout(archive.meetings)
-  const club = await buildClub(layout)
+  const club = await buildClub(layout, bookSpreads(archive.meetings))
   const meetingById = new Map(archive.meetings.map((m) => [m.id, m]))
 
   const { render: draw } = createPs1Renderer(canvas)
@@ -176,7 +177,7 @@ async function start() {
 
   // For the screenshot script and the browser console.
   if (import.meta.env.DEV) Object.assign(window, { __club: {
-    camera, controls, club, layout,
+    camera, controls, club, layout, book: club.book,
     pullOut: (c: CrateView) => { target = c; pullOut() },
     openPoster,
   } })

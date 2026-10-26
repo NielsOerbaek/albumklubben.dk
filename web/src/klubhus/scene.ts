@@ -6,6 +6,9 @@ import type { Album } from '../../../shared/types.ts'
 import { TABLE, type ClubLayout, type CrateSpec } from './layout.ts'
 import { BOARD, boardLines, createFlipBoard, type FlipBoard } from './flipsign.ts'
 import { buildRoom, FOG, kit } from './room.ts'
+import { buildFurniture, SCREEN_Y } from './furniture.ts'
+import { createBookView, type BookView } from './bookview.ts'
+import type { Spread } from './book.ts'
 
 const { mat, shadedBox } = kit
 
@@ -154,35 +157,30 @@ export interface Club {
   crates: CrateView[]
   /** The screen at the far end, showing the latest meeting on its split-flap board. */
   screen: FlipBoard
+  /** The poster book on the table's far end. */
+  book: BookView
   /** `player` is where you stand, or null to leave the screen as it is. */
   update(dt: number, player: { x: number; z: number } | null): void
 }
 
 const SCREEN_NEAR = 6 // the screen flips when you come this close to it...
 const SCREEN_REARM = 9 // ...and again once you have been this far away
-const SCREEN_Y = 1.45 // the picture's centre
 
-export async function buildClub(layout: ClubLayout): Promise<Club> {
+export async function buildClub(layout: ClubLayout, spreads: Spread[]): Promise<Club> {
   await fontsReady()
   const scene = new THREE.Scene()
   scene.background = new THREE.Color(FOG.fogColor)
   buildRoom(scene, layout)
 
-  // The long table, plain for now.
-  const t = layout.table
-  const tw = t.maxX - t.minX, td = t.maxZ - t.minZ
-  scene.add(at(shadedBox(tw, TABLE.h, td, '#c9c6be'), (t.minX + t.maxX) / 2, TABLE.h / 2, (t.minZ + t.maxZ) / 2))
+  buildFurniture(scene, layout)
 
-  // The screen on a black stand, facing down the room; its picture is the flip board, glowing.
+  // The screen's picture is the flip board, unshaded and unfogged so it glows; its stand is furniture.
   const sc = layout.screen
   const screen = createFlipBoard(layout.latest ? boardLines(layout.latest, BOARD.cols, BOARD.rows)
     : Array.from({ length: BOARD.rows }, () => ' '.repeat(BOARD.cols)))
-  scene.add(at(shadedBox(sc.w + 0.06, sc.h + 0.06, 0.06, '#1b1c1d'), sc.x, SCREEN_Y, sc.z))
-  scene.add(at(shadedBox(0.08, SCREEN_Y, 0.06, '#1b1c1d'), sc.x, SCREEN_Y / 2, sc.z - 0.06))
-  scene.add(at(shadedBox(0.7, 0.04, 0.45, '#1b1c1d'), sc.x, 0.02, sc.z))
   const board = screen.texture.image as HTMLCanvasElement
   const picH = Math.min(sc.h, sc.w * board.height / board.width) // the board at its own shape, black above and below
-  scene.add(at(shadedBox(sc.w, sc.h, 0.01, '#050505'), sc.x, SCREEN_Y, sc.z + 0.03))
+  scene.add(at(new THREE.Mesh(new THREE.PlaneGeometry(sc.w, sc.h), mat('#0b0c0d', null, 1, false, false)), sc.x, SCREEN_Y, sc.z + 0.026))
   scene.add(at(new THREE.Mesh(new THREE.PlaneGeometry(sc.w, picH, 4, 2), mat('#ffffff', screen.texture, 1, true, false)), sc.x, SCREEN_Y, sc.z + 0.036))
 
   // Crates on the table.
@@ -193,11 +191,15 @@ export async function buildClub(layout: ClubLayout): Promise<Club> {
     return view
   })
 
+  const book = await createBookView(spreads, layout.book)
+  scene.add(book.object)
+
   let armed = true
   return {
     scene,
     crates,
     screen,
+    book,
     update(dt, player) {
       for (const crate of crates) crate.update(dt)
       if (player) {
@@ -206,6 +208,7 @@ export async function buildClub(layout: ClubLayout): Promise<Club> {
         else if (d > SCREEN_REARM) armed = true
       }
       screen.update(dt)
+      book.update(dt)
     },
   }
 }

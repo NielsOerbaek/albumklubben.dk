@@ -1,6 +1,6 @@
 import { formatMeetingDate } from '../../../shared/dates.ts'
 import type { Album, Meeting, Poster } from '../../../shared/types.ts'
-import { drawPixelText } from './flipsign.ts'
+import { drawPixelText, fold } from './flipsign.ts'
 
 export interface Spread { meeting: Meeting; posters: Poster[]; continued: boolean }
 export interface Cell { x: number; y: number; w: number; h: number }
@@ -57,7 +57,7 @@ export function drawLeftPage(g: CanvasRenderingContext2D, s: Spread, size: { w: 
   let y = m / k
   const line = (text: string, tall = false) => {
     const rows: string[] = []
-    for (const word of text.toUpperCase().split(' ')) {
+    for (const word of fold(text).split(' ').filter(Boolean)) {
       const last = rows.length - 1
       if (last >= 0 && rows[last].length + 1 + word.length <= perLine) rows[last] += ' ' + word
       else rows.push(word)

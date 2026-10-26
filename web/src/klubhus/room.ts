@@ -10,18 +10,18 @@ import { BENCH, COLUMN_SIZE, type ClubLayout } from './layout.ts'
 // faked: daylight from the windows (-X) and the tubes overhead, as a shade per face.
 
 /** Pale, cool and still there at a distance, like the daylight haze in the photos. */
-export const FOG = { fogColor: 0xd9dcdf, fogNear: 7, fogFar: 30 }
+export const FOG = { fogColor: 0xd2d6d9, fogNear: 8, fogFar: 34 }
 export const kit = createBuilder(FOG)
 const { mat, decal } = kit
 
-type Shades = [px: number, nx: number, top: number, bottom: number, pz: number, nz: number]
+export type Shades = [px: number, nx: number, top: number, bottom: number, pz: number, nz: number]
 /** On the floor: lit from above and from the windows at -X. */
-const FLOOR_LIT: Shades = [0.72, 0.95, 1, 0.45, 0.86, 0.8]
+export const FLOOR_LIT: Shades = [0.62, 0.95, 1, 0.4, 0.8, 0.7]
 /** Hung from the ceiling: lit from below by the tubes and the daylight. */
-const CEILING_LIT: Shades = [0.6, 0.78, 0.5, 0.92, 0.68, 0.66]
+export const CEILING_LIT: Shades = [0.5, 0.7, 0.42, 0.86, 0.6, 0.56]
 
 /** A box with a shade per face; cut every 0.5 m like `shadedBox`, so the affine warp stays small. */
-function litBox(w: number, h: number, d: number, color: THREE.ColorRepresentation, map: THREE.Texture | null, shades: Shades) {
+export function litBox(w: number, h: number, d: number, color: THREE.ColorRepresentation, map: THREE.Texture | null, shades: Shades) {
   const seg = (n: number) => Math.max(1, Math.ceil(n / 0.5))
   const geo = new THREE.BoxGeometry(w, h, d, seg(w), seg(h), seg(d))
   return new THREE.Mesh(geo, shades.map((s) => mat(color, map, s)))
@@ -51,7 +51,7 @@ function repeatU<G extends THREE.BufferGeometry>(geo: G, n: number) {
 // ---------------------------------------------------------------------------------------------
 // Textures, painted on small canvases so they stay hard-pixelled.
 
-const concreteTex = (base: string, seed: number) => painted(32, 32, (g) => {
+export const concreteTex = (base: string, seed: number) => painted(32, 32, (g) => {
   g.fillStyle = base; g.fillRect(0, 0, 32, 32)
   const r = rng(seed)
   g.fillStyle = 'rgb(0 0 0 / 0.05)'
@@ -61,7 +61,7 @@ const concreteTex = (base: string, seed: number) => painted(32, 32, (g) => {
 
 /** Board-formed concrete: pale grey, the boards' joints as faint horizontal lines, dark aggregate. */
 const columnTex = () => painted(16, 128, (g) => {
-  g.fillStyle = '#c6c5be'; g.fillRect(0, 0, 16, 128)
+  g.fillStyle = '#b3b2aa'; g.fillRect(0, 0, 16, 128)
   const r = rng(17)
   for (let y = 0; y < 128; y += 6) {
     g.fillStyle = `rgb(0 0 0 / ${r() * 0.03})`; g.fillRect(0, y, 16, 6) // each board a touch different
@@ -186,14 +186,14 @@ export function buildRoom(scene: THREE.Scene, layout: ClubLayout) {
   // Floor, ceiling and the three plain walls (the -X wall is the windows).
   const floor = plane(W, L, mat('#ffffff', floorTex()), 2, 2)
   floor.rotation.x = -Math.PI / 2
-  const ceiling = plane(W, L, mat('#ffffff', concreteTex('#a3a29c', 23), 0.62), 1.5, 1.5)
+  const ceiling = plane(W, L, mat('#ffffff', concreteTex('#9a9993', 23), 0.56), 1.5, 1.5)
   ceiling.rotation.x = Math.PI / 2
   ceiling.position.y = H
   scene.add(floor, ceiling)
   const wall = wallTex()
-  scene.add(at(plane(L, H, mat('#ffffff', wall, 0.97), 1, 1), hw, H / 2, 0, -Math.PI / 2))
-  scene.add(at(plane(W, H, mat('#ffffff', wall, 0.9), 1, 1), 0, H / 2, -hl))
-  scene.add(at(plane(W, H, mat('#ffffff', wall, 0.86), 1, 1), 0, H / 2, hl, Math.PI))
+  scene.add(at(plane(L, H, mat('#ffffff', wall, 0.93), 1, 1), hw, H / 2, 0, -Math.PI / 2))
+  scene.add(at(plane(W, H, mat('#ffffff', wall, 0.84), 1, 1), 0, H / 2, -hl))
+  scene.add(at(plane(W, H, mat('#ffffff', wall, 0.8), 1, 1), 0, H / 2, hl, Math.PI))
   scene.add(at(plane(1.0, 2.1, decal('#ffffff', doorTex())), layout.spawn.x, 1.05, hl - 0.01, Math.PI))
 
   const columnMap = columnTex()
@@ -213,7 +213,7 @@ function buildCeiling(scene: THREE.Scene, { width: W, length: L, ceiling: H, sta
   const wellZ = stairs.maxZ
   const inWell = (x0: number, x1: number, z: number) => z < wellZ && x1 > stairs.minX && x0 < hw
 
-  const beamMap = concreteTex('#b3b2ac', 31)
+  const beamMap = concreteTex('#a8a7a0', 31)
   const beamZ: number[] = []
   for (let z = hl - BEAM.pitch / 2; z > -hl; z -= BEAM.pitch) beamZ.push(z)
   for (const z of beamZ) {
@@ -298,7 +298,7 @@ function buildWindows(scene: THREE.Scene, layout: ClubLayout, beamBottom: number
   scene.add(at(plane(L, BENCH.h, mat('#ffffff', wallTex(), 0.8), 1, 1), -hw + 0.003, BENCH.h / 2, 0, Math.PI / 2))
 
   // Frames: a sill, a transom and a head along the room; an upright in the middle of each bay.
-  const frame = '#b3b8ba'
+  const frame = '#6c7276'
   for (const y of [BENCH.h + 0.03, 1.25, beamBottom - 0.02]) {
     scene.add(at(litBox(0.05, 0.05, L, frame, null, FLOOR_LIT), -hw + 0.04, y, 0))
   }

@@ -19,7 +19,7 @@ export function flapPath(from: string, to: string): string[] {
 }
 
 /** Upper case, accents folded to their base letter, æøå kept, anything else a blank flap. */
-function fold(text: string): string {
+export function fold(text: string): string {
   return [...text.toUpperCase()].map((ch) => {
     if (FLAPS.includes(ch)) return ch
     const base = ch.normalize('NFD').replace(/\p{M}/gu, '')
