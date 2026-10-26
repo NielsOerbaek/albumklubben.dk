@@ -22,8 +22,7 @@ function view(archive: Archive | null) {
       <p>Hver anden tirsdag 11.30-12.30</p>
     </header>
     <nav class="entries">
-      <a href="/crate">Crate digging <span aria-hidden="true">→</span></a>
-      <a href="/museum">Albumklubben Museum <span aria-hidden="true">→</span></a>
+      <a href="/klubhuset">Klubhuset <span aria-hidden="true">→</span></a>
       <a href="/arkiv">Arkivet <span aria-hidden="true">→</span></a>
     </nav>
     ${latest && latestAlbums.length

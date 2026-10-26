@@ -1,0 +1,4 @@
+/* The top bar floats over the shop while you are not walking. */
+body.klubhus .topbar { position: fixed; top: 0; left: 0; right: 0; }
+body.klubhus.walking .topbar { display: none; }
+body.klubhus .ps1-small { padding-top: calc(var(--bar) + 16px); }

@@ -1,7 +1,7 @@
 import * as THREE from 'three'
 import { render } from 'lit-html'
 import '../base.css'
-import './crate.css'
+import './klubhus.css'
 import { fetchArchive } from '../api.ts'
 import { albumDialog } from '../album.ts'
 import { topBarTemplate } from '../topbar.ts'
@@ -17,10 +17,10 @@ const FACING = Math.cos(THREE.MathUtils.degToRad(35))
 const PROMPT = 'Klik eller scroll for at bladre · E for at tage pladen op'
 const AGAIN = 'Klik for at gå videre'
 
-render(topBarTemplate('crate'), document.getElementById('app')!)
+render(topBarTemplate('klubhus'), document.getElementById('app')!)
 const canvas = document.querySelector<HTMLCanvasElement>('canvas.ps1-canvas')!
 if (smallScreenGuard()) canvas.remove()
-else start().catch((err) => { console.error(err); showHint('Butikken kunne ikke åbne. Prøv at genindlæse siden.') })
+else start().catch((err) => { console.error(err); showHint('Klubhuset kunne ikke åbne. Prøv at genindlæse siden.') })
 
 /** The crate in reach that you look most squarely at, from its front side. */
 function crateInView(crates: CrateView[], camera: THREE.PerspectiveCamera): CrateView | null {

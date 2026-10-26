@@ -1,4 +1,5 @@
 import * as THREE from 'three'
+import { PS1_HEIGHT } from './renderer.ts'
 
 // Colour: textures are sRGB, so the GPU decodes them to linear when sampled (three uploads
 // video frames as plain RGBA8, hence the shader decode for those). Everything here is linear;
@@ -64,7 +65,7 @@ export function ps1Material(opts: {
       fogColor: { value: new THREE.Color(opts.fogColor) },
       fogNear: { value: opts.fogNear },
       fogFar: { value: opts.fogFar },
-      snap: { value: opts.snap ?? 120 },
+      snap: { value: opts.snap ?? PS1_HEIGHT / 2 },
     },
   })
 }

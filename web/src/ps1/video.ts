@@ -1,9 +1,8 @@
 import * as THREE from 'three'
-import { videoTexture } from '../ps1/textures.ts'
-import type { WallItem } from './layout.ts'
+import { videoTexture } from './textures.ts'
 
 export type Player = { x: number; z: number; yaw: number }
-type Placed = { x: number; z: number; normalX: number; normalZ: number }
+export type Placed = { x: number; z: number; normalX: number; normalZ: number; width: number; height: number; videoUrl: string | null }
 
 /** The nearest thing within `maxDist` (on the floor plan) whose front faces the player and that
  *  lies within `maxAngleDeg` of where the player looks. Yaw 0 looks down -Z. */
@@ -25,8 +24,8 @@ export function nearestInView<T extends Placed>(player: Player, things: T[], max
 }
 
 /** The poster whose video should play: the nearest one with a video in front of the player. */
-export function pickActiveVideo(player: Player, items: WallItem[], maxDist = 3, maxAngleDeg = 50): WallItem | null {
-  return nearestInView(player, items.filter((i) => i.kind === 'poster' && i.poster?.videoUrl), maxDist, maxAngleDeg)
+export function pickActiveVideo(player: Player, items: Placed[], maxDist = 3, maxAngleDeg = 50): Placed | null {
+  return nearestInView(player, items.filter((i) => i.videoUrl), maxDist, maxAngleDeg)
 }
 
 /** Full volume at 1 m or closer, fading linearly to silence at `maxDist`. */
@@ -35,8 +34,8 @@ export function volumeFor(dist: number, maxDist = 3): number {
 }
 
 /** A poster with a video, as hung in the scene: its picture and the image it shows when still. */
-export interface VideoPoster {
-  item: WallItem
+export interface VideoPoster<T extends Placed = Placed> {
+  item: T
   picture: THREE.Mesh<THREE.BufferGeometry, THREE.ShaderMaterial>
   image: THREE.Texture
   /** A black card behind the picture, shown while a video of another shape plays. */
@@ -45,14 +44,14 @@ export interface VideoPoster {
 
 /** Plays at most one poster video at a time. Call `update` every frame, with `null` while the
  *  player is not walking (pointer unlocked, tab hidden) to pause everything. */
-export function createVideoWall(posters: VideoPoster[]) {
+export function createVideoWall<T extends Placed>(posters: VideoPoster<T>[]) {
   const byItem = new Map(posters.map((p) => [p.item, p]))
   const items = posters.map((p) => p.item)
-  const videos = new Map<VideoPoster, { video: HTMLVideoElement; texture: THREE.VideoTexture }>()
-  let active: VideoPoster | null = null
+  const videos = new Map<VideoPoster<T>, { video: HTMLVideoElement; texture: THREE.VideoTexture }>()
+  let active: VideoPoster<T> | null = null
 
   /** Puts the video on the poster, fitted inside its frame, once it has a frame to show. */
-  function show(p: VideoPoster) {
+  function show(p: VideoPoster<T>) {
     const { video, texture } = videos.get(p)!
     if (active !== p || video.readyState < 2) return
     const va = video.videoWidth / video.videoHeight || 1
@@ -62,13 +61,13 @@ export function createVideoWall(posters: VideoPoster[]) {
     p.backing.visible = true
   }
 
-  function still(p: VideoPoster) {
+  function still(p: VideoPoster<T>) {
     p.picture.scale.set(1, 1, 1)
     p.picture.material.uniforms.map.value = p.image
     p.backing.visible = false
   }
 
-  function videoFor(p: VideoPoster) {
+  function videoFor(p: VideoPoster<T>) {
     let v = videos.get(p)
     if (!v) {
       const video = document.createElement('video')
@@ -76,7 +75,7 @@ export function createVideoWall(posters: VideoPoster[]) {
       video.preload = 'metadata'
       video.loop = true
       video.muted = false
-      video.src = p.item.poster!.videoUrl!
+      video.src = p.item.videoUrl!
       video.addEventListener('loadeddata', () => show(p))
       videos.set(p, v = { video, texture: videoTexture(video) })
     }
@@ -86,7 +85,7 @@ export function createVideoWall(posters: VideoPoster[]) {
   return {
     update(player: Player | null) {
       const item = player && pickActiveVideo(player, items)
-      const next = item ? byItem.get(item)! : null
+      const next = item ? byItem.get(item as T)! : null
       if (next !== active) {
         if (active) still(active)
         active = next

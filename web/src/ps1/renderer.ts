@@ -22,8 +22,11 @@ void main() {
   gl_FragColor = vec4(min(floor(c * 31.0 + t), 31.0) / 31.0, 1.0);
 }`
 
+/** Lines of the low-res render target; the vertex snap grid is half of it. */
+export const PS1_HEIGHT = 400
+
 export function createPs1Renderer(canvas: HTMLCanvasElement, opts: { height?: number } = {}) {
-  const height = opts.height ?? 240
+  const height = opts.height ?? PS1_HEIGHT
   const renderer = new THREE.WebGLRenderer({ canvas, antialias: false })
   const target = new THREE.WebGLRenderTarget(1, height, {
     minFilter: THREE.NearestFilter,

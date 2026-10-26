@@ -1,6 +1,6 @@
 import { readFileSync } from 'node:fs'
 import { describe, expect, it } from 'vitest'
-import { buildShopLayout, type ShopLayout } from '../../web/src/crate/layout.ts'
+import { buildShopLayout, type ShopLayout } from '../../web/src/klubhus/layout.ts'
 import { genreFamily } from '../../shared/genre.ts'
 import type { Album, Archive, Meeting } from '../../shared/types.ts'
 

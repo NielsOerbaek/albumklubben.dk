@@ -1,4 +1,4 @@
-import { mkdtempSync } from 'node:fs'
+import { mkdtempSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { Readable } from 'node:stream'
@@ -21,6 +21,27 @@ const firstCover = async (app: ReturnType<typeof setup>['app']) => {
   const archive = (await app.inject('/api/archive')).json() as Archive
   return archive.meetings.flatMap(m => m.albums).find(a => a.coverUrl)!.coverUrl!
 }
+
+describe('pages', () => {
+  it('301s /crate and /museum to /klubhuset', async () => {
+    const { app } = setup()
+    for (const old of ['/crate', '/museum']) {
+      const res = await app.inject(old)
+      expect(res.statusCode).toBe(301)
+      expect(res.headers.location).toBe('/klubhuset')
+    }
+  })
+
+  it('serves klubhuset.html at /klubhuset', async () => {
+    const webDir = mkdtempSync(join(tmpdir(), 'web-'))
+    writeFileSync(join(webDir, 'klubhuset.html'), '<p>klubhuset</p>')
+    const uploadDir = mkdtempSync(join(tmpdir(), 'api-'))
+    const app = buildApp({ db: openDb(':memory:'), uploadDir, adminPassword: 'x', sessionSecret: 'y', webDir })
+    const res = await app.inject('/klubhuset')
+    expect(res.statusCode).toBe(200)
+    expect(res.body).toBe('<p>klubhuset</p>')
+  })
+})
 
 describe('api', () => {
   it('GET /api/archive returns seeded meetings in number order', async () => {

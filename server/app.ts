@@ -36,9 +36,10 @@ export function buildApp(opts: AppOptions): FastifyInstance {
   if (opts.webDir) {
     const webDir = resolve(opts.webDir)
     app.register(fastifyStatic, { root: webDir, prefix: '/' })
-    for (const page of ['crate', 'museum', 'arkiv']) {
+    for (const page of ['klubhuset', 'arkiv']) {
       app.get(`/${page}`, (_req, reply) => reply.sendFile(`${page}.html`))
     }
   }
+  for (const old of ['crate', 'museum']) app.get(`/${old}`, (_req, reply) => reply.redirect('/klubhuset', 301))
   return app
 }

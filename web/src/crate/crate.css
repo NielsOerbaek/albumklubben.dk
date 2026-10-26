@@ -1,4 +1,0 @@
-/* The top bar floats over the shop while you are not walking. */
-body.crate .topbar { position: fixed; top: 0; left: 0; right: 0; }
-body.crate.walking .topbar { display: none; }
-body.crate .ps1-small { padding-top: calc(var(--bar) + 16px); }

@@ -91,7 +91,7 @@ const windowTex = () => painted(96, 48, (g) => {
   g.fillRect(31, 0, 2, 48); g.fillRect(63, 0, 2, 48)
 })
 
-// No thin border or light weight: single-pixel strokes vanish at a distance in 240 lines.
+// No thin border or light weight: single-pixel strokes vanish at a distance in 400 lines.
 const signTex = () => painted(256, 40, (g) => {
   g.fillStyle = '#000'; g.fillRect(0, 0, 256, 40)
   g.fillStyle = '#fff'

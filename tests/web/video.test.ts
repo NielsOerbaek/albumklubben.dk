@@ -1,14 +1,10 @@
 import { describe, expect, it } from 'vitest'
-import type { WallItem } from '../../web/src/museum/layout.ts'
-import { pickActiveVideo, volumeFor } from '../../web/src/museum/video.ts'
-import type { Poster } from '../../shared/types.ts'
+import { pickActiveVideo, volumeFor } from '../../web/src/ps1/video.ts'
 
-let nextId = 1
+type Placed = Parameters<typeof pickActiveVideo>[1][number]
 /** A poster hanging at (x, z) and facing along (normalX, normalZ). */
-function poster(x: number, z: number, normalX: number, normalZ: number, video = true): WallItem {
-  const p: Poster = { id: nextId++, meetingId: 1, position: 1, imageUrl: '/uploads/posters/p.png', caption: null, about: null,
-    videoUrl: video ? '/uploads/videos/p.mp4' : null }
-  return { kind: 'poster', meetingNumber: 1, poster: p, x, y: 1.6, z, normalX, normalZ, width: 0.79, height: 1.4 }
+function poster(x: number, z: number, normalX: number, normalZ: number, video = true): Placed {
+  return { x, z, normalX, normalZ, width: 0.79, height: 1.4, videoUrl: video ? '/uploads/videos/p.mp4' : null }
 }
 
 // The player stands at the origin. Yaw 0 looks down -Z.

@@ -17,8 +17,7 @@ const pages = [
   ['arkiv-hylden', '/arkiv#hylden'],
   ['arkiv-kortet', '/arkiv#kortet'],
   ['arkiv-vaeggen', '/arkiv#vaeggen'],
-  ['crate', '/crate', true],
-  ['museum', '/museum', true],
+  ['klubhuset', '/klubhuset', true],
   ['admin-login', '/admin/login'],
 ]
 
@@ -28,6 +27,15 @@ const ctx = await browser.newContext({
   viewport: { width: 1280, height: 800 },
 })
 let failed = 0
+// The old museum address must land on the Klubhuset.
+{
+  const page = await ctx.newPage()
+  await page.goto(base + '/museum', { waitUntil: 'domcontentloaded' })
+  const ok = new URL(page.url()).pathname === '/klubhuset'
+  console.log(ok ? 'ok   /museum -> /klubhuset' : `FAIL /museum landed on ${page.url()}`)
+  failed += ok ? 0 : 1
+  await page.close()
+}
 for (const [name, path, walk] of pages) {
   const page = await ctx.newPage()
   const problems = []
