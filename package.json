@@ -7,7 +7,8 @@
     "typecheck": "tsc --noEmit",
     "build": "vite build",
     "start": "node --experimental-strip-types server/index.ts",
-    "seed": "node --experimental-strip-types server/seed-cli.ts"
+    "seed": "node --experimental-strip-types server/seed-cli.ts",
+    "tracklists": "node --experimental-strip-types tools/fetch-tracklists.ts"
   },
   "pnpm": {
     "onlyBuiltDependencies": [

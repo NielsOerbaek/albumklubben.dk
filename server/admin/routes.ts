@@ -2,6 +2,7 @@ import { readFileSync } from 'node:fs'
 import { join } from 'node:path'
 import type { FastifyInstance, FastifyReply, FastifyRequest } from 'fastify'
 import type { Database } from '../db.ts'
+import { findTracklist } from '../musicbrainz.ts'
 import { removeFiles, saveImage, saveVideo } from '../files.ts'
 import {
   createAlbum, createMeeting, createPoster, deleteAlbum, deleteMeeting, deletePoster, getMeeting,
@@ -19,10 +20,11 @@ type Kind = 'cover' | 'image' | 'video'
 interface Upload { fields: Fields; saved: Partial<Record<Kind, string>>; error?: { field: Kind; message: string } }
 
 const CSS = readFileSync(join(import.meta.dirname, 'admin.css'), 'utf8')
+const JS = readFileSync(join(import.meta.dirname, 'admin.js'), 'utf8')
 
-export interface AdminOptions { db: Database; uploadDir: string; adminPassword: string }
+export interface AdminOptions { db: Database; uploadDir: string; adminPassword: string; musicbrainz?: typeof findTracklist }
 
-export function registerAdmin(app: FastifyInstance, { db, uploadDir, adminPassword }: AdminOptions) {
+export function registerAdmin(app: FastifyInstance, { db, uploadDir, adminPassword, musicbrainz = findTracklist }: AdminOptions) {
   const html = (reply: FastifyReply, body: string, code = 200) => reply.code(code).type('text/html').send(body)
   const notFound = (reply: FastifyReply) => html(reply, notFoundPage(), 404)
   const back = (reply: FastifyReply, meetingId: number, flash: string) =>
@@ -68,6 +70,7 @@ export function registerAdmin(app: FastifyInstance, { db, uploadDir, adminPasswo
   const discard = (up: Upload) => removeFiles(uploadDir, Object.values(up.saved))
 
   app.get('/admin/admin.css', (_req, reply) => reply.type('text/css').send(CSS))
+  app.get('/admin/admin.js', (_req, reply) => reply.type('text/javascript').send(JS))
   registerAuth(app, adminPassword)
   // Everything registered below is encapsulated: the guard applies to the matched route,
   // not the raw URL, so percent-encoded paths cannot slip past it.
@@ -117,12 +120,22 @@ export function registerAdmin(app: FastifyInstance, { db, uploadDir, adminPasswo
     return reply.redirect(`/admin?flash=${encodeURIComponent('Mødet er slettet')}`)
   })
 
+  app.get('/admin/musicbrainz', async (req, reply) => {
+    const { artist = '', title = '' } = req.query as { artist?: string; title?: string }
+    try {
+      const found = await musicbrainz(artist, title)
+      return found ?? reply.code(404).send({ error: 'MusicBrainz kender ikke albummet' })
+    } catch {
+      return reply.code(502).send({ error: 'MusicBrainz svarer ikke lige nu. Prøv igen om lidt.' })
+    }
+  })
+
   // Albums
   const albumValues = (a: Album): Fields => ({
     artist: a.artist, title: a.title, year: a.year?.toString() ?? '', origin: a.origin, country: a.country,
     lat: a.lat?.toString() ?? '', lng: a.lng?.toString() ?? '', genre: a.genre, gender: a.gender,
     status: a.status, picked_by_name: a.pickedByName ?? '', picked_by_workplace: a.pickedByWorkplace ?? '',
-    story: a.story ?? '', card_color: a.cardColor,
+    story: a.story ?? '', card_color: a.cardColor, tracklist: a.tracklist ?? '',
   })
 
   app.get('/admin/meetings/:id/albums/new', (req, reply) => {
@@ -207,7 +220,7 @@ export function registerAdmin(app: FastifyInstance, { db, uploadDir, adminPasswo
   app.get('/admin/posters/:id', (req, reply) => {
     const p = posterRow(id(req))
     if (!p) return notFound(reply)
-    return html(reply, posterForm(getMeeting(db, p.meetingId)!, `/admin/posters/${p.id}`, { caption: p.caption ?? '' }, {}, p))
+    return html(reply, posterForm(getMeeting(db, p.meetingId)!, `/admin/posters/${p.id}`, { caption: p.caption ?? '', about: p.about ?? '' }, {}, p))
   })
 
   app.post('/admin/posters/:id', async (req, reply) => {

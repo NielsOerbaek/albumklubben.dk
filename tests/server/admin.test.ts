@@ -2,17 +2,18 @@ import { existsSync, mkdtempSync, readdirSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import sharp from 'sharp'
-import { describe, expect, it } from 'vitest'
+import { describe, expect, it, vi } from 'vitest'
 import { buildApp } from '../../server/app.ts'
 import { saveImage } from '../../server/files.ts'
 import { openDb } from '../../server/db.ts'
+import type { findTracklist } from '../../server/musicbrainz.ts'
 import { getMeeting, listMeetings } from '../../server/repo.ts'
 import type { Archive } from '../../shared/types.ts'
 
-const setup = () => {
+const setup = (musicbrainz?: typeof findTracklist) => {
   const uploadDir = mkdtempSync(join(tmpdir(), 'admin-'))
   const db = openDb(':memory:')
-  const app = buildApp({ db, uploadDir, adminPassword: 'hemmelig', sessionSecret: 'secret' })
+  const app = buildApp({ db, uploadDir, adminPassword: 'hemmelig', sessionSecret: 'secret', musicbrainz })
   return { app, db, uploadDir }
 }
 type Ctx = ReturnType<typeof setup>
@@ -296,5 +297,71 @@ describe('admin tracklist and about', () => {
     const pb = multipart([{ name: 'about', value: 'Om plakaten' }, { name: 'image', filename: 'p.png', type: 'image/png', data: await png() }])
     await c.app.inject({ method: 'POST', url: `/admin/meetings/${m.id}/posters/new`, headers: { ...pb.headers, cookie }, payload: pb.payload })
     expect(getMeeting(c.db, m.id)!.posters[0].about).toBe('Om plakaten')
+  })
+
+  it('keeps the tracklist and about text when an album or poster is edited through the form', async () => {
+    const c = setup()
+    const { cookie } = await login(c.app)
+    const m = await newMeeting(c, cookie)
+    const body = multipart(albumFields({ tracklist: 'Intro 1:02\nOutro' }))
+    await c.app.inject({ method: 'POST', url: `/admin/meetings/${m.id}/albums/new`, headers: { ...body.headers, cookie }, payload: body.payload })
+    const a = getMeeting(c.db, m.id)!.albums[0]
+    const page = (await c.app.inject({ url: `/admin/albums/${a.id}`, headers: { cookie } })).body
+    expect(page).toContain('name="tracklist"')
+    expect(page).toContain('Intro 1:02\nOutro</textarea>')
+    expect(page).toContain('data-musicbrainz')
+    const fields = [...page.matchAll(/<textarea name="(\w+)"[^>]*>([^<]*)<\/textarea>/g)].map(x => ({ name: x[1], value: x[2] }))
+    const edit = multipart([...albumFields({ title: 'Nyt navn' }).filter(p => p.name !== 'tracklist'), ...fields.filter(f => f.name === 'tracklist')])
+    await c.app.inject({ method: 'POST', url: `/admin/albums/${a.id}`, headers: { ...edit.headers, cookie }, payload: edit.payload })
+    expect(getMeeting(c.db, m.id)!.albums[0]).toMatchObject({ title: 'Nyt navn', tracklist: 'Intro 1:02\nOutro' })
+
+    const pb = multipart([{ name: 'about', value: 'Om plakaten' }, { name: 'image', filename: 'p.png', type: 'image/png', data: await png() }])
+    await c.app.inject({ method: 'POST', url: `/admin/meetings/${m.id}/posters/new`, headers: { ...pb.headers, cookie }, payload: pb.payload })
+    const p = getMeeting(c.db, m.id)!.posters[0]
+    const ppage = (await c.app.inject({ url: `/admin/posters/${p.id}`, headers: { cookie } })).body
+    expect(ppage).toContain('name="about"')
+    expect(ppage).toContain('Om plakaten</textarea>')
+    const pe = multipart([{ name: 'caption', value: 'Ny tekst' }, { name: 'about', value: 'Om plakaten' }])
+    await c.app.inject({ method: 'POST', url: `/admin/posters/${p.id}`, headers: { ...pe.headers, cookie }, payload: pe.payload })
+    expect(getMeeting(c.db, m.id)!.posters[0]).toMatchObject({ caption: 'Ny tekst', about: 'Om plakaten' })
+  })
+})
+
+describe('admin MusicBrainz route', () => {
+  const q = '/admin/musicbrainz?artist=Aphex%20Twin&title=Windowlicker'
+
+  it('needs a session', async () => {
+    const lookup = vi.fn()
+    const res = await setup(lookup).app.inject(q)
+    expect(res.statusCode).toBe(302)
+    expect(lookup).not.toHaveBeenCalled()
+  })
+
+  it('relays the lookup', async () => {
+    const lookup = vi.fn(async () => ({ tracklist: 'A 1:00', release: 'X (2000, GB), 1 spor' }))
+    const c = setup(lookup)
+    const { cookie } = await login(c.app)
+    const res = await c.app.inject({ url: q, headers: { cookie } })
+    expect(res.statusCode).toBe(200)
+    expect(res.json()).toEqual({ tracklist: 'A 1:00', release: 'X (2000, GB), 1 spor' })
+    expect(lookup).toHaveBeenCalledWith('Aphex Twin', 'Windowlicker')
+  })
+
+  it('answers 404 when MusicBrainz does not know the album, 502 when it fails', async () => {
+    const c = setup(async () => null)
+    const r404 = await c.app.inject({ url: q, headers: { cookie: (await login(c.app)).cookie } })
+    expect(r404.statusCode).toBe(404)
+    expect(r404.json()).toEqual({ error: 'MusicBrainz kender ikke albummet' })
+    const bad = setup(async () => { throw new Error('503') })
+    const r502 = await bad.app.inject({ url: q, headers: { cookie: (await login(bad.app)).cookie } })
+    expect(r502.statusCode).toBe(502)
+    expect(r502.json()).toEqual({ error: 'MusicBrainz svarer ikke lige nu. Prøv igen om lidt.' })
+  })
+
+  it('serves admin.js', async () => {
+    const res = await setup().app.inject('/admin/admin.js')
+    expect(res.statusCode).toBe(200)
+    expect(res.headers['content-type']).toContain('javascript')
+    expect((await setup().app.inject('/admin/meetings/new')).statusCode).toBe(302)
   })
 })

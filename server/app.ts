@@ -6,6 +6,7 @@ import Fastify, { type FastifyInstance } from 'fastify'
 import { resolve } from 'node:path'
 import { registerApi } from './api.ts'
 import { registerAdmin } from './admin/routes.ts'
+import type { findTracklist } from './musicbrainz.ts'
 import type { Database } from './db.ts'
 
 export interface AppOptions {
@@ -14,6 +15,7 @@ export interface AppOptions {
   adminPassword: string
   sessionSecret: string
   webDir?: string
+  musicbrainz?: typeof findTracklist
 }
 
 export function buildApp(opts: AppOptions): FastifyInstance {

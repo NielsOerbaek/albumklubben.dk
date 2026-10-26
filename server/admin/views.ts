@@ -14,7 +14,7 @@ export function layout(title: string, body: string, flash?: string): string {
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="robots" content="noindex, nofollow">
 <title>${e(title)} | Albumklubben</title>
-<link rel="stylesheet" href="/admin/admin.css"></head>
+<link rel="stylesheet" href="/admin/admin.css"><script src="/admin/admin.js" defer></script></head>
 <body>
 <header><a href="/admin">Albumklubben · Redigering</a>
 <form method="post" action="/admin/logout"><button type="submit" class="link">Log ud</button></form></header>
@@ -106,6 +106,9 @@ ${t('Status', 'status')}
 ${t('Valgt af', 'picked_by_name')}
 ${t('Arbejdsplads', 'picked_by_workplace')}
 <label>Historie <textarea name="story" rows="6">${e(v.story)}</textarea></label>
+<label>Tracklist <textarea name="tracklist" rows="12">${e(v.tracklist)}</textarea>
+<span class="hint">Ét nummer pr. linje, eventuelt med spilletid til sidst (Windowlicker 6:07). En tom linje starter en ny disk.</span></label>
+<p><button type="button" data-musicbrainz>Hent fra MusicBrainz</button> <span data-musicbrainz-status role="status"></span></p>
 <label>Kortfarve <input type="color" name="card_color" value="${e(v.card_color || '#302c21')}">${fieldError(errors, 'card_color')}</label>
 <label>Cover ${thumb(coverUrl, 'Nuværende cover')} <input type="file" name="cover" accept="image/jpeg,image/png,image/webp">
 <span class="hint">${isNew ? 'jpg, png eller webp' : 'Vælg en fil for at skifte cover'}</span>${fieldError(errors, 'cover')}</label>
@@ -122,6 +125,7 @@ ${formError(errors)}
 <label>Billede ${poster ? thumb(poster.imageUrl, 'Nuværende billede') : ''}
 <input type="file" name="image" accept="image/jpeg,image/png,image/webp" ${poster ? '' : 'required'}>${fieldError(errors, 'image')}</label>
 ${input('Billedtekst', 'caption', v, errors)}
+<label>Om plakaten <textarea name="about" rows="6">${e(v.about)}</textarea></label>
 <label>Video (mp4 eller webm) <input type="file" name="video" accept="video/mp4,video/webm">
 <span class="hint">Videoen skal være mp4 (H.264) eller webm. Videoer fra iPhone (.mov, HEVC) skal først eksporteres eller konverteres.</span>${fieldError(errors, 'video')}</label>
 ${poster?.videoUrl ? `<p>Nuværende video: <a href="${e(poster.videoUrl)}">se video</a></p>
