@@ -2,35 +2,28 @@ body.arkiv { min-height: 100vh; }
 .muted { color: var(--muted); }
 .small { font-size: 13px; }
 .note { padding: 80px var(--pad); color: var(--muted); }
-.subline { margin: 0; padding: 16px var(--pad) 0; font-size: 16px; color: var(--muted); }
 
 /* Pills: outlined, filled white when active. */
-.arkiv .chips .pill, .arkiv .buttons .pill { height: 32px; padding: 0 14px; font-size: 12px; }
+.arkiv .chips .pill, .arkiv .cf-controls > .pill { height: 32px; padding: 0 14px; font-size: 12px; }
 .pill.solid, .pill.on { background: #fff; color: #000; }
 .chips { display: flex; gap: 6px; flex-wrap: wrap; align-items: center; }
 .chips > .muted { font-size: 13px; margin-right: 8px; text-transform: uppercase; }
 
-/* Hylden */
-.stage { display: flex; flex-wrap: wrap; gap: 0; align-items: stretch; margin-top: 16px; }
-.info { flex: 1 1 420px; min-width: 0; display: flex; flex-direction: column; gap: 14px; padding: 4px var(--pad) 20px 32px; }
-.kicker { font-size: 13px; text-transform: uppercase; color: var(--muted);
-  display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
-.dot { width: 10px; height: 10px; border-radius: 50%; display: inline-block; }
-.info h1 { margin: 0; font-size: clamp(30px, 2.75vw, 39px); line-height: 1.15; font-weight: 300; overflow-wrap: anywhere; }
-.artist { font-size: 26px; font-weight: 300; }
-.buttons { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 8px; }
-.shelfbar { padding: 24px var(--pad) 40px; display: flex; flex-direction: column; gap: 16px; }
-.shelf { display: flex; gap: 22px; overflow-x: auto; padding: 8px 0 14px; align-items: flex-end; }
-.shelf::-webkit-scrollbar { height: 6px; }
-.shelf::-webkit-scrollbar-thumb { background: #444; }
-.slot { flex: 0 0 auto; display: flex; flex-direction: column; gap: 8px; }
-.row { display: flex; gap: 4px; flex-wrap: wrap; }
+/* One page: a sticky row of section links, then Hylden, Kortet and Tal. */
+.sections { position: sticky; top: var(--bar); z-index: 15; display: flex; gap: 6px; align-items: center;
+  flex-wrap: wrap; padding: 8px var(--pad); background: #000; }
+.arkiv .sections .pill { height: 28px; padding: 0 14px; font-size: 12px; }
+.sections .where { margin-left: auto; font-size: 13px; }
+.sec { scroll-margin-top: calc(var(--bar) + 44px); }
+.sec + .sec { border-top: 1px solid var(--line); }
+.sec-head { padding: 40px var(--pad) 0; }
+.sec-head h2 { margin: 0; font-size: clamp(30px, 2.75vw, 39px); line-height: 1.15; font-weight: 300; }
+.sec-head p { margin: 6px 0 0; font-size: 16px; }
 .cov { width: 96px; height: 96px; padding: 0; overflow: hidden; cursor: pointer;
   background: #111; border: 0; outline: 3px solid transparent; outline-offset: 0; transition: opacity .2s ease; }
-.cov[aria-current='true'] { outline-color: #fff; }
-.cov[data-dim] { opacity: .18; }
 .cov:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
 .cov img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.row { display: flex; gap: 4px; flex-wrap: wrap; }
 
 /* Kortet */
 .atlas { display: flex; flex-wrap: wrap; gap: 32px; padding: 20px var(--pad) 40px; align-items: flex-start; }
@@ -76,6 +69,5 @@ body.arkiv { min-height: 100vh; }
 .clabel { font-size: 16px; margin-top: 4px; }
 
 @media (max-width: 700px) {
-  .info { padding: 16px var(--pad) 20px; }
-  .stage { margin-top: 0; }
+  .sections .where { display: none; }
 }
