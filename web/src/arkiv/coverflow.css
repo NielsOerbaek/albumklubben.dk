@@ -1,11 +1,15 @@
-/* Hylden: Cover Flow as in iTunes 7. Covers are 220 px squares; zoom scales the whole stage. */
+/* Hylden: Cover Flow as in iTunes 7. Covers are 220 px squares; --cf-scale scales the whole stage.
+   It is a transform, not `zoom`: Chrome runs the covers' transitions on the GPU, which ignores
+   zoom, so with zoom the side covers slid in too close and jumped out when each move ended. */
 .cf-band { position: relative; background: #000; padding: 0 var(--pad) 22px; overflow: hidden;
   user-select: none; -webkit-user-select: none; }
 .cf-band:focus { outline: none; }
 /* Keyboard focus marks the centre cover, not the whole band. */
 .cf-band:focus-visible .cf-cover[aria-current='true'] { outline: 2px solid var(--focus); outline-offset: 4px; }
 .cf-stage { position: relative; height: 350px; perspective: 900px; perspective-origin: 50% 150px;
-  touch-action: pan-y; cursor: grab; zoom: 1.3; }
+  touch-action: pan-y; cursor: grab;
+  --cf-scale: 1.3; transform: scale(var(--cf-scale)); transform-origin: 50% 0;
+  margin-bottom: calc(350px * (var(--cf-scale) - 1)); }
 .cf-stage:active { cursor: grabbing; }
 .cf-cover { position: absolute; left: calc(50% - 110px); top: 40px; width: 220px; height: 220px;
   padding: 0; border: 0; border-radius: 0; background: #111; cursor: pointer;
@@ -45,5 +49,5 @@
 .cf-below .note { padding: 40px 0; }
 
 @media (max-width: 700px) {
-  .cf-stage { zoom: .72; }
+  .cf-stage { --cf-scale: .72; }
 }
