@@ -22,6 +22,20 @@ export interface PosterSlot {
   wall: 'left' | 'right' | 'back'
 }
 
+/** A meeting's plaque, centred under the run of its posters it labels. `x`/`z` is on the wall's
+ *  surface, `y` the plaque's top edge, `width` the run's length along the wall. The scene sizes
+ *  the plaque itself from its texture. */
+export interface Plaque {
+  meetingNumber: number
+  x: number
+  y: number
+  z: number
+  normalX: number
+  normalZ: number
+  width: number
+  wall: PosterSlot['wall']
+}
+
 export interface ClubLayout {
   width: number
   depth: number
@@ -42,6 +56,9 @@ export interface ClubLayout {
   /** The meeting the flip sign shows: the latest with albums. */
   latest: Meeting | null
   posters: PosterSlot[]
+  /** One per run of a meeting's posters: a meeting's posters hang together, so usually one per
+   *  meeting, but the current meeting gets one each side of the sign. */
+  plaques: Plaque[]
 }
 
 // The room spans x in [-width/2, width/2] and z in [-depth/2, depth/2]. The back wall
@@ -69,6 +86,10 @@ const COUNTER_IN = 1.3 // the counter's centre from the front wall
 const DOOR_CLEAR = 0.8 // no side poster within this of the spawn, along the wall
 const COUNTER_CLEAR = 0.5
 const PITCH = SLOT.w + SLOT.gap
+const GROUP_GAP = 0.6 // extra wall between two meetings' posters
+const SEP = SLOT.gap + GROUP_GAP
+const PLAQUE_DROP = 0.055 // a full-height poster's frame bottom to its plaque's top
+const DEPTH_STEP = 0.05 // the room's depth grows in these steps, on a fixed grid
 // Wall the side runs lose to the lounge and the front: the left run stops short of the door, the
 // right one short of the counter. A run spans the bins, from the lounge to its front end.
 const LEFT_LOST = LOUNGE + SPAWN_IN + DOOR_CLEAR
@@ -79,11 +100,40 @@ const fits = (len: number) => Math.max(0, Math.floor((len + SLOT.gap) / PITCH + 
 /** Wall `k` slots need. */
 const runFor = (k: number) => (k ? k * PITCH - SLOT.gap : 0)
 
-/** The least depth whose two side runs hold `n` posters. */
-function posterDepth(n: number): number {
-  let best = Infinity
-  for (let left = 0; left <= n; left++) best = Math.min(best, Math.max(LEFT_LOST + runFor(left), RIGHT_LOST + runFor(n - left)))
-  return best
+/** Hangs the meetings' groups of posters on walls of the given lengths, in order: a group that
+ *  does not fit the rest of a wall moves on to the next one, so it hangs together. Only a group
+ *  too long for the whole wall it starts splits, filling that wall and going on on the next; on
+ *  the last wall there is no next, so the room grows instead. Returns each wall's runs in order,
+ *  or null when the walls are too short. */
+function pack(groups: Poster[][], walls: number[]): Poster[][][] | null {
+  const out: Poster[][][] = walls.map(() => [])
+  let w = 0, used = 0 // wall `w` is taken up to `used` metres, its last run's end
+  for (let rest of groups) {
+    while (rest.length) {
+      if (w === walls.length) return null
+      const need = (used ? used + SEP : 0) + runFor(rest.length)
+      if (need <= walls[w] + 1e-6) { out[w].push(rest); used = need; break }
+      if (!used) { // too long for a whole wall
+        const k = fits(walls[w])
+        if (k) out[w].push(rest.slice(0, k))
+        rest = rest.slice(k)
+      }
+      w++
+      used = 0
+    }
+  }
+  return out
+}
+
+/** The least depth, on a fixed grid, whose side walls hold `groups`. Fitting only gets easier as
+ *  the walls lengthen, and harder as posters arrive, so the room never shrinks when one does. */
+function posterDepth(groups: Poster[][]): number {
+  if (!groups.length) return 0
+  // A start below the answer: every run end to end on the two walls, less one gap where they change.
+  const total = groups.reduce((sum, g) => sum + runFor(g.length), 0) + (groups.length - 1) * SEP
+  let k = Math.max(0, Math.floor((total - SEP + LEFT_LOST + RIGHT_LOST) / 2 / DEPTH_STEP))
+  while (!pack(groups, [k * DEPTH_STEP - LEFT_LOST, k * DEPTH_STEP - RIGHT_LOST])) k++
+  return k * DEPTH_STEP
 }
 
 function genreCrates(meetings: Meeting[]): Omit<CrateSpec, 'x' | 'z' | 'rotationY'>[] {
@@ -120,13 +170,15 @@ export function buildClubLayout(meetings: Meeting[]): ClubLayout {
   const current = latest ? byPosition(latest) : []
   const perSide = fits(hw - SIGN.w / 2 - SLOT.gap - SLOT.gap) // off the sign, off the corner
   const back = current.slice(0, 2 * perSide)
-  const side = [...current.slice(back.length),
-    ...[...meetings].sort((a, b) => a.number - b.number).filter((m) => m !== latest).flatMap(byPosition)]
+  // The side walls hang the posters in groups, a meeting's together.
+  const groups = [current.slice(back.length),
+    ...[...meetings].sort((a, b) => a.number - b.number).filter((m) => m !== latest).map(byPosition)]
+    .filter((g) => g.length)
 
   // Depth: the tables' own, plus the lounge, or more when the side walls need it for the posters.
   // The extra goes between the lounge and the tables, so the tables keep their place by the door.
   const tableDepth = Math.max(MIN_D, BACK + Math.max(rows - 1, 0) * AISLE + FRONT)
-  const depth = Math.max(tableDepth + LOUNGE, posterDepth(side.length))
+  const depth = Math.max(tableDepth + LOUNGE, posterDepth(groups))
   const hd = depth / 2
 
   // Tables fill rows from the back, left to right, centred across the room. Crates face the front.
@@ -162,17 +214,40 @@ export function buildClubLayout(meetings: Meeting[]): ClubLayout {
   const rightFront = counter.minZ - COUNTER_CLEAR
   const bins = [box(-hw + BIN.d / 2, (runBack + leftFront) / 2, BIN.d, leftFront - runBack),
     box(hw - BIN.d / 2, (runBack + rightFront) / 2, BIN.d, rightFront - runBack)]
-  const onLeft = Math.min(side.length, fits(leftFront - runBack))
+  const [leftRuns, rightRuns] = pack(groups, [leftFront - runBack, rightFront - runBack])!
 
   const slot = (poster: Poster, wall: PosterSlot['wall'], x: number, z: number, normalX: number, normalZ: number): PosterSlot =>
     ({ poster, meetingNumber: number.get(poster.meetingId)!, x, y: POSTER_Y, z, normalX, normalZ,
       width: SLOT.w, height: SLOT.h, videoUrl: poster.videoUrl, wall })
+  const plaque = (run: Poster[], wall: PosterSlot['wall'], x: number, z: number, normalX: number, normalZ: number): Plaque =>
+    ({ meetingNumber: number.get(run[0].meetingId)!, x, y: POSTER_Y - SLOT.h / 2 - PLAQUE_DROP, z, normalX, normalZ,
+      width: runFor(run.length), wall })
+  const posters: PosterSlot[] = []
+  const plaques: Plaque[] = []
+
+  // The current meeting's, beside the sign in position order: left, right, left..., each further
+  // out, with a plaque under each side's.
   const out = SIGN.w / 2 + SLOT.gap + SLOT.w / 2
-  const posters = [
-    ...back.map((p, i) => slot(p, 'back', (i % 2 ? 1 : -1) * (out + Math.floor(i / 2) * PITCH), -hd, 0, 1)),
-    ...side.slice(0, onLeft).map((p, i) => slot(p, 'left', -hw, leftFront - SLOT.w / 2 - i * PITCH, 1, 0)),
-    ...side.slice(onLeft).map((p, i) => slot(p, 'right', hw, runBack + SLOT.w / 2 + i * PITCH, -1, 0)),
-  ]
+  back.forEach((p, i) => posters.push(slot(p, 'back', (i % 2 ? 1 : -1) * (out + Math.floor(i / 2) * PITCH), -hd, 0, 1)))
+  for (const s of [-1, 1]) {
+    const run = back.filter((_, i) => (i % 2 ? 1 : -1) === s)
+    if (run.length) plaques.push(plaque(run, 'back', s * (out - SLOT.w / 2 + runFor(run.length) / 2), -hd, 0, 1))
+  }
+
+  // The side runs: the left wall from the door towards the back, the right from the back towards
+  // the counter, a gap between meetings.
+  const hang = (runs: Poster[][], wall: 'left' | 'right', start: number, dir: number) => {
+    const x = wall === 'left' ? -hw : hw, normalX = wall === 'left' ? 1 : -1
+    let z = start
+    runs.forEach((run, r) => {
+      if (r) z += dir * SEP
+      run.forEach((p, i) => posters.push(slot(p, wall, x, z + dir * (SLOT.w / 2 + i * PITCH), normalX, 0)))
+      plaques.push(plaque(run, wall, x, z + dir * runFor(run.length) / 2, normalX, 0))
+      z += dir * runFor(run.length)
+    })
+  }
+  hang(leftRuns, 'left', leftFront, -1)
+  hang(rightRuns, 'right', runBack, 1)
 
   const walls = [
     { minX: -hw - 1, maxX: hw + 1, minZ: -hd - 1, maxZ: -hd },
@@ -182,7 +257,7 @@ export function buildClubLayout(meetings: Meeting[]): ClubLayout {
   ]
 
   return {
-    width, depth, crates, tables, bins, counter, couch, rug, coffeeTable, sign, posters, latest: latest ?? null,
+    width, depth, crates, tables, bins, counter, couch, rug, coffeeTable, sign, posters, plaques, latest: latest ?? null,
     boxes: [...walls, ...tables, ...bins, counter, couch, coffeeTable],
     // Just inside the door, turned a little towards the aisles and the counter.
     spawn: { x: -hw + SIDE + 0.4, z: hd - SPAWN_IN, yaw: -0.35 },

@@ -144,7 +144,7 @@ const rugTex = () => painted(48, 64, (g) => {
   speckle(g, 48, 64, 0.1, 53)
 })
 
-/** A cream plaque with the poster's meeting, in the flip sign's type: 5×7 glyphs, 2 texels of margin.
+/** A cream plaque with a meeting's number, in the flip sign's type: 5×7 glyphs, 2 texels of margin.
  *  16 mm a texel keeps every stroke at least a pixel wide from 3 m, in 400 lines; "MØDE 123" is 0.82 m. */
 const PLAQUE_TEXEL = 0.016
 const plaqueTex = (n: number) => {
@@ -414,10 +414,9 @@ export async function buildClub(layout: ClubLayout): Promise<Club> {
   const nameH = 0.24
   scene.add(at(plane(nameH * 6.4, nameH, decal('#ffffff', signTex())), sign.x, sign.y + sign.h / 2 + 0.05 + 0.03 + nameH / 2, -hd + 0.02))
 
-  // Posters, each fitted inside its slot at its own shape, in a thin black frame, with its meeting
-  // on a plaque underneath. A poster whose image would not load leaves an empty frame and its plaque.
+  // Posters, each fitted inside its slot at its own shape, in a thin black frame. A poster whose
+  // image would not load leaves an empty frame.
   const images = await posterImages
-  const plaques = new Map<number, THREE.Texture>()
   const posterMeshes: VideoPoster<PosterSlot>[] = []
   layout.posters.forEach((slot, i) => {
     const image = images[i]
@@ -426,10 +425,6 @@ export async function buildClub(layout: ClubLayout): Promise<Club> {
     const w = Math.min(slot.width, slot.height * aspect), h = w / aspect
     const g = at(new THREE.Group(), slot.x, slot.y, slot.z, Math.atan2(slot.normalX, slot.normalZ))
     g.add(at(shadedBox(w + 2 * FRAME, h + 2 * FRAME, FRAME, image ? '#161514' : '#2a2724'), 0, 0, FRAME / 2))
-    let plaque = plaques.get(slot.meetingNumber)
-    if (!plaque) plaques.set(slot.meetingNumber, plaque = plaqueTex(slot.meetingNumber))
-    const { width: pw, height: ph } = plaque.image as HTMLCanvasElement
-    g.add(at(plane(pw * PLAQUE_TEXEL, ph * PLAQUE_TEXEL, decal('#ffffff', plaque)), 0, -h / 2 - FRAME - 0.03 - ph * PLAQUE_TEXEL / 2, 0.01))
     if (image) {
       const picture = at(plane(w, h, ps1Material({ map: image, decal: true, ...FOG }), w, h, 0.2), 0, 0, FRAME + 0.012)
       const backing = at(plane(w, h, decal('#000000')), 0, 0, FRAME + 0.006)
@@ -439,6 +434,15 @@ export async function buildClub(layout: ClubLayout): Promise<Club> {
     }
     scene.add(g)
   })
+  // A plaque under each meeting's group of posters, hanging from its top edge.
+  const plaqueTexs = new Map<number, THREE.Texture>()
+  for (const p of layout.plaques) {
+    let tex = plaqueTexs.get(p.meetingNumber)
+    if (!tex) plaqueTexs.set(p.meetingNumber, tex = plaqueTex(p.meetingNumber))
+    const { width: pw, height: ph } = tex.image as HTMLCanvasElement
+    scene.add(at(plane(pw * PLAQUE_TEXEL, ph * PLAQUE_TEXEL, decal('#ffffff', tex)),
+      p.x + p.normalX * 0.01, p.y - ph * PLAQUE_TEXEL / 2, p.z + p.normalZ * 0.01, Math.atan2(p.normalX, p.normalZ)))
+  }
 
   // Crates: the genre crates on the tables, Nyt on the counter.
   const crateWood = woodTex('#c79a62', '#a57a46', 23)

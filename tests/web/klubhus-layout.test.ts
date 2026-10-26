@@ -1,6 +1,6 @@
 import { readFileSync } from 'node:fs'
 import { describe, expect, it } from 'vitest'
-import { buildClubLayout, COUCH, type ClubLayout, type PosterSlot } from '../../web/src/klubhus/layout.ts'
+import { BIN, buildClubLayout, COUCH, POSTER_Y, SLOT, type ClubLayout, type PosterSlot } from '../../web/src/klubhus/layout.ts'
 import type { Box2 } from '../../web/src/ps1/collide.ts'
 import { genreFamily } from '../../shared/genre.ts'
 import type { Album, Archive, Meeting, Poster } from '../../shared/types.ts'
@@ -95,7 +95,9 @@ describe('buildClubLayout', () => {
   it('room grows', () => {
     const many = meetings(Array(100).fill(2))
     const l = buildClubLayout(many)
-    expect(l.width * l.depth).toBeGreaterThan(shop.width * shop.depth)
+    // Against the fixture's records alone: its posters make it deeper than its crates need.
+    const bare = buildClubLayout(archive.meetings.map((m) => ({ ...m, posters: [] })))
+    expect(l.width * l.depth).toBeGreaterThan(bare.width * bare.depth)
     expectSound(l, many.flatMap((m) => m.albums))
   })
 })
@@ -201,6 +203,68 @@ function expectClub(l: ClubLayout, ms: Meeting[]) {
     expect(b.minZ).toBeGreaterThanOrEqual(l.couch.maxZ)
   }
   expect(reachesCouch(l)).toBe(true)
+  expectGroups(l)
+}
+
+const PITCH = SLOT.w + SLOT.gap
+const runFor = (k: number) => k * PITCH - SLOT.gap
+
+/** A wall's slots in hanging order, cut into runs of one meeting each: the side walls in their
+ *  hanging direction, the back wall's either side of the sign, outwards. */
+function runs(l: ClubLayout): { wall: PosterSlot['wall']; slots: PosterSlot[] }[] {
+  const out: { wall: PosterSlot['wall']; slots: PosterSlot[] }[] = []
+  const on = (wall: PosterSlot['wall']) => l.posters.filter((s) => s.wall === wall)
+  for (const s of [-1, 1]) {
+    const side = on('back').filter((p) => Math.sign(p.x) === s).sort((a, b) => Math.abs(a.x) - Math.abs(b.x))
+    if (side.length) out.push({ wall: 'back', slots: side })
+  }
+  for (const [wall, dir] of [['left', -1], ['right', 1]] as const) {
+    for (const s of on(wall).sort((a, b) => dir * (a.z - b.z))) {
+      const last = out.at(-1)
+      if (last?.wall === wall && last.slots.at(-1)!.meetingNumber === s.meetingNumber) last.slots.push(s)
+      else out.push({ wall, slots: [s] })
+    }
+  }
+  return out
+}
+
+/** The posters hang in groups by meeting, each with one plaque centred under it. */
+function expectGroups(l: ClubLayout) {
+  const all = runs(l)
+  for (const { wall, slots } of all) {
+    // Within a run, the usual spacing.
+    for (let i = 1; i < slots.length; i++) {
+      expect(Math.abs(alongWall(slots[i]) - alongWall(slots[i - 1]))).toBeCloseTo(PITCH, 9)
+    }
+    // One plaque for the run, centred under it, on the same wall, between the posters and the bins.
+    const mid = (alongWall(slots[0]) + alongWall(slots.at(-1)!)) / 2
+    const mine = l.plaques.filter((p) => p.wall === wall && Math.abs((wall === 'back' ? p.x : p.z) - mid) < 1e-6)
+    expect(mine).toHaveLength(1)
+    const [p] = mine
+    expect(p.meetingNumber).toBe(slots[0].meetingNumber)
+    expect([p.normalX, p.normalZ]).toEqual([slots[0].normalX, slots[0].normalZ])
+    expect(wall === 'back' ? p.z : p.x).toBe(wall === 'back' ? slots[0].z : slots[0].x)
+    expect(p.width).toBeCloseTo(runFor(slots.length), 9)
+    expect(p.y).toBeLessThanOrEqual(POSTER_Y - SLOT.h / 2)
+    expect(p.y - 0.2).toBeGreaterThan(BIN.h)
+  }
+  expect(l.plaques).toHaveLength(all.length)
+  // Between runs on a side wall, a clearly wider gap than within one.
+  for (const wall of ['left', 'right'] as const) {
+    const mine = all.filter((r) => r.wall === wall)
+    for (let i = 1; i < mine.length; i++) {
+      const gap = Math.abs(alongWall(mine[i].slots[0]) - alongWall(mine[i - 1].slots.at(-1)!)) - SLOT.w
+      expect(gap).toBeGreaterThanOrEqual(SLOT.gap + 0.6 - EPS)
+    }
+  }
+  // A meeting hangs as one run on one side wall, unless it is too long for a whole wall. The
+  // current meeting may also hang beside the sign.
+  const wallLen = Math.min(...l.bins.map((b) => b.maxZ - b.minZ))
+  for (const n of new Set(l.posters.map((s) => s.meetingNumber))) {
+    const side = all.filter((r) => r.wall !== 'back' && r.slots[0].meetingNumber === n)
+    expect(new Set(side.map((r) => r.wall)).size).toBe(side.length)
+    if (side.length > 1) expect(runFor(side.reduce((k, r) => k + r.slots.length, 0))).toBeGreaterThan(wallLen)
+  }
 }
 
 describe('buildClubLayout: the listening corner and the posters', () => {
@@ -277,5 +341,58 @@ describe('buildClubLayout: the listening corner and the posters', () => {
     }
     expect(last).toBeGreaterThan(base.depth)
     expect(buildClubLayout(withPosters(300)).width).toBe(base.width)
+  })
+
+  it('grows as posters arrive in meeting order, and to earlier meetings, and never shrinks', () => {
+    // A seeded run: mostly the newest meeting with posters gets another, sometimes the next one
+    // starts, sometimes an older one gets one late, sometimes the current one.
+    let seed = 7
+    const r = () => ((seed = (seed * 1103515245 + 12345) % 2147483648) / 2147483648)
+    const ms = meetings(Array(20).fill(2))
+    let newest = 0, last = buildClubLayout(ms).depth
+    for (let step = 0; step < 250; step++) {
+      const roll = r()
+      const m = roll < 0.55 ? ms[newest] : roll < 0.8 ? ms[newest = Math.min(newest + 1, 18)]
+        : roll < 0.92 ? ms[Math.floor(r() * (newest + 1))] : ms[19]
+      m.posters.push(poster(m.id, m.posters.length + 1))
+      const l = buildClubLayout(ms)
+      expect(l.depth).toBeGreaterThanOrEqual(last)
+      last = l.depth
+      if (step % 25 === 0) expectClub(l, ms)
+    }
+  })
+
+  it('hangs a meeting\'s posters together on one wall, with one plaque under them', () => {
+    const ms = withPosters(40)
+    const l = buildClubLayout(ms)
+    expectClub(l, ms)
+    for (const m of ms.filter((m) => m.posters.length)) {
+      const mine = l.posters.filter((s) => s.meetingNumber === m.number)
+      expect(new Set(mine.map((s) => s.wall)).size).toBe(1)
+      expect(l.plaques.filter((p) => p.meetingNumber === m.number)).toHaveLength(1)
+    }
+    // A meeting with more posters than a wall holds still hangs together: the room grows for it.
+    const big = meetings(Array(20).fill(2))
+    for (let i = 0; i < 3; i++) big[i].posters.push(poster(i + 1, 1))
+    for (let i = 0; i < 14; i++) big[4].posters.push(poster(5, i + 1))
+    const lb = buildClubLayout(big)
+    expectClub(lb, big)
+    expect(new Set(lb.posters.filter((s) => s.meetingNumber === 5).map((s) => s.wall)).size).toBe(1)
+  })
+
+  it('labels the current meeting once each side of the sign, and splits a group too long for a wall', () => {
+    const five = buildClubLayout(withPosters(4, 5))
+    const back = five.plaques.filter((p) => p.wall === 'back')
+    expect(back.map((p) => [p.meetingNumber, Math.sign(p.x)])).toEqual([[20, -1], [20, 1]])
+    const one = buildClubLayout(withPosters(4, 1)).plaques.filter((p) => p.wall === 'back')
+    expect(one.map((p) => Math.sign(p.x))).toEqual([-1])
+
+    // Sixty current posters: the back wall's, then a run too long for the left wall, which goes
+    // on on the right, each part with its plaque.
+    const ms = withPosters(4, 60)
+    const l = buildClubLayout(ms)
+    expectClub(l, ms)
+    const current = l.plaques.filter((p) => p.meetingNumber === 20).map((p) => p.wall)
+    expect(current).toEqual(['back', 'back', 'left', 'right'])
   })
 })
