@@ -7,6 +7,7 @@ import { resolve } from 'node:path'
 import { registerApi } from './api.ts'
 import { registerAdmin } from './admin/routes.ts'
 import { registerBoard } from './board.ts'
+import { registerLyttefest } from './lyttefest.ts'
 import { createThetaApi, type ThetaApi } from './theta-api.ts'
 import { registerThetaAuth, type ThetaAuthOptions } from './theta-auth.ts'
 import { registerThetaWebhook } from './theta-webhook.ts'
@@ -26,6 +27,8 @@ export interface AppOptions {
   thetaApi?: ThetaApi
   /** Shared with Theta, so a signed event can be told from anyone else's. No secret, no webhook. */
   thetaWebhookSecret?: string
+  /** The clock, so a test can decide when a lyttefest starts and ends. */
+  now?: () => number
 }
 
 export function buildApp(opts: AppOptions): FastifyInstance {
@@ -36,9 +39,17 @@ export function buildApp(opts: AppOptions): FastifyInstance {
   // First, so its gate covers every route below.
   if (opts.theta) {
     registerThetaAuth(app, opts.theta)
-    const board = registerBoard(app, opts.thetaApi ?? createThetaApi(opts.theta))
+    const api = opts.thetaApi ?? createThetaApi(opts.theta)
+    const board = registerBoard(app, api)
+    const fest = registerLyttefest(app, {
+      db: opts.db, api, publicUrl: opts.theta.publicUrl, now: opts.now,
+    })
     if (opts.thetaWebhookSecret) {
-      registerThetaWebhook(app, { secret: opts.thetaWebhookSecret, onGroupPosted: () => board.drop() })
+      registerThetaWebhook(app, {
+        secret: opts.thetaWebhookSecret,
+        onGroupPosted: () => board.drop(),
+        onCardAction: fest.onCardAction,
+      })
     }
   }
   registerApi(app, opts.db, opts.uploadDir)
@@ -55,6 +66,8 @@ export function buildApp(opts: AppOptions): FastifyInstance {
     const webDir = resolve(opts.webDir)
     app.register(fastifyStatic, { root: webDir, prefix: '/' })
     app.get('/klubhuset', (_req, reply) => reply.sendFile('klubhuset.html'))
+    // Every lyttefest is the same page; which one it is comes from the address.
+    app.get('/lyttefest/:id', (_req, reply) => reply.sendFile('lyttefest.html'))
   }
   for (const old of ['crate', 'museum']) app.get(`/${old}`, (_req, reply) => reply.redirect('/klubhuset', 301))
   // Arkivet is the front page now; browsers carry a #kortet fragment across the redirect.

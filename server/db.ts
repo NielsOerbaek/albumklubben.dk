@@ -41,6 +41,46 @@ CREATE TABLE IF NOT EXISTS posters (
   video_path TEXT,
   about TEXT
 );
+-- Lyttefesten: an album, a time, and everybody pressing play at once on their own speakers.
+-- The tracks column is the tracklist frozen as it was when the lyttefest was made, so editing
+-- the album later cannot move a party that has already been held.
+CREATE TABLE IF NOT EXISTS lyttefester (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  album_id INTEGER NOT NULL REFERENCES albums(id) ON DELETE CASCADE,
+  host_sub TEXT NOT NULL,
+  host_name TEXT NOT NULL,
+  starts_at TEXT NOT NULL,
+  note TEXT,
+  tracks TEXT NOT NULL,
+  theta_post_id TEXT,
+  theta_post_url TEXT,
+  card_external_id TEXT,
+  posted_as TEXT NOT NULL DEFAULT 'user',
+  cancelled_at TEXT,
+  reminded_at TEXT,
+  summary_posted_at TEXT,
+  created_at TEXT NOT NULL
+);
+CREATE TABLE IF NOT EXISTS lyttefest_rsvps (
+  lyttefest_id INTEGER NOT NULL REFERENCES lyttefester(id) ON DELETE CASCADE,
+  sub TEXT NOT NULL,
+  name TEXT NOT NULL,
+  created_at TEXT NOT NULL,
+  PRIMARY KEY (lyttefest_id, sub)
+);
+CREATE TABLE IF NOT EXISTS lyttefest_comments (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  lyttefest_id INTEGER NOT NULL REFERENCES lyttefester(id) ON DELETE CASCADE,
+  sub TEXT NOT NULL,
+  name TEXT NOT NULL,
+  track_index INTEGER,
+  text TEXT NOT NULL,
+  created_at TEXT NOT NULL,
+  deleted_at TEXT
+);
+CREATE INDEX IF NOT EXISTS lyttefester_album ON lyttefester(album_id);
+CREATE INDEX IF NOT EXISTS lyttefester_time ON lyttefester(starts_at);
+CREATE INDEX IF NOT EXISTS lyttefest_comments_fest ON lyttefest_comments(lyttefest_id, created_at);
 CREATE INDEX IF NOT EXISTS albums_meeting ON albums(meeting_id, position);
 CREATE INDEX IF NOT EXISTS posters_meeting ON posters(meeting_id, position);
 `
