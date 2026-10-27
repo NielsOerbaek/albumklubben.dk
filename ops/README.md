@@ -17,7 +17,7 @@ Siden: https://albumklubben.dn.osogdata.dk. Aendring af Caddyfilen kraever `cadd
 ## Log ind med Theta
 
 Hele siden er kun for medlemmer af Albumklubben-gruppen paa Theta (`server/theta-auth.ts`). Serveren starter ikke uden `THETA_*` og `PUBLIC_URL` i `.env`.
-Theta er OIDC-udbyder; appen beder om `openid profile groups` og lukker ind, naar `groups`-claimet indeholder `THETA_GROUP_ID`. En session varer 7 dage, saa tjekkes medlemskabet igen.
+Theta er OIDC-udbyder; appen beder om `openid profile groups` og lukker ind, naar `groups`-claimet indeholder `THETA_GROUP_ID`. En session varer et doegn, saa tjekkes medlemskabet igen (stille, mens man er logget ind paa Theta).
 Kun `/auth/*`, `/healthz` og `/robots.txt` er aabne. `/admin` kraever derudover sit eget `ADMIN_PASSWORD`.
 
 Appen er registreret paa Theta (i dag stage) med `interop-admin` og filen `ops/theta-interop.json`:

@@ -1,5 +1,5 @@
 # Albumklubben. Imported from /etc/caddy/Caddyfile with: import /home/theta/albumklubben-ops/Caddyfile
-# Make the hash with: caddy hash-password  (the plain password lives in the live .env as SITE_PASSWORD).
+# No password here: the app itself lets in only members of the club's Theta group (server/theta-auth.ts).
 albumklubben.dn.osogdata.dk {
 	encode zstd gzip
 	header {
@@ -15,9 +15,6 @@ Disallow: /
 " 200
 	request_body {
 		max_size 600MB
-	}
-	basic_auth {
-		albumklub <BCRYPT-HASH>
 	}
 	reverse_proxy 127.0.0.1:3600
 }

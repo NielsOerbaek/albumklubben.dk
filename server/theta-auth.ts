@@ -5,7 +5,7 @@ import type { FastifyInstance, FastifyReply, FastifyRequest } from 'fastify'
  * "Log ind med Theta": the whole site is for members of the club's Theta group. Theta is an
  * OIDC provider; we ask for the `groups` scope, whose claim lists the groups this app is
  * installed in where the person is an active member. A member gets a signed session cookie
- * for a week, after which the round trip (silent while their Theta session lives) checks the
+ * for a day, after which the round trip (silent while their Theta session lives) checks the
  * membership again.
  */
 export interface ThetaAuthOptions {
@@ -19,7 +19,8 @@ export interface ThetaAuthOptions {
 
 const SESSION = 'ak_member'
 const FLOW = 'ak_oidc'
-const WEEK = 7 * 24 * 60 * 60
+const DAY = 24 * 60 * 60
+const timeout = () => AbortSignal.timeout(10_000)
 const OPEN = ['/auth/', '/healthz', '/robots.txt']
 
 interface Discovery { authorization_endpoint: string; token_endpoint: string; userinfo_endpoint: string }
@@ -27,10 +28,15 @@ interface Member { sub: string; name: string; exp: number }
 
 const b64url = (b: Buffer) => b.toString('base64url')
 
-/** A path on this site to come back to; anything else is the front page. */
+/** A path on this site to come back to; anything else is the front page. Resolved the way a
+ * browser will (which drops tabs and newlines, so `/\t/evil.test` is `//evil.test`). */
 export function safeNext(next: unknown): string {
-  return typeof next === 'string' && next.startsWith('/') && !next.startsWith('//') && !next.startsWith('/\\')
-    ? next : '/'
+  if (typeof next !== 'string' || !next.startsWith('/') || /[\x00-\x1f\\]/.test(next)) return '/'
+  const base = 'https://albumklubben.invalid'
+  try {
+    const url = new URL(next, base)
+    return url.origin === base ? url.pathname + url.search + url.hash : '/'
+  } catch { return '/' }
 }
 
 const page = (title: string, body: string) => `<!doctype html>
@@ -48,7 +54,7 @@ export function registerThetaAuth(app: FastifyInstance, opts: ThetaAuthOptions) 
   const redirectUri = `${opts.publicUrl}/auth/callback`
   const cookieOpts = { signed: true, httpOnly: true, sameSite: 'lax' as const, secure: true, path: '/' }
   let discovery: Promise<Discovery> | null = null
-  const discover = () => (discovery ??= doFetch(`${opts.issuer}/.well-known/openid-configuration`)
+  const discover = () => (discovery ??= doFetch(`${opts.issuer}/.well-known/openid-configuration`, { signal: timeout() })
     .then(r => { if (!r.ok) throw new Error(`discovery ${r.status}`); return r.json() as Promise<Discovery> })
     .catch(err => { discovery = null; throw err }))
 
@@ -113,6 +119,7 @@ export function registerThetaAuth(app: FastifyInstance, opts: ThetaAuthOptions) 
     const basic = Buffer.from(`${encodeURIComponent(opts.clientId)}:${encodeURIComponent(opts.clientSecret)}`).toString('base64')
     const tokenRes = await doFetch(token_endpoint, {
       method: 'POST',
+      signal: timeout(),
       headers: { authorization: `Basic ${basic}`, 'content-type': 'application/x-www-form-urlencoded' },
       body: new URLSearchParams({
         grant_type: 'authorization_code', code: req.query.code, redirect_uri: redirectUri, code_verifier: saved.verifier,
@@ -123,7 +130,7 @@ export function registerThetaAuth(app: FastifyInstance, opts: ThetaAuthOptions) 
       return html(502, 'Login fejlede', `<p>Theta svarede ikke som ventet.</p>${loginButton(saved.next)}`)
     }
     const { access_token } = await tokenRes.json() as { access_token: string }
-    const infoRes = await doFetch(userinfo_endpoint, { headers: { authorization: `Bearer ${access_token}` } })
+    const infoRes = await doFetch(userinfo_endpoint, { headers: { authorization: `Bearer ${access_token}` }, signal: timeout() })
     if (!infoRes.ok) {
       req.log.warn({ status: infoRes.status }, 'theta userinfo failed')
       return html(502, 'Login fejlede', `<p>Theta svarede ikke som ventet.</p>${loginButton(saved.next)}`)
@@ -133,8 +140,8 @@ export function registerThetaAuth(app: FastifyInstance, opts: ThetaAuthOptions) 
       return html(403, 'Kun for medlemmer',
         `<p>Albumklubben er for medlemmer af Albumklubben-gruppen på Theta. Spørg en af klubbens admins om at blive meldt ind.</p>${loginButton(saved.next)}`)
     }
-    const session: Member = { sub: info.sub, name: info.name ?? '', exp: Math.floor(Date.now() / 1000) + WEEK }
-    reply.setCookie(SESSION, JSON.stringify(session), { ...cookieOpts, maxAge: WEEK })
+    const session: Member = { sub: info.sub, name: info.name ?? '', exp: Math.floor(Date.now() / 1000) + DAY }
+    reply.setCookie(SESSION, JSON.stringify(session), { ...cookieOpts, maxAge: DAY })
     return reply.redirect(saved.next)
   })
 

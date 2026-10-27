@@ -31,7 +31,10 @@ function sameOrigin(req: FastifyRequest): boolean {
 export function requireAdmin(req: FastifyRequest, reply: FastifyReply, done: () => void) {
   if (req.method !== 'GET' && req.method !== 'HEAD' && !sameOrigin(req)) return reply.code(403).send('Ugyldig oprindelse')
   const raw = req.cookies[COOKIE]
-  const ok = raw !== undefined && req.unsignCookie(raw).valid
+  // The value too: every cookie here is signed with the same secret, so a member's or a
+  // sign-in cookie's value is validly signed as well.
+  const unsigned = raw === undefined ? null : req.unsignCookie(raw)
+  const ok = unsigned !== null && unsigned.valid && unsigned.value === 'ok'
   if (ok) return done()
   if (req.method === 'GET') reply.redirect('/admin/login')
   else reply.code(401).send('Log ind først')

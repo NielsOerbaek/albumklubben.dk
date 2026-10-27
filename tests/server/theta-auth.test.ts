@@ -121,7 +121,20 @@ describe('Log ind med Theta', () => {
   })
 
   it('only follows a next that stays on this site', () => {
-    expect(safeNext('/klubhuset?x=1')).toBe('/klubhuset?x=1')
-    for (const bad of ['//evil.test', '/\\evil.test', 'https://evil.test', undefined, 42]) expect(safeNext(bad)).toBe('/')
+    expect(safeNext('/klubhuset?x=1#kortet')).toBe('/klubhuset?x=1#kortet')
+    // Browsers drop tabs and newlines, so /\t/evil.test would be //evil.test.
+    for (const bad of ['//evil.test', '/\\evil.test', '/\t/evil.test', '/\n/evil.test', 'https://evil.test', undefined, 42]) {
+      expect(safeNext(bad), String(bad)).toBe('/')
+    }
+  })
+
+  it('does not take a member\'s or a sign-in cookie as the admin cookie', async () => {
+    const { app } = setup()
+    const { start, cb } = await signIn(app)
+    for (const value of [cb.cookies.find(c => c.name === 'ak_member')!.value, start.cookies.find(c => c.name === 'ak_oidc')!.value]) {
+      const res = await app.inject({ url: '/admin', headers: { cookie: `${cookieHeader(cb, 'ak_member')}; ak_admin=${value}` } })
+      expect(res.statusCode).toBe(302)
+      expect(res.headers.location).toBe('/admin/login')
+    }
   })
 })
