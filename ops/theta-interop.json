@@ -2,7 +2,7 @@
   "apps": [
     {
       "slug": "albumklubben",
-      "name": "Albumklubben",
+      "name": "Albumklubben.dk",
       "description": "Klubhuset og arkivet for frokostlytteklubben på Thoravej 29.",
       "clientId": "albumklubben",
       "clientSecret": "env:ALBUMKLUBBEN_CLIENT_SECRET",
