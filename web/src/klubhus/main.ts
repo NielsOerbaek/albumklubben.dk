@@ -13,7 +13,9 @@ import { buildClubLayout } from './layout.ts'
 import { bookSpreads } from './book.ts'
 import { buildClub, type CrateView } from './scene.ts'
 import { BOARD_REACH } from './corkboard.ts'
+import { BOARD, boardLines, festLines, type SignFest } from './flipsign.ts'
 import { createBoard } from '../board/board.ts'
+import { createLyttefestPanel } from '../lyttefest/start.ts'
 import type { Album, Meeting, Poster } from '../../../shared/types.ts'
 
 type Pose = { position: THREE.Vector3; yaw: number; pitch: number }
@@ -25,6 +27,7 @@ const AGAIN = 'Klik for at gå videre'
 const BOOK_SHUT = 'Klik eller E for at åbne plakatbogen'
 const CORK = 'Klik for at læse opslagstavlen'
 const CORK_EVERY = 60_000 // the board looks for new posts this often, while the tab is watched
+const SIGN_EVERY = 20_000 // and the screen asks whether a lyttefest is on
 const BOOK_OPEN = 'Klik på en plakat for at se den · A/D eller pilene for at bladre · Esc for at lukke'
 const BOOK_REACH = 1.6 // metres on the floor plan from the book's centre
 const EASE_TIME = 0.5 // seconds, to the open book and back
@@ -89,6 +92,7 @@ async function start() {
   // The open dialogs: a poster, an album over it (or a record pulled from a crate), or both.
   let poster: { poster: Poster; meeting: Meeting } | null = null
   let pulled: { album: Album; showTracks: boolean } | null = null
+  const fest = createLyttefestPanel(() => drawOverlay())
   let entered = false
   const open = () => !!(poster || pulled) || board.isOpen()
   // Where you stood before opening the book, and the camera's ease to the book or back to it.
@@ -130,6 +134,20 @@ async function start() {
   const fillCork = () => board.peek().then((posts) => club.cork.setPosts(posts))
   void fillCork()
   setInterval(() => { if (!document.hidden && !board.isOpen()) void fillCork() }, CORK_EVERY)
+
+  // The screen: a lyttefest while there is one, otherwise the latest meeting, as before.
+  const meetingLines = layout.latest ? boardLines(layout.latest, BOARD.cols, BOARD.rows)
+    : Array.from({ length: BOARD.rows }, () => ' '.repeat(BOARD.cols))
+  async function fillSign() {
+    try {
+      const res = await fetch('/api/lyttefest', { headers: { accept: 'application/json' } })
+      if (!res.ok) return
+      const { lyttefest } = await res.json() as { lyttefest: SignFest | null }
+      club.screen.setLines(lyttefest ? festLines(lyttefest, BOARD.cols, BOARD.rows) : meetingLines)
+    } catch { /* no Theta, no lyttefest: the screen keeps the meeting */ }
+  }
+  void fillSign()
+  setInterval(() => { if (!document.hidden) void fillSign() }, SIGN_EVERY)
   // What a member writes themselves should be on the wall when they turn round.
   document.addEventListener('visibilitychange', () => { if (!document.hidden) void fillCork() })
 
@@ -172,7 +190,7 @@ async function start() {
   function clickBook() {
     const hit = book.aim(centreRay())
     if (hit?.kind === 'poster') poster = { poster: hit.poster, meeting: hit.meeting }
-    else if (hit?.kind === 'album') pulled = { album: hit.album, showTracks: false }
+    else if (hit?.kind === 'album') { pulled = { album: hit.album, showTracks: false }; fest.open(hit.album.id) }
     else return
     openDialog()
   }
@@ -199,6 +217,7 @@ async function start() {
       const { album, showTracks } = pulled
       return showOverlay(albumDialog({
         album, showTracks, meetingNumber: meetingById.get(album.meetingId)!.number,
+        extra: fest.template(album),
         help: poster ? 'Esc for at gå tilbage til plakaten' : 'Esc for at lægge den tilbage',
         onToggle: () => { pulled!.showTracks = !pulled!.showTracks; drawOverlay() },
         onClose: closeAll,
@@ -209,7 +228,7 @@ async function start() {
       return showOverlay(posterDialog({
         poster: poster.poster,
         meeting: poster.meeting,
-        onAlbum: (album) => { pulled = { album, showTracks: false }; drawOverlay() },
+        onAlbum: (album) => { pulled = { album, showTracks: false }; fest.open(album.id); drawOverlay() },
         onClose: closeAll,
         onPrev: neighbour(-1) ? () => stepPoster(-1) : undefined,
         onNext: neighbour(1) ? () => stepPoster(1) : undefined,
@@ -238,6 +257,7 @@ async function start() {
     const album = target?.frontAlbum()
     if (!album) return
     pulled = { album, showTracks: false }
+    fest.open(album.id)
     openDialog()
   }
 

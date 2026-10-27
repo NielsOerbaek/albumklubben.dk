@@ -1,5 +1,8 @@
 import type { Database } from './db.ts'
+import type { BoardPost } from '../shared/board.ts'
 import type { FestAlbum, FestComment, FestPerson, FestSummary, FestTrack } from '../shared/lyttefest.ts'
+
+type BoardPostFest = NonNullable<BoardPost['lyttefest']>
 
 /** The lyttefest tables. Everything the site knows about a listening party lives here. */
 type Row = Record<string, any>
@@ -166,6 +169,22 @@ export function festAlbum(db: Database, albumId: number): FestAlbum | null {
     coverUrl: r.cover_path === null ? null : `/uploads/${r.cover_path}`,
     cardColor: r.card_color, meetingNumber: r.meeting_number,
   }
+}
+
+/** The lyttefester announced by the given Theta posts, so the board can show them as such. */
+export function festsByPost(db: Database, postIds: string[]): Map<string, BoardPostFest> {
+  const out = new Map<string, BoardPostFest>()
+  if (postIds.length === 0) return out
+  const rows = db.prepare(`SELECT id, album_id, theta_post_id FROM lyttefester
+    WHERE theta_post_id IN (${postIds.map(() => '?').join(',')})`).all(...postIds) as Row[]
+  for (const r of rows) {
+    const album = festAlbum(db, r.album_id)
+    if (album) {
+      out.set(String(r.theta_post_id),
+        { id: r.id, artist: album.artist, title: album.title, coverUrl: album.coverUrl })
+    }
+  }
+  return out
 }
 
 export const albumTracklist = (db: Database, albumId: number): string | null => {

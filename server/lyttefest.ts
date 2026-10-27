@@ -90,7 +90,7 @@ export function registerLyttefest(app: FastifyInstance, opts: LyttefestOptions) 
       thetaUrl: f.thetaPostUrl,
       coming: listRsvps(db, f.id),
       comments: listComments(db, f.id),
-      you: { coming: isComing(db, f.id, who.sub), host: who.sub === f.host.sub },
+      you: { sub: who.sub, coming: isComing(db, f.id, who.sub), host: who.sub === f.host.sub },
       now: new Date(now()).toISOString(),
     }
   }
@@ -209,6 +209,34 @@ export function registerLyttefest(app: FastifyInstance, opts: LyttefestOptions) 
     if (!fest) return reply
     reply.header('Cache-Control', 'no-store')
     return view(fest, req.member!) ?? reply.code(404).send({ error: 'Lyttefesten findes ikke' })
+  })
+
+  /**
+   * For the room's screen: the lyttefest it should be showing, if any. The one playing now, or
+   * the next one within a day. Nothing else is the screen's business.
+   */
+  app.get('/api/lyttefest', async (_req, reply) => {
+    reply.header('Cache-Control', 'no-store')
+    const at = now()
+    const soon = festsFrom(db, new Date(at - 24 * 3600_000).toISOString())
+      .filter(f => !f.cancelledAt)
+      .map(f => ({ f, p: positionAt(f.tracks, Date.parse(f.startsAt), at) }))
+    const playing = soon.find(x => x.p.state === 'nu')
+    const next = soon.find(x => x.p.state === 'kommende' && x.p.seconds <= 24 * 3600)
+    const show = playing ?? next
+    if (!show) return { lyttefest: null }
+    const album = festAlbum(db, show.f.albumId)
+    return {
+      lyttefest: {
+        id: show.f.id,
+        artist: album?.artist ?? '',
+        title: album?.title ?? '',
+        startsAt: show.f.startsAt,
+        state: show.p.state,
+        track: show.p.track?.title ?? null,
+        trackNumber: show.p.track?.number ?? null,
+      },
+    }
   })
 
   app.get<{ Params: { id: string } }>('/api/albums/:id/lyttefester', async (req, reply) => {

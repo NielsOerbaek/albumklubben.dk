@@ -1,0 +1,70 @@
+<!doctype html>
+<html lang="da">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Lyttefest-test</title>
+</head>
+<body class="lyttefest">
+<!-- Dev only (not in the Vite build inputs): the lyttefest page on a made-up lyttefest, so the
+     three states can be looked at without Theta. ?tid=foer|nu|slut picks one. The people are
+     invented, like the seed data. -->
+<div id="app"></div>
+<script type="module">
+const state = new URLSearchParams(location.search).get('tid') ?? 'nu'
+const TRACKS = [
+  { number: 1, title: 'Moving', seconds: 180, disc: 1 },
+  { number: 2, title: 'The Saxophone Song', seconds: 270, disc: 1 },
+  { number: 3, title: 'Strange Phenomena', seconds: 180, disc: 1 },
+  { number: 4, title: 'Wuthering Heights', seconds: 270, disc: 1 },
+]
+// Before: in twenty minutes. Now: five seconds into the second track. Over: an hour ago.
+const offsets = { foer: 20 * 60_000, nu: -185_000, slut: -3600_000 }
+const startsAt = new Date(Date.now() + (offsets[state] ?? 0)).toISOString()
+const iso = (secondsAgo) => new Date(Date.now() - secondsAgo * 1000).toISOString()
+
+const FEST = {
+  id: 1,
+  album: { id: 1, artist: 'Kate Bush', title: 'The Kick Inside', year: 1978, coverUrl: null,
+    cardColor: '#be7472', meetingNumber: 13 },
+  host: { sub: 's1', name: 'Medlem 1' },
+  startsAt,
+  note: 'Jeg har hørt den hundrede gange, men aldrig sammen med nogen.',
+  tracks: TRACKS,
+  cancelled: false,
+  thetaUrl: 'https://stage.theta.dk/p/1',
+  coming: [{ sub: 's1', name: 'Medlem 1' }, { sub: 's2', name: 'Medlem 2' }, { sub: 'me', name: 'Dig' }],
+  comments: [
+    { id: 1, sub: 's2', name: 'Medlem 2', trackIndex: 0, text: 'Den åbning!', createdAt: iso(300) },
+    { id: 2, sub: 'me', name: 'Dig', trackIndex: 0, text: 'Enig. Hvad er det for en lyd?', createdAt: iso(240) },
+    { id: 3, sub: 's1', name: 'Medlem 1', trackIndex: 1, text: 'Saxofonen kommer nu', createdAt: iso(60) },
+  ],
+  you: { sub: 'me', coming: true, host: false },
+  now: new Date().toISOString(),
+}
+
+const real = window.fetch
+window.fetch = async (url, init) => {
+  const path = String(url)
+  const json = (b) => new Response(JSON.stringify(b), { status: 200, headers: { 'content-type': 'application/json' } })
+  if (path === '/api/lyttefest/1') return json({ ...FEST, now: new Date().toISOString() })
+  if (path.endsWith('/rsvp')) {
+    const coming = JSON.parse(init.body).coming
+    FEST.coming = coming ? [...FEST.coming, { sub: 'me', name: 'Dig' }] : FEST.coming.filter((c) => c.sub !== 'me')
+    return json({ coming: FEST.coming })
+  }
+  if (path.endsWith('/comments')) {
+    const made = { id: Date.now(), sub: 'me', name: 'Dig', trackIndex: 1, text: JSON.parse(init.body).text, createdAt: new Date().toISOString() }
+    FEST.comments.push(made)
+    return json(made)
+  }
+  if (path.startsWith('/api/board')) return json({ items: [], nextCursor: null })
+  return real(url, init)
+}
+// The page reads which lyttefest it is from the address.
+history.replaceState(null, '', '/lyttefest/1' + location.search)
+window.EventSource = class { addEventListener() {} close() {} }
+await import('/src/lyttefest/main.ts')
+</script>
+</body>
+</html>

@@ -57,6 +57,8 @@ export interface AlbumOptions {
   showTracks: boolean
   onToggle: () => void
   size?: 'large' | 'medium'
+  /** Put under the album in its dialog: the lyttefest panel, where there is one. */
+  extra?: TemplateResult
 }
 
 /** The record (cover, turning to the tracklist) with the info panel beside it. */
@@ -91,6 +93,7 @@ export function albumDialog(o: AlbumOptions & { help?: string; onClose: () => vo
         <button class="album-close" aria-label="Luk" @click=${o.onClose}>×</button>
       </div>
       ${albumTemplate(o)}
+      ${o.extra ?? nothing}
       ${o.help ? html`<p class="album-help">${o.help}</p>` : nothing}
     </div>
   </div>`

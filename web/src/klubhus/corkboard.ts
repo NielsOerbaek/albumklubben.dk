@@ -6,6 +6,7 @@ import { drawPixelText, fold } from './flipsign.ts'
 import { kit } from './room.ts'
 import type { ClubLayout } from './layout.ts'
 import { firstName, type BoardPost } from '../../../shared/board.ts'
+import { textureUrl } from '../api.ts'
 
 /**
  * Opslagstavlen on the bare wall by the door: a cork board with the group's latest posts pinned
@@ -31,8 +32,10 @@ const COLS_TEXT = Math.floor((CELL.w - PAD * 2 - MARGIN * 2) / GLYPH)
 const CORK = '#b07c3c'
 const FRAME = '#6b4a28'
 const INK = '#2b2520'
-/** Paper, in the shades a club's notes come in. A lyttefest gets the album's own colour instead. */
+/** Paper, in the shades a club's notes come in. A lyttefest is on its own colour, with the cover. */
 const PAPERS = ['#efe7d2', '#f2dcc6', '#dfe6e8', '#f0dfe4', '#e5e8d6', '#eadfee']
+const FEST_PAPER = '#fe3ebe'
+const COVER = 34 // texels: the cover on a lyttefest note
 const PIN = ['#b9120a', '#1d4e89', '#2f6b35', '#8a5a1b']
 
 const BOARD_H = 1.25 // metres
@@ -67,6 +70,19 @@ export function wrap(text: string, cols: number, max: number): string[] {
   return out
 }
 
+/** Album covers for the notes, each fetched once and kept. */
+const covers = new Map<string, HTMLImageElement>()
+function cover(url: string, ready: (img: HTMLImageElement) => void) {
+  const src = textureUrl(url, 64)
+  const had = covers.get(src)
+  if (had?.complete) return ready(had)
+  if (had) return had.addEventListener('load', () => ready(had), { once: true })
+  const img = new Image()
+  covers.set(src, img)
+  img.addEventListener('load', () => ready(img), { once: true })
+  img.src = src
+}
+
 export function createCorkBoard(layout: ClubLayout): CorkBoard {
   const canvas = document.createElement('canvas')
   canvas.width = TEX.w
@@ -80,14 +96,22 @@ export function createCorkBoard(layout: ClubLayout): CorkBoard {
     speckle(g, TEX.w, TEX.h, 0.09, 7)
 
     const notes = posts === 'error'
-      ? [{ name: '', lines: wrap('Tavlen kan ikke hentes lige nu', COLS_TEXT, 4), foot: '' }]
+      ? [{ name: '', lines: wrap('Tavlen kan ikke hentes lige nu', COLS_TEXT, 4), foot: '', cover: null }]
       : posts.length === 0
-        ? [{ name: '', lines: wrap('Der er ikke skrevet noget endnu', COLS_TEXT, 4), foot: '' }]
-        : posts.slice(0, COLS * ROWS).map((p) => ({
-          name: fold(firstName(p.author.name)).slice(0, COLS_TEXT),
-          lines: wrap(p.title || p.body, COLS_TEXT, 3),
-          foot: p.commentCount > 0 ? `${p.commentCount} SVAR` : '',
-        }))
+        ? [{ name: '', lines: wrap('Der er ikke skrevet noget endnu', COLS_TEXT, 4), foot: '', cover: null }]
+        : posts.slice(0, COLS * ROWS).map((p) => p.lyttefest
+          ? {
+            name: 'LYTTEFEST',
+            lines: wrap(`${p.lyttefest.artist}: ${p.lyttefest.title}`, COLS_TEXT, 2),
+            foot: p.commentCount > 0 ? `${p.commentCount} SVAR` : '',
+            cover: p.lyttefest.coverUrl,
+          }
+          : {
+            name: fold(firstName(p.author.name)).slice(0, COLS_TEXT),
+            lines: wrap(p.title || p.body, COLS_TEXT, 3),
+            foot: p.commentCount > 0 ? `${p.commentCount} SVAR` : '',
+            cover: null as string | null,
+          })
 
     const r = rng(11)
     notes.forEach((note, i) => {
@@ -98,7 +122,8 @@ export function createCorkBoard(layout: ClubLayout): CorkBoard {
       // The paper, with a hard shadow under it so it stands off the cork.
       g.fillStyle = 'rgb(0 0 0 / 0.25)'
       g.fillRect(x + 2, y + 2, w, h)
-      g.fillStyle = PAPERS[i % PAPERS.length]
+      const isFest = note.name === 'LYTTEFEST'
+      g.fillStyle = isFest ? FEST_PAPER : PAPERS[i % PAPERS.length]
       g.fillRect(x, y, w, h)
       g.fillStyle = INK
       let line = y + 6
@@ -111,8 +136,18 @@ export function createCorkBoard(layout: ClubLayout): CorkBoard {
         drawPixelText(g, text, x + MARGIN, line)
         line += LINE
       }
+      if (note.cover) {
+        // The cover is drawn when it arrives; the note is already up by then.
+        const at = { x: x + (w - COVER) / 2 | 0, y: y + h - COVER - 12 }
+        g.fillStyle = '#00000022'
+        g.fillRect(at.x, at.y, COVER, COVER)
+        cover(note.cover, (img) => {
+          g.drawImage(img, at.x, at.y, COVER, COVER)
+          texture.needsUpdate = true
+        })
+      }
       if (note.foot) {
-        g.fillStyle = '#6a625a'
+        g.fillStyle = isFest ? '#5a1142' : '#6a625a'
         drawPixelText(g, note.foot, x + MARGIN, y + h - 11)
       }
       // The pin.

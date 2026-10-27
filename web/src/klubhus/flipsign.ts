@@ -37,6 +37,28 @@ export function boardLines(m: Meeting, cols: number, rows: number): string[] {
   return Array.from({ length: rows }, (_, i) => fold(lines[i] ?? '').slice(0, cols).padEnd(cols, ' '))
 }
 
+/** What the screen says about a lyttefest: playing now, or coming up within the day. */
+export interface SignFest {
+  artist: string
+  title: string
+  startsAt: string
+  state: 'kommende' | 'nu' | 'slut' | 'aflyst'
+  track: string | null
+  trackNumber: number | null
+}
+
+/** "LYTTEFEST NU" with the album and the track; before it, the time it starts. */
+export function festLines(f: SignFest, cols: number, rows: number): string[] {
+  const at = new Date(f.startsAt)
+  const two = (n: number) => String(n).padStart(2, '0')
+  const when = Number.isNaN(at.getTime()) ? '' : `${at.getDate()}/${at.getMonth() + 1} ${two(at.getHours())}.${two(at.getMinutes())}`
+  const lines = f.state === 'nu'
+    ? ['LYTTEFEST NU', `${f.artist}: ${f.title}`,
+      f.track ? `${f.trackNumber}. ${f.track}` : '']
+    : ['LYTTEFEST', when, `${f.artist}: ${f.title}`]
+  return Array.from({ length: rows }, (_, i) => fold(lines[i] ?? '').slice(0, cols).padEnd(cols, ' '))
+}
+
 /** Each glyph's flaps from blank, worked out once. */
 const fromBlank = new Map<string, string[]>()
 
@@ -126,10 +148,13 @@ export interface FlipBoard {
   texture: THREE.CanvasTexture
   /** Blanks the board and flips it through to the text again. */
   trigger(): void
+  /** New text, flipped to from whatever is up now. Nothing happens if it is the same. */
+  setLines(lines: string[]): void
   update(dt: number): void
 }
 
-export function createFlipBoard(lines: string[]): FlipBoard {
+export function createFlipBoard(initial: string[]): FlipBoard {
+  let lines = initial
   const cols = Math.max(0, ...lines.map((l) => l.length)), rows = lines.length
   const canvas = document.createElement('canvas')
   canvas.width = cols * CELL.w + 1
@@ -156,6 +181,15 @@ export function createFlipBoard(lines: string[]): FlipBoard {
   return {
     texture,
     trigger() { t = 0 },
+    setLines(next) {
+      const fitted = Array.from({ length: rows }, (_, i) => (next[i] ?? '').slice(0, cols).padEnd(cols, ' '))
+      if (fitted.every((l, i) => l === lines[i])) return
+      lines = fitted
+      t = 0 // flips from blank, as it does when you come near it
+      shown = lines.map((l) => ' '.repeat(l.length))
+      shown.forEach((l, row) => [...l].forEach((ch, col) => paintCell(col, row, ch)))
+      texture.needsUpdate = true
+    },
     update(dt) {
       if (t === Infinity) return
       t += dt

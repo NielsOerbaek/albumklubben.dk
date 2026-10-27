@@ -13,6 +13,7 @@ import { albumDialog } from '../album.ts'
 import { posterDialog } from '../poster.ts'
 import { nextMeeting, nextView, today, type NextPick } from './next.ts'
 import { createBoard } from '../board/board.ts'
+import { createLyttefestPanel } from '../lyttefest/start.ts'
 
 /** An album together with the number of the meeting it belongs to. */
 export interface Entry { album: Album; n: number }
@@ -76,12 +77,17 @@ const actions: Actions = {
 const head = (title: string, line: string) =>
   html`<header class="sec-head"><h2>${title}</h2><p class="muted">${line}</p></header>`
 
-const openAlbum = (id: number) => actions.set({ dialogId: id, dialogTracks: false })
+const fest = createLyttefestPanel(() => draw())
+const openAlbum = (id: number) => {
+  fest.open(id)
+  actions.set({ dialogId: id, dialogTracks: false })
+}
 
 /** The album dialog, over the poster dialog when it was opened from one (Tilbage goes back to it). */
 function dialog(): TemplateResult | typeof nothing {
   const e = state.entries.find((x) => x.album.id === state.dialogId)
   if (e) return albumDialog({ album: e.album, meetingNumber: e.n, showTracks: state.dialogTracks, size: 'medium',
+    extra: fest.template(e.album),
     onToggle: () => actions.set({ dialogTracks: !state.dialogTracks }),
     onBack: posterId != null ? () => actions.set({ dialogId: null }) : undefined,
     onClose: () => { posterId = null; actions.set({ dialogId: null }) } })

@@ -7,6 +7,7 @@ import type { BoardPost } from '../../shared/board.ts'
 const post = (over: Partial<BoardPost> = {}): BoardPost => ({
   id: '1', author: { sub: 'sub-9', name: 'Medlem 1' }, title: null, body: 'Et opslag',
   createdAt: new Date().toISOString(), commentCount: 0, attachmentCount: 0, pinned: false, url: null,
+  lyttefest: null,
   ...over,
 })
 

@@ -102,7 +102,7 @@ describe('at lave en lyttefest', () => {
     const fest = res.json()
     expect(fest.album.title).toBe('The Kick Inside')
     expect(fest.tracks).toHaveLength(3)
-    expect(fest.you).toEqual({ coming: true, host: true })
+    expect(fest.you).toEqual({ sub: 'sub-1', coming: true, host: true })
     expect(fest.coming.map((c: any) => c.sub)).toEqual(['sub-1'])
 
     expect(posts).toHaveLength(1)
@@ -374,5 +374,65 @@ describe('uret: én påmindelse og ét referat', () => {
     await app.lyttefestTick()
     expect(notes).toHaveLength(0)
     expect(comments.filter(c => c.externalId?.endsWith('-summary'))).toHaveLength(0)
+  })
+})
+
+describe('skærmen i klubhuset', () => {
+  const screen = (app: any, cookie: string) => app.inject({ url: '/api/lyttefest', headers: { cookie } })
+
+  it('shows nothing when there is no lyttefest within the day', async () => {
+    const { app, albumId } = setup()
+    const cookie = await signIn(app)
+    expect((await screen(app, cookie)).json().lyttefest).toBeNull()
+    await make(app, cookie, { albumId })
+    // Two days before it, the screen is still the club's latest meeting.
+    clock = START - 48 * 3600_000
+    expect((await screen(app, cookie)).json().lyttefest).toBeNull()
+  })
+
+  it('counts one coming up within the day, and the track while it plays', async () => {
+    const { app, albumId } = setup()
+    const cookie = await signIn(app)
+    await make(app, cookie, { albumId })
+
+    clock = START - 3600_000
+    const soon = (await screen(app, cookie)).json().lyttefest
+    expect(soon.state).toBe('kommende')
+    expect(soon.artist).toBe('Kate Bush')
+
+    clock = START + 185_000
+    const nu = (await screen(app, cookie)).json().lyttefest
+    expect(nu.state).toBe('nu')
+    expect(nu.track).toBe('To')
+    expect(nu.trackNumber).toBe(2)
+
+    clock = START + 20 * 60_000
+    expect((await screen(app, cookie)).json().lyttefest).toBeNull()
+  })
+
+  it('leaves a cancelled one off the screen', async () => {
+    const { app, albumId } = setup()
+    const cookie = await signIn(app)
+    await make(app, cookie, { albumId })
+    await app.inject({ method: 'POST', url: '/api/lyttefest/1/aflys', headers: { cookie } })
+    clock = START + 60_000
+    expect((await screen(app, cookie)).json().lyttefest).toBeNull()
+  })
+
+  it('marks the announcement on the opslagstavle as a lyttefest, with its cover', async () => {
+    const { app, db, albumId } = setup({
+      posts: async () => ({
+        items: [{
+          id: 'p1', author: { sub: 'sub-1', name: 'Medlem Een' }, title: null, body: 'Lyttefest',
+          createdAt: '', commentCount: 0, attachmentCount: 0, pinned: false, url: null, lyttefest: null,
+        }],
+        nextCursor: null,
+      }),
+    })
+    const cookie = await signIn(app)
+    await make(app, cookie, { albumId })
+    db.prepare('UPDATE lyttefester SET theta_post_id = ?').run('p1')
+    const board = (await app.inject({ url: '/api/board', headers: { cookie } })).json()
+    expect(board.items[0].lyttefest).toEqual({ id: 1, artist: 'Kate Bush', title: 'The Kick Inside', coverUrl: null })
   })
 })

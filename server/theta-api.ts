@@ -74,6 +74,7 @@ function toPost(raw: Record<string, any>): BoardPost {
     attachmentCount: num(raw.attachmentCount ?? raw.attachments?.length),
     pinned: raw.pinned === true,
     url: str(raw.url) ?? str(raw.href),
+    lyttefest: null, // filled in by the board, which is the side that knows
   }
 }
 

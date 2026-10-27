@@ -63,6 +63,8 @@ describe('Theta App API', () => {
       id: '7', author: { sub: 'sub-9', name: 'Medlem 1' }, title: 'Hej', body: 'Et opslag',
       createdAt: '2026-10-27T09:00:00.000Z', commentCount: 2, attachmentCount: 3, pinned: true,
       url: 'https://theta.test/p/7',
+      // Theta has no idea what a lyttefest is; the board is the side that fills this in.
+      lyttefest: null,
     })
     await api(theta).posts('sub-1', 'c2')
     expect(new URL(theta.calls.at(-1)!.url).searchParams.get('cursor')).toBe('c2')

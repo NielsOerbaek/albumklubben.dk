@@ -12,6 +12,8 @@ export interface BoardPost {
   pinned: boolean
   /** The post on Theta, where the attachments and everything else are. */
   url: string | null
+  /** Set when this post is a lyttefest the site itself announced, so it can be shown as one. */
+  lyttefest: { id: number; artist: string; title: string; coverUrl: string | null } | null
 }
 
 export interface BoardComment {

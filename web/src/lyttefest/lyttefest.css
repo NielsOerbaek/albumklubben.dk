@@ -1,0 +1,80 @@
+/* Lyttefesten: a plain page in the site's look, not inside the 3D room. */
+.fest {
+  width: min(760px, 100%);
+  margin: 0 auto;
+  padding: 32px var(--pad) 64px;
+}
+.fest h1 { margin: 4px 0 8px; font-size: clamp(24px, 4vw, 34px); font-weight: 300; line-height: 1.1; }
+.fest h2 { margin: 0 0 8px; font-size: 13px; font-weight: 400; text-transform: uppercase; letter-spacing: 0.04em; }
+.fest section { margin-top: 32px; }
+
+.fest-head { display: flex; gap: 24px; align-items: flex-start; flex-wrap: wrap; }
+.fest-cover {
+  width: clamp(120px, 22vw, 200px);
+  aspect-ratio: 1;
+  object-fit: cover;
+  background: var(--card-bg, #262d66);
+}
+.fest-head > div { flex: 1 1 320px; min-width: 0; }
+.fest-kicker { margin: 0; font-size: 13px; text-transform: uppercase; letter-spacing: 0.04em; color: var(--muted-on-black); }
+.fest-facts { margin: 0; font-size: 14px; color: var(--muted-on-black); }
+.fest-facts a, .fest-find a { color: inherit; }
+.fest-person { color: #fff; }
+
+.fest-countdown { margin: 32px 0 4px; font-size: clamp(20px, 3.4vw, 28px); font-weight: 300; }
+.fest-lead { margin: 8px 0 0; color: var(--muted-on-black); }
+.fest-note { margin: 10px 0 0; font-size: 13px; color: var(--muted-on-black); }
+.fest-error { margin: 16px 0 0; padding: 10px 12px; border: 1px solid #fff; font-size: 14px; }
+
+/* While it plays: the track, large, with how far in we are. */
+.fest-now-label { margin: 0; font-size: 13px; text-transform: uppercase; color: var(--muted-on-black); }
+.fest .fest-track {
+  margin: 4px 0 16px;
+  font-size: clamp(26px, 5vw, 44px);
+  font-weight: 300;
+  line-height: 1.05;
+  text-transform: none;
+  letter-spacing: 0;
+}
+.fest-bar { height: 4px; background: #333; }
+.fest-bar-fill { height: 100%; background: var(--card-bg, #fff); transition: width 1s linear; }
+.fest-clock { margin: 8px 0 0; font-variant-numeric: tabular-nums; }
+.fest-catch { margin: 4px 0 0; font-size: 14px; color: var(--muted-on-black); }
+
+.fest-next ol, .fest-tracklist { list-style: none; margin: 0; padding: 0; }
+.fest-next li, .fest-track-line { display: flex; gap: 12px; padding: 4px 0; border-bottom: 1px solid #1c1c1c; }
+.fest-track-line { margin: 16px 0 0; }
+.fest-next .no, .fest-tracklist .no { width: 2em; color: var(--muted-on-black); font-variant-numeric: tabular-nums; }
+.fest-next .len, .fest-tracklist .len { margin-left: auto; color: var(--muted-on-black); font-variant-numeric: tabular-nums; }
+
+.fest-write { display: flex; gap: 10px; align-items: flex-end; margin-top: 8px; }
+.fest-write textarea {
+  flex: 1;
+  padding: 10px 12px;
+  border: 1px solid var(--line, #333);
+  background: #0b0b0b;
+  color: #fff;
+  font: inherit;
+  resize: vertical;
+}
+.fest-write textarea:focus { border-color: #fff; outline: none; }
+.fest-write .pill[disabled] { opacity: 0.4; cursor: default; }
+
+.fest-comments { list-style: none; margin: 16px 0 0; padding: 0; }
+.fest-comment { margin: 0 0 12px; padding-left: 12px; border-left: 1px solid var(--line, #333); }
+.fest-comment-by { display: flex; align-items: center; gap: 8px; margin: 0; font-size: 13px; }
+.fest-when { color: var(--muted-on-black); }
+.fest-remove {
+  margin-left: auto; width: 22px; height: 22px; padding: 0;
+  border: 0; background: none; color: var(--muted-on-black); font-size: 16px; line-height: 1; cursor: pointer;
+}
+.fest-remove:hover { color: #fff; }
+.fest-comment-text { margin: 2px 0 0; overflow-wrap: anywhere; }
+
+.fest-coming .pill, .fest-host .pill { margin-top: 10px; }
+.fest-host { display: flex; gap: 8px; }
+
+@media (max-width: 700px) {
+  .fest { padding-top: 20px; }
+  .fest-head { gap: 16px; }
+}

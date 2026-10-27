@@ -25,6 +25,7 @@ function fakeOidc(sub: string) {
 const post = (id: string, body: string): BoardPost => ({
   id, author: { sub: 'sub-9', name: 'Medlem 1' }, title: null, body,
   createdAt: '2026-10-27T09:00:00.000Z', commentCount: 0, attachmentCount: 0, pinned: false, url: null,
+  lyttefest: null,
 })
 
 /** Counts what actually reached Theta, so the cache can be seen working. */

@@ -172,7 +172,7 @@ export interface FestView {
   coming: FestPerson[]
   comments: FestComment[]
   /** About the member reading the page. */
-  you: { coming: boolean; host: boolean }
+  you: { sub: string; coming: boolean; host: boolean }
   /** The server's clock when it answered, so the page can measure its own offset to it. */
   now: string
 }

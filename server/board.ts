@@ -1,5 +1,7 @@
 import { randomUUID } from 'node:crypto'
 import type { FastifyInstance, FastifyReply } from 'fastify'
+import type { Database } from './db.ts'
+import { festsByPost } from './lyttefest-repo.ts'
 import { ThetaError, type BoardComment, type BoardPost, type Page, type ThetaApi } from './theta-api.ts'
 
 /**
@@ -20,7 +22,7 @@ const text = (v: unknown, max: number): string | null => {
   return t.length === 0 || t.length > max ? null : t
 }
 
-export function registerBoard(app: FastifyInstance, api: ThetaApi) {
+export function registerBoard(app: FastifyInstance, api: ThetaApi, db: Database) {
   // Keyed by viewer first: two members never share an answer.
   const cache = new Map<string, Entry>()
   const drop = () => cache.clear()
@@ -45,11 +47,19 @@ export function registerBoard(app: FastifyInstance, api: ThetaApi) {
     return reply.code(502).send({ error: whenWriting ? 'Theta tog ikke imod opslaget' : 'Opslagstavlen kan ikke hentes lige nu' })
   }
 
+  /** Theta does not know a lyttefest from any other post; this side does. */
+  function withFests(page: Page<BoardPost>): Page<BoardPost> {
+    const fests = festsByPost(db, page.items.map(p => p.id))
+    return fests.size === 0 ? page
+      : { ...page, items: page.items.map(p => ({ ...p, lyttefest: fests.get(p.id) ?? null })) }
+  }
+
   app.get<{ Querystring: { cursor?: string } }>('/api/board', async (req, reply) => {
     const { sub } = req.member!
     reply.header('Cache-Control', 'no-store')
     try {
-      return await cached<Page<BoardPost>>(`${sub}|posts|${req.query.cursor ?? ''}`, () => api.posts(sub, req.query.cursor))
+      return withFests(await cached<Page<BoardPost>>(`${sub}|posts|${req.query.cursor ?? ''}`,
+        () => api.posts(sub, req.query.cursor)))
     } catch (err) { return fail(reply, err) }
   })
 

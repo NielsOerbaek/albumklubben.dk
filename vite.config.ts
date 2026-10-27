@@ -15,7 +15,7 @@ export default defineConfig({
     chunkSizeWarningLimit: 800, // three.js alone is about 550 kB
     rollupOptions: {
       input: Object.fromEntries(
-        ['index', 'klubhuset'].map((n) => [n, resolve(root, `${n}.html`)]),
+        ['index', 'klubhuset', 'lyttefest'].map((n) => [n, resolve(root, `${n}.html`)]),
       ),
     },
   },

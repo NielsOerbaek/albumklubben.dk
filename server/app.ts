@@ -40,7 +40,7 @@ export function buildApp(opts: AppOptions): FastifyInstance {
   if (opts.theta) {
     registerThetaAuth(app, opts.theta)
     const api = opts.thetaApi ?? createThetaApi(opts.theta)
-    const board = registerBoard(app, api)
+    const board = registerBoard(app, api, opts.db)
     const fest = registerLyttefest(app, {
       db: opts.db, api, publicUrl: opts.theta.publicUrl, now: opts.now,
     })

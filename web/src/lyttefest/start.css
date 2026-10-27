@@ -1,0 +1,24 @@
+/* The lyttefest panel under an album in its dialog. */
+.fest-start { margin-top: 24px; padding-top: 20px; border-top: 1px solid var(--line, #333); }
+.fest-start h3 { margin: 0 0 10px; font-size: 13px; font-weight: 400; text-transform: uppercase; letter-spacing: 0.04em; }
+.fest-start .pill[disabled] { opacity: 0.4; cursor: default; }
+
+.fest-start-list { list-style: none; margin: 0 0 12px; padding: 0; font-size: 14px; }
+.fest-start-list li { display: flex; gap: 10px; flex-wrap: wrap; padding: 3px 0; }
+.fest-start-list a { color: inherit; }
+.fest-start-by { color: var(--muted-on-black, #9ca3af); }
+
+.fest-start-form { display: flex; flex-direction: column; gap: 10px; max-width: 26rem; }
+.fest-start-form label { display: flex; flex-direction: column; gap: 4px; font-size: 13px; color: var(--muted-on-black, #9ca3af); }
+.fest-start-form input {
+  padding: 8px 10px;
+  border: 1px solid var(--line, #333);
+  background: #0b0b0b;
+  color: #fff;
+  font: inherit;
+  color-scheme: dark;
+}
+.fest-start-form input:focus { border-color: #fff; outline: none; }
+.fest-start-bar { display: flex; gap: 8px; }
+.fest-start-note { margin: 0; font-size: 13px; color: var(--muted-on-black, #9ca3af); }
+.fest-start-error { margin: 0; padding: 8px 10px; border: 1px solid #fff; font-size: 13px; }
