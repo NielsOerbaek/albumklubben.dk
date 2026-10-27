@@ -1,4 +1,4 @@
-export const USER_AGENT = 'Albumklubben/1.0 ( https://albumklubben.dn.osogdata.dk )'
+export const USER_AGENT = 'Albumklubben/1.0 ( https://albumklubben.dk )'
 const BASE = 'https://musicbrainz.org/ws/2/'
 const GAP_MS = 1000
 

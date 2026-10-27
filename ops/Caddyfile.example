@@ -1,6 +1,6 @@
-# Albumklubben. Imported from /etc/caddy/Caddyfile with: import /home/theta/albumklubben-ops/Caddyfile
+# Albumklubben block in /opt/caddy/Caddyfile (Caddy runs in Docker, see /root/CLAUDE.md).
 # No password here: the app itself lets in only members of the club's Theta group (server/theta-auth.ts).
-albumklubben.dn.osogdata.dk {
+albumklubben.dk {
 	encode zstd gzip
 	header {
 		X-Robots-Tag "noindex, nofollow"
@@ -16,5 +16,6 @@ Disallow: /
 	request_body {
 		max_size 600MB
 	}
-	reverse_proxy 127.0.0.1:3600
+	# The app listens on docker0 (HOST=172.17.0.1 in .env), which host.docker.internal points to.
+	reverse_proxy host.docker.internal:3600
 }

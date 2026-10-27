@@ -1,9 +1,9 @@
 #!/usr/bin/env bash
 # Nightly backup: SQLite online backup + hard-linked uploads. Keeps the newest 14 days.
 set -euo pipefail
-LIVE=/home/theta/albumklubben-live
-NODE=/home/theta/.nvm/versions/node/v22.22.0/bin/node  # same node as the service; systemd PATH finds an older one
-DEST=/home/theta/albumklubben-backups
+LIVE=$HOME/albumklubben-live
+NODE=/usr/bin/node  # same node as the service
+DEST=$HOME/albumklubben-backups
 env_get() { grep -m1 "^$1=" "$LIVE/.env" | cut -d= -f2-; }
 DB_PATH=$(env_get DB_PATH); UPLOAD_DIR=$(env_get UPLOAD_DIR)
 [ -n "$DB_PATH" ] && [ -n "$UPLOAD_DIR" ] || { echo "DB_PATH/UPLOAD_DIR missing in $LIVE/.env" >&2; exit 1; }

@@ -89,7 +89,7 @@ describe('findTracklist', () => {
     await findTracklist('a', 'b', { fetch: f.fn, wait: async ms => { waits.push(ms) } })
     expect(waits).toEqual([1000, 1000])  // three requests: none before the first
     expect(f.calls.every(c => c.headers['User-Agent'] === USER_AGENT)).toBe(true)
-    expect(USER_AGENT).toBe('Albumklubben/1.0 ( https://albumklubben.dn.osogdata.dk )')
+    expect(USER_AGENT).toBe('Albumklubben/1.0 ( https://albumklubben.dk )')
     expect(f.calls.every(c => c.url.startsWith('https://musicbrainz.org/ws/2/') && c.url.includes('fmt=json'))).toBe(true)
   })
 

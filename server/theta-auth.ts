@@ -13,7 +13,7 @@ export interface ThetaAuthOptions {
   clientId: string
   clientSecret: string
   groupId: string // the club's Theta group id, as the claim carries it
-  publicUrl: string // this site's origin, e.g. https://albumklubben.dn.osogdata.dk
+  publicUrl: string // this site's origin, e.g. https://albumklubben.dk
   fetch?: typeof fetch
 }
 

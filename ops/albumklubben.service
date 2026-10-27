@@ -1,10 +1,13 @@
 [Unit]
-Description=Albumklubben website (albumklubben.dn.osogdata.dk)
+Description=Albumklubben website (albumklubben.dk)
 After=network.target
+# HOST is the docker0 address (172.17.0.1) so the Caddy container can reach it; until
+# Docker has brought docker0 up at boot the bind fails, so keep retrying.
+StartLimitIntervalSec=0
 
 [Service]
-WorkingDirectory=/home/theta/albumklubben-live
-ExecStart=/home/theta/.nvm/versions/node/v22.22.0/bin/node --experimental-strip-types --disable-warning=ExperimentalWarning server/index.ts
+WorkingDirectory=%h/albumklubben-live
+ExecStart=/usr/bin/node --experimental-strip-types --disable-warning=ExperimentalWarning server/index.ts
 Restart=on-failure
 RestartSec=3
 

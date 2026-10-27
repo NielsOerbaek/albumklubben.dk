@@ -6,8 +6,8 @@
       "description": "Klubhuset og arkivet for frokostlytteklubben på Thoravej 29.",
       "clientId": "albumklubben",
       "clientSecret": "env:ALBUMKLUBBEN_CLIENT_SECRET",
-      "redirectUris": ["https://albumklubben.dn.osogdata.dk/auth/callback"],
-      "postLogoutRedirectUris": ["https://albumklubben.dn.osogdata.dk/auth/logout"],
+      "redirectUris": ["https://albumklubben.dk/auth/callback"],
+      "postLogoutRedirectUris": ["https://albumklubben.dk/auth/logout"],
       "installInGroups": ["122304557724776"]
     }
   ]

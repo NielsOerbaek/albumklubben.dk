@@ -4,11 +4,11 @@ import { chromium } from 'playwright'
 import { mkdirSync, readFileSync } from 'node:fs'
 import sharp from 'sharp'
 
-const ENV = process.env.SMOKE_ENV ?? '/home/theta/albumklubben-live/.env'
+const ENV = process.env.SMOKE_ENV ?? `${process.env.HOME}/albumklubben-live/.env`
 const env = Object.fromEntries(
   readFileSync(ENV, 'utf8').split('\n').filter((l) => l.includes('=')).map((l) => [l.slice(0, l.indexOf('=')), l.slice(l.indexOf('=') + 1)]),
 )
-const base = process.argv[2] ?? 'https://albumklubben.dn.osogdata.dk'
+const base = process.argv[2] ?? 'https://albumklubben.dk'
 const out = process.env.SMOKE_OUT ?? new URL('../var/screens/task10/', import.meta.url).pathname
 mkdirSync(out, { recursive: true })
 

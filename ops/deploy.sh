@@ -4,7 +4,7 @@
 # dist/ is untouched (the build goes to dist.new and is swapped in only on success) and the
 # service is not restarted.
 set -euo pipefail
-LIVE=/home/theta/albumklubben-live
+LIVE=$HOME/albumklubben-live
 
 install_deps() { CI=true pnpm install --frozen-lockfile --prefer-offline; }
 

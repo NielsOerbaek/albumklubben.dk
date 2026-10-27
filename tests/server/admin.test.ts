@@ -60,7 +60,7 @@ describe('admin cross-origin writes', () => {
   }
 
   it('rejects a sibling-subdomain Origin and changes nothing', async () => {
-    const { res, count } = await attempt({ origin: 'https://evil.osogdata.dk', host: 'albumklubben.dn.osogdata.dk' })
+    const { res, count } = await attempt({ origin: 'https://evil.osogdata.dk', host: 'albumklubben.dk' })
     expect(res.statusCode).toBe(403)
     expect(count).toBe(0)
   })
@@ -72,7 +72,7 @@ describe('admin cross-origin writes', () => {
   })
 
   it('accepts a matching Origin', async () => {
-    const { res, count } = await attempt({ origin: 'https://albumklubben.dn.osogdata.dk', host: 'albumklubben.dn.osogdata.dk' })
+    const { res, count } = await attempt({ origin: 'https://albumklubben.dk', host: 'albumklubben.dk' })
     expect(res.statusCode).toBe(302)
     expect(count).toBe(1)
   })
