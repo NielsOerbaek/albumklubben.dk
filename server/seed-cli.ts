@@ -12,7 +12,7 @@ const dbPath = process.env.DB_PATH!
 const uploadDir = process.env.UPLOAD_DIR!
 mkdirSync(dirname(dbPath), { recursive: true })
 try {
-  const r = seed(openDb(dbPath), 'data', uploadDir)
+  const r = seed(openDb(dbPath), process.env.ALBUMKLUBBEN_DATA ?? 'data', uploadDir)
   console.log(`${r.meetings} meetings, ${r.albums} albums, ${r.posters} posters`)
 } catch (e) {
   console.error((e as Error).message)

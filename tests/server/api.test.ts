@@ -13,7 +13,7 @@ import type { Archive } from '../../shared/types.ts'
 const setup = () => {
   const uploadDir = mkdtempSync(join(tmpdir(), 'api-'))
   const db = openDb(':memory:')
-  seed(db, 'data', uploadDir)
+  seed(db, 'tests/fixtures/seed', uploadDir) // synthetic: album facts, anonymised picks, plain covers
   const app = buildApp({ db, uploadDir, adminPassword: 'x', sessionSecret: 'y' })
   return { app, uploadDir }
 }
