@@ -6,7 +6,10 @@ import Fastify, { type FastifyInstance } from 'fastify'
 import { resolve } from 'node:path'
 import { registerApi } from './api.ts'
 import { registerAdmin } from './admin/routes.ts'
+import { registerBoard } from './board.ts'
+import { createThetaApi, type ThetaApi } from './theta-api.ts'
 import { registerThetaAuth, type ThetaAuthOptions } from './theta-auth.ts'
+import { registerThetaWebhook } from './theta-webhook.ts'
 import type { findTracklist } from './musicbrainz.ts'
 import type { Database } from './db.ts'
 
@@ -19,6 +22,10 @@ export interface AppOptions {
   musicbrainz?: typeof findTracklist
   /** Members-only via Theta. index.ts refuses to start without it; tests may leave it out. */
   theta?: ThetaAuthOptions
+  /** The group behind the opslagstavle. Built from `theta` unless a test passes its own. */
+  thetaApi?: ThetaApi
+  /** Shared with Theta, so a signed event can be told from anyone else's. No secret, no webhook. */
+  thetaWebhookSecret?: string
 }
 
 export function buildApp(opts: AppOptions): FastifyInstance {
@@ -27,7 +34,13 @@ export function buildApp(opts: AppOptions): FastifyInstance {
   app.register(formbody)
   app.register(multipart, { limits: { fileSize: 500 * 1024 * 1024 } })
   // First, so its gate covers every route below.
-  if (opts.theta) registerThetaAuth(app, opts.theta)
+  if (opts.theta) {
+    registerThetaAuth(app, opts.theta)
+    const board = registerBoard(app, opts.thetaApi ?? createThetaApi(opts.theta))
+    if (opts.thetaWebhookSecret) {
+      registerThetaWebhook(app, { secret: opts.thetaWebhookSecret, onGroupPosted: () => board.drop() })
+    }
+  }
   registerApi(app, opts.db, opts.uploadDir)
   registerAdmin(app, opts)
 

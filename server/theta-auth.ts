@@ -28,7 +28,8 @@ export const ICON_FILES = [
   '/favicon.ico', '/icon.svg', '/apple-touch-icon.png',
   '/icon-192.png', '/icon-512.png', '/icon-maskable-512.png', '/manifest.webmanifest',
 ]
-const OPEN = ['/auth/', '/healthz', '/robots.txt', ...ICON_FILES]
+// The webhook is Theta calling us, not a member: it is behind Theta's signature instead.
+const OPEN = ['/auth/', '/healthz', '/robots.txt', '/theta/webhook', ...ICON_FILES]
 /** A session cookie bigger than this is at risk of being dropped by the browser (the limit is
  * 4 kB), so the ID token goes out rather than the session. */
 const COOKIE_LIMIT = 3500
@@ -40,7 +41,14 @@ interface Discovery {
   end_session_endpoint?: string
 }
 /** `idt` is the ID token, kept only so logging out can tell Theta whose session it is. */
-interface Member { sub: string; name: string; exp: number; idt?: string }
+export interface Member { sub: string; name: string; exp: number; idt?: string }
+
+declare module 'fastify' {
+  interface FastifyRequest {
+    /** Who is logged in, for the routes behind the gate; null on the open paths. */
+    member: Member | null
+  }
+}
 
 const b64url = (b: Buffer) => b.toString('base64url')
 
@@ -117,10 +125,12 @@ export function registerThetaAuth(app: FastifyInstance, opts: ThetaAuthOptions) 
   }
 
   // Everything but the sign-in itself is for members. Registered before any route.
+  app.decorateRequest('member', null)
   app.addHook('onRequest', (req, reply, done) => {
     const path = req.url.split('?')[0]
     if (OPEN.some(p => path === p || (p.endsWith('/') && path.startsWith(p)))) return done()
-    if (member(req)) return done()
+    const who = member(req)
+    if (who) { req.member = who; return done() }
     const navigating = req.method === 'GET' &&
       (req.headers['sec-fetch-mode'] === 'navigate' || (req.headers.accept ?? '').includes('text/html'))
     // The login page is shown at the address that was asked for, so the way back is kept.

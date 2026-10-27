@@ -7,6 +7,8 @@
       "clientId": "albumklubben",
       "clientSecret": "env:ALBUMKLUBBEN_CLIENT_SECRET",
       "logoUrl": "https://albumklubben.dk/icon-512.png",
+      "webhookUrl": "https://albumklubben.dk/theta/webhook",
+      "webhookSecret": "env:ALBUMKLUBBEN_WEBHOOK_SECRET",
       "redirectUris": ["https://albumklubben.dk/auth/callback"],
       "postLogoutRedirectUris": ["https://albumklubben.dk/auth/logged-out"],
       "installInGroups": ["122304557724776"]

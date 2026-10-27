@@ -26,6 +26,7 @@ const app = buildApp({
   uploadDir,
   adminPassword: env.ADMIN_PASSWORD!,
   sessionSecret: env.SESSION_SECRET!,
+  thetaWebhookSecret: env.THETA_WEBHOOK_SECRET,
   webDir: existsSync('dist') ? 'dist' : undefined,
   theta: {
     issuer: env.THETA_ISSUER!.replace(/\/$/, ''),
