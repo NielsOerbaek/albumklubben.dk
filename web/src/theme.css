@@ -32,6 +32,8 @@ button { font: inherit; color: inherit; }
 .topbar .wordmark { text-transform: uppercase; white-space: nowrap; }
 .topbar nav { display: flex; gap: 26px; flex-wrap: nowrap; white-space: nowrap; }
 .topbar nav a:hover, .topbar nav a[aria-current='page'] { text-decoration: underline; text-underline-offset: 4px; }
+.topbar-link { padding: 0; border: 0; background: none; font: inherit; cursor: pointer; }
+.topbar-link:hover { text-decoration: underline; text-underline-offset: 4px; }
 .topbar-right { margin-left: auto; display: flex; gap: 6px; }
 
 /* Pills are the only rounded elements. */

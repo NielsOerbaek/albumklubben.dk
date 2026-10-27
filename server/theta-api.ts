@@ -6,6 +6,8 @@
  * and shows their posts as theirs, "via Albumklubben.dk". What the API takes and answers is
  * written down in `docs/theta-app-api.md`.
  */
+import type { BoardComment, BoardPost, Page } from '../shared/board.ts'
+
 const timeout = () => AbortSignal.timeout(10_000)
 
 export interface ThetaApiOptions {
@@ -16,11 +18,17 @@ export interface ThetaApiOptions {
   fetch?: typeof fetch
 }
 
-/** Theta said no. `code` is Theta's own (`notFound`, `badRequest`, `userNotEligible`, …). */
+/** Theta said no. `code` is Theta's own (`notFound`, `badRequest`, `userNotEligible`, …).
+ *  Written out in full: the server is run by Node's strip-only mode, which has no parameter
+ *  properties. */
 export class ThetaError extends Error {
-  constructor(readonly status: number, readonly code: string, message: string) {
+  readonly status: number
+  readonly code: string
+  constructor(status: number, code: string, message: string) {
     super(message)
     this.name = 'ThetaError'
+    this.status = status
+    this.code = code
   }
   /** A read is refused with 404 whether the post is gone, the person left the group or they
    * never said yes to the `feed` scope. The caller cannot tell them apart, and neither can we. */
@@ -28,26 +36,7 @@ export class ThetaError extends Error {
   get notEligible() { return this.code === 'userNotEligible' }
 }
 
-export interface BoardAuthor { sub: string; name: string }
-export interface BoardPost {
-  id: string
-  author: BoardAuthor
-  title: string | null
-  body: string
-  createdAt: string
-  commentCount: number
-  attachmentCount: number
-  pinned: boolean
-  url: string | null
-}
-export interface BoardComment {
-  id: string
-  author: BoardAuthor
-  body: string
-  createdAt: string
-  depth: number
-}
-export interface Page<T> { items: T[]; nextCursor: string | null }
+export type { BoardAuthor, BoardComment, BoardPost, Page } from '../shared/board.ts'
 
 export type CardTone = 'neutral' | 'info' | 'success' | 'warning' | 'danger'
 export interface Card {

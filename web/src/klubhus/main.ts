@@ -12,6 +12,8 @@ import { FIRST_HINT, showHint, showOverlay, showPrompt, showReticle, smallScreen
 import { buildClubLayout } from './layout.ts'
 import { bookSpreads } from './book.ts'
 import { buildClub, type CrateView } from './scene.ts'
+import { BOARD_REACH } from './corkboard.ts'
+import { createBoard } from '../board/board.ts'
 import type { Album, Meeting, Poster } from '../../../shared/types.ts'
 
 type Pose = { position: THREE.Vector3; yaw: number; pitch: number }
@@ -21,6 +23,8 @@ const FACING = Math.cos(THREE.MathUtils.degToRad(35))
 const PROMPT = 'Klik eller scroll for at bladre · E for at tage pladen op'
 const AGAIN = 'Klik for at gå videre'
 const BOOK_SHUT = 'Klik eller E for at åbne plakatbogen'
+const CORK = 'Klik for at læse opslagstavlen'
+const CORK_EVERY = 60_000 // the board looks for new posts this often, while the tab is watched
 const BOOK_OPEN = 'Klik på en plakat for at se den · A/D eller pilene for at bladre · Esc for at lukke'
 const BOOK_REACH = 1.6 // metres on the floor plan from the book's centre
 const EASE_TIME = 0.5 // seconds, to the open book and back
@@ -28,7 +32,12 @@ const EASE_TIME = 0.5 // seconds, to the open book and back
 const LOOK = { yaw: 0.55, down: 0.2, up: 0.28 }
 const CENTRE = new THREE.Vector2(0, 0) // the view's centre, for the aim ray
 
-render(topBarTemplate('klubhus'), document.getElementById('app')!)
+/** Set by `start()`: the prompt goes back up when the board is closed, however it was closed. */
+let afterBoard = () => {}
+const board = createBoard({ show: (content) => showOverlay(content), onClose: () => afterBoard() })
+render(topBarTemplate('klubhus', undefined, () => openBoard()), document.getElementById('app')!)
+/** Replaced by `start()` once the room is up; from the top bar the dialog opens on its own. */
+let openBoard = () => { board.open() }
 const canvas = document.querySelector<HTMLCanvasElement>('canvas.ps1-canvas')!
 if (smallScreenGuard()) canvas.remove()
 else start().catch((err) => { console.error(err); showHint('Klubhuset kunne ikke åbne. Prøv at genindlæse siden.') })
@@ -76,11 +85,12 @@ async function start() {
   // What you aim at: a crate in reach, or else the shut book.
   let target: CrateView | null = null
   let bookAimed = false
+  let corkAimed = false
   // The open dialogs: a poster, an album over it (or a record pulled from a crate), or both.
   let poster: { poster: Poster; meeting: Meeting } | null = null
   let pulled: { album: Album; showTracks: boolean } | null = null
   let entered = false
-  const open = () => !!(poster || pulled)
+  const open = () => !!(poster || pulled) || board.isOpen()
   // Where you stood before opening the book, and the camera's ease to the book or back to it.
   let standing: Pose | null = null
   let ease: { from: Pose; to: Pose; t: number; done: () => void } | null = null
@@ -104,6 +114,24 @@ async function start() {
   /** Within reach of the shut book, the view's centre on it. A book with no posters stays shut. */
   const bookInView = () => spreads.length > 0 && Math.hypot(layout.book.x - camera.position.x, layout.book.z - camera.position.z) <= BOOK_REACH
     && centreRay().intersectObject(book.object).some((h) => shown(h.object))
+
+  /** Within reach of the cork board, with the view's centre on it. */
+  const corkInView = () => Math.hypot(club.cork.centre.x - camera.position.x, club.cork.centre.z - camera.position.z) <= BOARD_REACH
+    && centreRay().intersectObject(club.cork.object, true).some((h) => shown(h.object))
+
+  openBoard = () => {
+    prompt(null)
+    controls.unlock()
+    board.open()
+  }
+  afterBoard = () => prompt(AGAIN)
+
+  // Filled in after the room is up, so a slow Theta never holds the room back.
+  const fillCork = () => board.peek().then((posts) => club.cork.setPosts(posts))
+  void fillCork()
+  setInterval(() => { if (!document.hidden && !board.isOpen()) void fillCork() }, CORK_EVERY)
+  // What a member writes themselves should be on the wall when they turn round.
+  document.addEventListener('visibilitychange', () => { if (!document.hidden) void fillCork() })
 
   const pose = (): Pose => ({ position: camera.position.clone(), yaw: camera.rotation.y, pitch: camera.rotation.x })
   const easeTo = (to: Pose, done: () => void) => { ease = { from: pose(), to, t: 0, done } }
@@ -234,6 +262,7 @@ async function start() {
     if (!controls.isLocked() || e.detail > 1 || ease) return
     if (book.isOpen()) return clickBook()
     if (bookAimed) return openBook()
+    if (corkAimed) return openBoard()
     clickFlipped = target
     target?.flip(1)
   })
@@ -266,7 +295,8 @@ async function start() {
     const locked = controls.isLocked()
     if (e.code === 'Escape') {
       // One Esc does one thing: it closes a dialog, or else the book (when the browser let us see it).
-      if (open()) closeTop()
+      if (board.isOpen()) board.close()
+      else if (open()) closeTop()
       else if (book.isOpen() && !locked) closeBook()
     } else if (poster && !pulled) {
       if (e.code === 'ArrowLeft' || e.code === 'ArrowRight') stepPoster(e.code === 'ArrowLeft' ? -1 : 1)
@@ -275,6 +305,7 @@ async function start() {
     } else if (e.code === 'KeyE' && locked) {
       if (target) pullOut()
       else if (bookAimed) openBook()
+      else if (corkAimed) openBoard()
     }
   })
 
@@ -296,12 +327,13 @@ async function start() {
     if (controls.isLocked() && !ease) {
       if (book.isOpen()) prompt(BOOK_OPEN)
       else {
-        // The crates come first when both are in view.
+        // The crates come first when both are in view, then the book, then the board on the wall.
         target = crateInView(club.crates, camera)
         bookAimed = !target && bookInView()
-        prompt(target ? PROMPT : bookAimed ? BOOK_SHUT : null)
+        corkAimed = !target && !bookAimed && corkInView()
+        prompt(target ? PROMPT : bookAimed ? BOOK_SHUT : corkAimed ? CORK : null)
       }
-    } else if (!ease) { target = null; bookAimed = false }
+    } else if (!ease) { target = null; bookAimed = corkAimed = false }
     reticle(controls.isLocked() && book.isOpen() && !ease)
     draw(club.scene, camera)
     requestAnimationFrame(loop)
@@ -314,5 +346,6 @@ async function start() {
     openPoster: (i: number) => { poster = posterOrder[i]; openDialog() },
     /** What a click on the open book would open now. */
     aim: () => book.aim(centreRay()),
+    board, openBoard, fillCork,
   } })
 }

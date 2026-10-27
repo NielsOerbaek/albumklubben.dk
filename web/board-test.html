@@ -1,0 +1,92 @@
+<!doctype html>
+<html lang="da">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Opslagstavle-test</title>
+<link rel="stylesheet" href="/src/theme.css">
+</head>
+<body>
+<!-- Dev only (not in the Vite build inputs): the opslagstavle on made-up posts, so the look can
+     be worked on without Theta. The people here are invented, like the seed data. -->
+<!-- /board-test.html shows the dialog; /board-test.html?kork shows the cork board's own drawing. -->
+<div id="bar"></div>
+<div id="board"></div>
+<div id="kork" style="padding:40px;display:none"></div>
+<script type="module">
+import { html, render, nothing } from 'lit-html'
+import { createBoard } from '/src/board/board.ts'
+import { topBarTemplate } from '/src/topbar.ts'
+
+const now = Date.now()
+const iso = (minutesAgo) => new Date(now - minutesAgo * 60_000).toISOString()
+const POSTS = [
+  { id: '1', author: { sub: 's1', name: 'Medlem 1' }, title: 'Mødet på tirsdag', pinned: true,
+    body: 'Vi starter 11.30 som altid. Husk at vælge et album, hvis det er din tur.',
+    createdAt: iso(40), commentCount: 4, attachmentCount: 0, url: 'https://stage.theta.dk/p/1' },
+  { id: '2', author: { sub: 's2', name: 'Medlem 2' }, title: null, pinned: false,
+    body: 'Jeg fandt den her i en kasse på loftet.\nNogen der kender den?',
+    createdAt: iso(180), commentCount: 2, attachmentCount: 3, url: 'https://stage.theta.dk/p/2' },
+  { id: '3', author: { sub: 's3', name: 'Medlem 3' }, title: 'Pladebørs på lørdag', pinned: false,
+    body: 'Der er pladebørs i Valby. Nogen der tager afsted?',
+    createdAt: iso(60 * 26), commentCount: 0, attachmentCount: 0, url: 'https://stage.theta.dk/p/3' },
+]
+const COMMENTS = [
+  { id: 'c1', author: { sub: 's2', name: 'Medlem 2' }, body: 'Jeg er med.', createdAt: iso(30), depth: 0 },
+  { id: 'c2', author: { sub: 's4', name: 'Medlem 4' }, body: 'Kan først 11.45, men jeg kommer.', createdAt: iso(20), depth: 0 },
+  { id: 'c3', author: { sub: 's1', name: 'Medlem 1' }, body: 'Fint, vi venter med pladen.', createdAt: iso(10), depth: 1 },
+]
+
+// The server, as it would answer.
+const real = window.fetch
+window.fetch = async (url, init) => {
+  const path = String(url)
+  await new Promise((r) => setTimeout(r, 120))
+  const json = (b) => new Response(JSON.stringify(b), { status: 200, headers: { 'content-type': 'application/json' } })
+  if (path.includes('/comments')) {
+    return init?.method === 'POST'
+      ? json({ id: 'ny', author: { sub: 'me', name: 'Dig' }, body: JSON.parse(init.body).body, createdAt: iso(0), depth: 0 })
+      : json({ items: COMMENTS, nextCursor: null })
+  }
+  if (path.startsWith('/api/board')) {
+    if (init?.method === 'POST') {
+      const made = { id: String(POSTS.length + 1), author: { sub: 'me', name: 'Dig' }, title: JSON.parse(init.body).title ?? null,
+        body: JSON.parse(init.body).body, createdAt: iso(0), commentCount: 0, attachmentCount: 0, pinned: false, url: null }
+      POSTS.unshift(made)
+      return json(made)
+    }
+    return json({ items: POSTS, nextCursor: null })
+  }
+  return real(url, init)
+}
+
+const layer = document.getElementById('board')
+const board = createBoard({ show: (content) => render(content ?? nothing, layer) })
+render(topBarTemplate(null, undefined, () => board.open()), document.getElementById('bar'))
+
+if (location.search.includes('kork')) {
+  // The wall board's own texture, blown up, so the notes can be read while they are drawn.
+  const { createCorkBoard } = await import('/src/klubhus/corkboard.ts')
+  const { buildClubLayout } = await import('/src/klubhus/layout.ts')
+  const kork = document.getElementById('kork')
+  kork.style.display = 'block'
+  for (const [label, posts] of [['Opslag', POSTS], ['Tom', []], ['Fejl', 'error']]) {
+    const cork = createCorkBoard(buildClubLayout([]))
+    cork.setPosts(posts)
+    const src = cork.texture.image
+    const big = document.createElement('canvas')
+    big.width = src.width * 3
+    big.height = src.height * 3
+    const g = big.getContext('2d')
+    g.imageSmoothingEnabled = false
+    g.drawImage(src, 0, 0, big.width, big.height)
+    const h = document.createElement('p')
+    h.textContent = label
+    kork.append(h, big)
+  }
+} else {
+  board.open()
+}
+</script>
+</body>
+</html>

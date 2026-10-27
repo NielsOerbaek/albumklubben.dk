@@ -8,6 +8,7 @@ import { BOARD, boardLines, createFlipBoard, type FlipBoard } from './flipsign.t
 import { buildRoom, FOG, kit } from './room.ts'
 import { buildFurniture, SCREEN_Y } from './furniture.ts'
 import { createBookView, type BookView } from './bookview.ts'
+import { createCorkBoard, type CorkBoard } from './corkboard.ts'
 import type { Spread } from './book.ts'
 
 const { mat, shadedBox } = kit
@@ -159,6 +160,8 @@ export interface Club {
   screen: FlipBoard
   /** The poster book on the table's far end. */
   book: BookView
+  /** Opslagstavlen on the bare wall by the door; filled in once Theta has answered. */
+  cork: CorkBoard
   /** `player` is where you stand, or null to leave the screen as it is. */
   update(dt: number, player: { x: number; z: number } | null): void
 }
@@ -194,12 +197,16 @@ export async function buildClub(layout: ClubLayout, spreads: Spread[]): Promise<
   const book = await createBookView(spreads, layout.book)
   scene.add(book.object)
 
+  const cork = createCorkBoard(layout)
+  scene.add(cork.object)
+
   let armed = true
   return {
     scene,
     crates,
     screen,
     book,
+    cork,
     update(dt, player) {
       for (const crate of crates) crate.update(dt)
       if (player) {
