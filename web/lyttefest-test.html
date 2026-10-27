@@ -21,7 +21,9 @@ const TRACKS = [
 // Before: in twenty minutes. Now: five seconds into the second track. Over: an hour ago.
 const offsets = { foer: 20 * 60_000, nu: -185_000, slut: -3600_000 }
 const startsAt = new Date(Date.now() + (offsets[state] ?? 0)).toISOString()
-const iso = (secondsAgo) => new Date(Date.now() - secondsAgo * 1000).toISOString()
+// A comment is placed by when it was written, so the harness writes them at seconds into the
+// album: 10 s in is track 1, 190 s in is track 2, and so on.
+const at = (secondsIn) => new Date(Date.parse(startsAt) + secondsIn * 1000).toISOString()
 
 const FEST = {
   id: 1,
@@ -35,9 +37,11 @@ const FEST = {
   thetaUrl: 'https://stage.theta.dk/p/1',
   coming: [{ sub: 's1', name: 'Medlem 1' }, { sub: 's2', name: 'Medlem 2' }, { sub: 'me', name: 'Dig' }],
   comments: [
-    { id: 1, sub: 's2', name: 'Medlem 2', trackIndex: 0, text: 'Den åbning!', createdAt: iso(300) },
-    { id: 2, sub: 'me', name: 'Dig', trackIndex: 0, text: 'Enig. Hvad er det for en lyd?', createdAt: iso(240) },
-    { id: 3, sub: 's1', name: 'Medlem 1', trackIndex: 1, text: 'Saxofonen kommer nu', createdAt: iso(60) },
+    { id: 1, sub: 's2', name: 'Medlem 2', trackIndex: null, text: 'Klar her!', createdAt: at(-30) },
+    { id: 2, sub: 's2', name: 'Medlem 2', trackIndex: 0, text: 'Den åbning!', createdAt: at(12) },
+    { id: 3, sub: 'me', name: 'Dig', trackIndex: 0, text: 'Enig. Hvad er det for en lyd?', createdAt: at(95) },
+    { id: 4, sub: 's1', name: 'Medlem 1', trackIndex: 0, text: 'Vent på omkvædet', createdAt: at(166) },
+    { id: 5, sub: 's1', name: 'Medlem 1', trackIndex: 1, text: 'Saxofonen kommer nu', createdAt: at(184) },
   ],
   you: { sub: 'me', coming: true, host: false },
   now: new Date().toISOString(),

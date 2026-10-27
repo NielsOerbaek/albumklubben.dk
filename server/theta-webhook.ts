@@ -61,7 +61,18 @@ export function registerThetaWebhook(app: FastifyInstance, handlers: WebhookHand
     scope.post('/theta/webhook', async (req, reply) => {
       const raw = (req as any).rawBody as Buffer | undefined
       if (!raw || !verify(handlers.secret, req.headers['theta-signature'] as string | undefined, raw)) {
-        req.log.warn('theta webhook with a signature that does not match')
+        // The scheme here is read off the interop README's "Signed events", which was not at hand
+        // when this was written. Until a real event has been seen, a refusal says what arrived —
+        // the header names, and the value of anything that looks like the signature — so the
+        // first press of a button on a card is enough to put it right. A signature is a digest,
+        // not a secret, and no body is logged.
+        req.log.warn({
+          headers: Object.keys(req.headers),
+          signature: Object.entries(req.headers)
+            .filter(([k]) => k.includes('signature') || k.startsWith('theta') || k.startsWith('x-theta'))
+            .map(([k, v]) => `${k}: ${String(v).slice(0, 200)}`),
+          bytes: raw?.length ?? 0,
+        }, 'theta webhook refused: the signature does not match')
         return reply.code(401).send({ error: 'Underskriften passer ikke' })
       }
       const event = req.body as CloudEvent
@@ -72,7 +83,10 @@ export function registerThetaWebhook(app: FastifyInstance, handlers: WebhookHand
         case 'dk.theta.card.action': {
           const card = await handlers.onCardAction?.(event.data ?? {})
           // The answer to a card action is the card as it now looks; nothing to say is a no-op.
-          return card ? reply.send({ card }) : reply.code(404).send({ error: 'Kortet findes ikke' })
+          if (card) return reply.send({ card })
+          // Same reason as above: the field names of a card action are a guess until one is seen.
+          req.log.warn({ data: Object.keys(event.data ?? {}) }, 'theta card action: no card to answer with')
+          return reply.code(404).send({ error: 'Kortet findes ikke' })
         }
         default:
           // An event we do not act on is still received: Theta should not keep retrying it.

@@ -117,8 +117,9 @@ describe('Thetas webhook', () => {
 
   it('does not let a signed webhook body reach the rest of the site', async () => {
     const { app } = setup()
-    // The raw-body parser lives in the webhook's own scope: ordinary JSON routes are unaffected.
-    const res = await app.inject({ method: 'POST', url: '/api/board/posts', payload: { body: 'Hej' } })
+    // The raw-body parser lives in the webhook's own scope: ordinary JSON routes are unaffected,
+    // and still answer to the login gate rather than to a signature.
+    const res = await app.inject({ method: 'POST', url: '/api/lyttefest', payload: { albumId: 1 } })
     expect(res.statusCode).toBe(401)
   })
 

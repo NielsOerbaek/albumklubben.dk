@@ -122,7 +122,11 @@ describe('at lave en lyttefest', () => {
     expect(card.badge).toEqual({ text: 'Kommende', tone: 'info' })
     expect(card.fields.map((f: any) => f.label)).toEqual(['Tidspunkt', 'Vært', 'Spilletid', 'Kommer'])
     expect(card.fields.find((f: any) => f.label === 'Spilletid').value).toBe('10 min.')
-    expect(card.actions.map((a: any) => a.id)).toEqual(['kommer'])
+    // The host is already coming when the announcement goes up, so the card says so and offers
+    // them the way out of it again.
+    expect(card.fields.find((f: any) => f.label === 'Kommer').value).toBe('1')
+    expect(card.actions.map((a: any) => a.id)).toEqual(['kommer', 'kommer-ikke'])
+    expect(card.actions.find((a: any) => a.id === 'kommer-ikke').audience).toEqual(['sub-1'])
     expect(card.link).toEqual({ label: 'Åbn lyttefesten', url: 'https://ak.test/lyttefest/1' })
   })
 
@@ -324,20 +328,35 @@ describe('værtens to håndtag', () => {
 })
 
 describe('uret: én påmindelse og ét referat', () => {
-  it('rings the bell once for those who are coming, when it starts', async () => {
+  it('rings the bell once, a couple of minutes before the first track', async () => {
     const { app, albumId, notes } = setup()
     const cookie = await signIn(app)
     await make(app, cookie, { albumId })
-    clock = START - 1000
+    clock = START - 5 * 60_000
     await app.lyttefestTick()
-    expect(notes).toHaveLength(0)
-    clock = START + 1000
+    expect(notes).toHaveLength(0) // five minutes out is too early
+    clock = START - 90_000
     await app.lyttefestTick()
     await app.lyttefestTick() // a second pass must not ring twice
     expect(notes).toHaveLength(1)
     expect(notes[0].recipients).toEqual(['sub-1'])
-    expect(notes[0].text).toContain('starter nu')
+    expect(notes[0].text).toContain('begynder om et par minutter')
     expect(notes[0].href).toBe('https://ak.test/lyttefest/1')
+    // And it does not ring again once it is playing.
+    clock = START + 60_000
+    await app.lyttefestTick()
+    expect(notes).toHaveLength(1)
+  })
+
+  it('does not pretend it is about to start when the bell rings late', async () => {
+    const { app, albumId, notes } = setup()
+    const cookie = await signIn(app)
+    await make(app, cookie, { albumId })
+    // Nothing ticked over the window — the server was down — and it is already playing.
+    clock = START + 60_000
+    await app.lyttefestTick()
+    expect(notes).toHaveLength(1)
+    expect(notes[0].text).toContain('er begyndt')
   })
 
   it('puts the comments in the group as one comment when it is over, and only once', async () => {
@@ -424,7 +443,7 @@ describe('skærmen i klubhuset', () => {
       posts: async () => ({
         items: [{
           id: 'p1', author: { sub: 'sub-1', name: 'Medlem Een' }, title: null, body: 'Lyttefest',
-          createdAt: '', commentCount: 0, attachmentCount: 0, pinned: false, url: null, lyttefest: null,
+          createdAt: '', commentCount: 0, attachmentCount: 0, url: null, lyttefest: null,
         }],
         nextCursor: null,
       }),

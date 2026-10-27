@@ -1,4 +1,5 @@
 import { html, nothing, render, type TemplateResult } from 'lit-html'
+import { live } from 'lit-html/directives/live.js'
 import '../base.css'
 import './lyttefest.css'
 import { topBarTemplate } from '../topbar.ts'
@@ -7,13 +8,16 @@ import { thumbUrl } from '../api.ts'
 import { formatPostTime } from '../../../shared/board.ts'
 import {
   catchUpText, formatClock, formatCountdown, formatLength, positionAt, searchLinks, totalSeconds,
-  type FestComment, type FestPosition, type FestView,
+  type FestComment, type FestPosition, type FestTrack, type FestView,
 } from '../../../shared/lyttefest.ts'
 
 /**
  * Lyttefesten: one album, one time, everybody on their own speakers. The page's only job is to
  * keep everyone on the same track, which it does by counting from the start time on the server's
  * clock — never the browser's, which may be minutes out.
+ *
+ * What is said is laid out along the album: every track that has played has a bar of its own,
+ * stacked in playing order, and a comment sits on that bar at the moment it was written.
  */
 const app = document.getElementById('app')!
 const id = Number(/\/lyttefest\/(\d+)/.exec(location.pathname)?.[1])
@@ -78,6 +82,10 @@ function listen() {
 const where = (): FestPosition =>
   positionAt(fest!.tracks, Date.parse(fest!.startsAt), serverNow(), fest!.cancelled)
 
+/** Where a comment sits on the album: which track it was written during, and how far into it. */
+const commentAt = (c: FestComment): FestPosition =>
+  positionAt(fest!.tracks, Date.parse(fest!.startsAt), Date.parse(c.createdAt))
+
 // --- Doing things -------------------------------------------------------------------------------
 
 async function rsvp(coming: boolean) {
@@ -106,6 +114,7 @@ async function comment() {
   } catch (err) { error = (err as Error).message }
   sending = false
   draw()
+  focusWrite()
 }
 
 async function remove(commentId: number) {
@@ -136,27 +145,86 @@ function askNewTime() {
   void host('udskyd', at.toISOString())
 }
 
+const focusWrite = () => document.querySelector<HTMLTextAreaElement>('.fest-write textarea')?.focus()
+
 // --- The page ------------------------------------------------------------------------------------
 
 const person = (name: string) => html`<span class="fest-person">${name}</span>`
 
+/** Where a comment was written, in words: "4. Wuthering Heights · 1:32". */
+function stampOf(c: FestComment): string {
+  const at = commentAt(c)
+  return at.track ? `${at.track.number}. ${at.track.title} · ${formatClock(at.into)}` : formatPostTime(c.createdAt)
+}
+
 /** A comment goes only when its own author or the host takes it down. */
 function commentTemplate(c: FestComment): TemplateResult {
   const mine = fest !== null && (c.sub === fest.you.sub || fest.you.host)
-  return html`<li class="fest-comment">
+  return html`<li class="fest-comment" id=${`k${c.id}`}>
     <p class="fest-comment-by">${person(c.name)}
-      <span class="fest-when">${formatPostTime(c.createdAt)}</span>
+      <span class="fest-when">${stampOf(c)}</span>
       ${mine ? html`<button class="fest-remove" aria-label="Fjern kommentaren" @click=${() => remove(c.id)}>×</button>` : nothing}</p>
     <p class="fest-comment-text">${c.text}</p>
   </li>`
 }
 
+/**
+ * One track's bar: how far through it we are, with every comment written during it sitting at the
+ * moment it was written. The track playing now also carries the playhead and a chat mark that
+ * comes up under the pointer, so a comment can be written from where you are looking.
+ */
+function laneTemplate(track: FestTrack, p: FestPosition, said: FestComment[]): TemplateResult {
+  const isNow = p.state === 'nu' && p.track?.number === track.number
+  const done = p.state === 'slut' || (p.track != null && p.track.number > track.number)
+  const filled = isNow ? (p.into / track.seconds) * 100 : done ? 100 : 0
+  const at = (c: FestComment) => Math.min(100, Math.max(0, (commentAt(c).into / track.seconds) * 100))
+  return html`<li class="fest-lane ${isNow ? 'is-now' : ''}">
+    <p class="fest-lane-head">
+      <span class="no">${track.number}</span>
+      <span class="fest-lane-title">${track.title}</span>
+      <span class="len">${isNow ? `${formatClock(p.into)} / ${formatClock(track.seconds)}` : formatClock(track.seconds)}</span>
+    </p>
+    <div class="fest-lane-bar">
+      <div class="fest-lane-fill" style=${`width:${filled}%`}></div>
+      ${said.map(c => html`<span class="fest-mark" aria-hidden="true" style=${`left:${at(c)}%`}
+        title=${`${c.name}: ${c.text}`}></span>`)}
+      ${isNow ? html`
+        <span class="fest-playhead" style=${`left:${filled}%`}></span>
+        <button class="fest-add" style=${`left:${filled}%`} title="Skriv herfra"
+          aria-label="Skriv en kommentar her" @click=${focusWrite}>💬</button>` : nothing}
+    </div>
+    ${said.length ? html`<ol class="fest-comments">${said.map(commentTemplate)}</ol>` : nothing}
+  </li>`
+}
+
+/** The album as a stack of bars: every track that has played, in playing order, newest at the foot. */
+function lanesTemplate(f: FestView, p: FestPosition): TemplateResult {
+  const byTrack = new Map<number | null, FestComment[]>()
+  for (const c of f.comments) {
+    const index = commentAt(c).track?.number ?? null
+    byTrack.set(index, [...(byTrack.get(index) ?? []), c])
+  }
+  const last = p.state === 'nu' && p.track ? p.track.number : f.tracks.length
+  const lanes = p.state === 'kommende' ? [] : f.tracks.filter(t => t.number <= last)
+  const outside = byTrack.get(null) ?? []
+  return html`
+    <ol class="fest-lanes">${lanes.map(t => laneTemplate(t, p, byTrack.get(t.number) ?? []))}</ol>
+    ${outside.length ? html`<section class="fest-outside">
+      <h2>Uden for numrene</h2>
+      <ol class="fest-comments">${outside.map(commentTemplate)}</ol>
+    </section>` : nothing}`
+}
+
+/** Enter sends; shift and enter makes a new line. */
 const writeTemplate = () => html`
   <form class="fest-write" @submit=${(e: Event) => { e.preventDefault(); void comment() }}>
-    <textarea rows="2" maxlength="500" placeholder="Hvad synes du?" .value=${draft}
-      @input=${(e: Event) => { draft = (e.target as HTMLTextAreaElement).value; draw() }}></textarea>
-    <button class="pill" type="submit" ?disabled=${sending || draft.trim().length === 0}>
-      ${sending ? 'Sender …' : 'Send'}</button>
+    <textarea rows="2" maxlength="500" placeholder="Skriv her — Enter sender" .value=${live(draft)}
+      @input=${(e: Event) => { draft = (e.target as HTMLTextAreaElement).value }}
+      @keydown=${(e: KeyboardEvent) => {
+        // `isComposing` keeps Enter out of the way while a keyboard is composing a character.
+        if (e.key === 'Enter' && !e.shiftKey && !e.isComposing) { e.preventDefault(); void comment() }
+      }}></textarea>
+    <button class="pill" type="submit" ?disabled=${sending}>${sending ? 'Sender …' : 'Send'}</button>
   </form>
   <p class="fest-note">Kommentarerne samles i ét opslag i gruppen på Theta, når lyttefesten er slut.</p>`
 
@@ -200,43 +268,25 @@ function duringTemplate(f: FestView, p: FestPosition): TemplateResult {
     <section class="fest-now">
       <p class="fest-now-label">Nummer ${track.number} af ${f.tracks.length}</p>
       <h2 class="fest-track">${track.title}</h2>
-      <div class="fest-bar"><div class="fest-bar-fill" style=${`width:${(p.into / track.seconds) * 100}%`}></div></div>
-      <p class="fest-clock">${formatClock(p.into)} / ${formatClock(track.seconds)}</p>
       <p class="fest-catch">${catchUpText(p)}</p>
+    </section>
+    <section class="fest-talk">
+      <h2>Undervejs</h2>
+      ${lanesTemplate(f, p)}
+      ${writeTemplate()}
     </section>
     ${left.length ? html`<section class="fest-next">
       <h2>Herefter</h2>
       <ol>${left.map(t => html`<li><span class="no">${t.number}</span> ${t.title}
         <span class="len">${formatClock(t.seconds)}</span></li>`)}</ol>
     </section>` : nothing}
-    <section class="fest-talk">
-      <h2>Undervejs</h2>
-      ${writeTemplate()}
-      <ol class="fest-comments">${[...f.comments].reverse().map(commentTemplate)}</ol>
-    </section>
     ${comingTemplate(f, p)}`
 }
 
 function afterTemplate(f: FestView, p: FestPosition): TemplateResult {
-  const byTrack = new Map<number | null, FestComment[]>()
-  for (const c of f.comments) byTrack.set(c.trackIndex, [...(byTrack.get(c.trackIndex) ?? []), c])
   return html`
     <p class="fest-countdown">${f.cancelled ? 'Lyttefesten er aflyst' : 'Lyttefesten er slut'}</p>
-    ${f.cancelled ? nothing : html`<section class="fest-after">
-      <ol class="fest-tracklist">
-        ${f.tracks.map(t => html`<li>
-          <p class="fest-track-line"><span class="no">${t.number}</span> ${t.title}
-            <span class="len">${formatClock(t.seconds)}</span></p>
-          ${(byTrack.get(t.number - 1) ?? []).length
-            ? html`<ol class="fest-comments">${byTrack.get(t.number - 1)!.map(commentTemplate)}</ol>`
-            : nothing}
-        </li>`)}
-      </ol>
-      ${(byTrack.get(null) ?? []).length ? html`<section class="fest-talk">
-        <h2>Udenfor numrene</h2>
-        <ol class="fest-comments">${byTrack.get(null)!.map(commentTemplate)}</ol>
-      </section>` : nothing}
-    </section>`}
+    ${f.cancelled ? nothing : html`<section class="fest-talk">${lanesTemplate(f, p)}</section>`}
     ${comingTemplate(f, p)}`
 }
 

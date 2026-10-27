@@ -371,6 +371,22 @@ So the board is a window, not a place:
 This also settles what "a reply under each comment" would have been — Theta's App API could not
 have done it anyway, see below.
 
+### After the first real lyttefest (Niels)
+
+- **The bell rings two minutes before the first track**, not at it, so there is time to find the
+  album and press play. If a restart means it rings late, it says "er begyndt" instead of
+  pretending otherwise.
+- **The host is on the list before the announcement goes up.** They were put there afterwards, so
+  the card in the group said nobody was coming and offered the host no way out of it again.
+- **The chat is laid out along the album.** Every track that has played has a bar of its own,
+  stacked in playing order; a comment sits on its bar at the moment it was written and is stamped
+  with the track and the time ("4. Wuthering Heights · 1:32"). Enter sends, shift and enter makes
+  a new line, and a chat mark comes up under the pointer at the playhead so a comment can be
+  written from where you are looking.
+- **"Jeg kommer" on the card in Theta was refused** by this side. Until a real event has been
+  seen, the webhook logs what arrived when it refuses — the header names, the signature's own
+  value, and the field names of a card action — so one press is enough to put the scheme right.
+
 ### The App API had less in it than the design assumed
 
 The contract was read off stage by asking the API and reading its own validation errors, and

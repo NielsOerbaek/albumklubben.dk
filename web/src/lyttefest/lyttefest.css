@@ -26,28 +26,63 @@
 .fest-note { margin: 10px 0 0; font-size: 13px; color: var(--muted-on-black); }
 .fest-error { margin: 16px 0 0; padding: 10px 12px; border: 1px solid #fff; font-size: 14px; }
 
-/* While it plays: the track, large, with how far in we are. */
+/* While it plays: the track, large. */
 .fest-now-label { margin: 0; font-size: 13px; text-transform: uppercase; color: var(--muted-on-black); }
 .fest .fest-track {
-  margin: 4px 0 16px;
+  margin: 4px 0 8px;
   font-size: clamp(26px, 5vw, 44px);
   font-weight: 300;
   line-height: 1.05;
   text-transform: none;
   letter-spacing: 0;
 }
-.fest-bar { height: 4px; background: #333; }
-.fest-bar-fill { height: 100%; background: var(--card-bg, #fff); transition: width 1s linear; }
-.fest-clock { margin: 8px 0 0; font-variant-numeric: tabular-nums; }
 .fest-catch { margin: 4px 0 0; font-size: 14px; color: var(--muted-on-black); }
 
-.fest-next ol, .fest-tracklist { list-style: none; margin: 0; padding: 0; }
-.fest-next li, .fest-track-line { display: flex; gap: 12px; padding: 4px 0; border-bottom: 1px solid #1c1c1c; }
-.fest-track-line { margin: 16px 0 0; }
-.fest-next .no, .fest-tracklist .no { width: 2em; color: var(--muted-on-black); font-variant-numeric: tabular-nums; }
-.fest-next .len, .fest-tracklist .len { margin-left: auto; color: var(--muted-on-black); font-variant-numeric: tabular-nums; }
+/* The album as a stack of bars, one per track played, newest at the foot. What was said sits on
+   the bar at the moment it was said. */
+.fest-lanes { list-style: none; margin: 0; padding: 0; }
+.fest-lane { margin: 0 0 20px; }
+.fest-lane-head { display: flex; gap: 12px; align-items: baseline; margin: 0 0 6px; font-size: 14px; }
+.fest-lane-head .no { width: 2em; color: var(--muted-on-black); font-variant-numeric: tabular-nums; }
+.fest-lane-title { color: var(--muted-on-black); overflow-wrap: anywhere; }
+.fest-lane.is-now .fest-lane-title, .fest-lane.is-now .fest-lane-head .no { color: #fff; }
+.fest-lane-head .len { margin-left: auto; color: var(--muted-on-black); font-variant-numeric: tabular-nums; }
 
-.fest-write { display: flex; gap: 10px; align-items: flex-end; margin-top: 8px; }
+.fest-lane-bar { position: relative; height: 6px; background: #262626; }
+.fest-lane.is-now .fest-lane-bar { height: 10px; }
+.fest-lane-fill { height: 100%; background: #4a4a4a; }
+.fest-lane.is-now .fest-lane-fill { background: var(--card-bg, #fff); transition: width 1s linear; }
+
+/* A comment, where it was written. */
+.fest-mark {
+  position: absolute; top: 50%;
+  width: 7px; height: 7px;
+  margin: -3.5px 0 0 -3.5px;
+  border-radius: 50%;
+  background: #fff;
+}
+.fest-mark:hover { background: var(--card-bg, #fff); transform: scale(1.4); }
+
+.fest-playhead {
+  position: absolute; top: -3px; bottom: -3px;
+  width: 2px; margin-left: -1px;
+  background: #fff;
+}
+
+/* The chat mark: only under the pointer, at the moment being played. */
+.fest-add {
+  position: absolute; top: 50%;
+  width: 26px; height: 26px;
+  margin: -13px 0 0 -13px;
+  padding: 0;
+  border: 1px solid #fff; border-radius: 50%;
+  background: #000;
+  font-size: 12px; line-height: 1; cursor: pointer;
+  opacity: 0; transition: opacity 0.12s;
+}
+.fest-lane.is-now:hover .fest-add, .fest-add:focus-visible { opacity: 1; }
+
+.fest-write { display: flex; gap: 10px; align-items: flex-end; margin-top: 20px; }
 .fest-write textarea {
   flex: 1;
   padding: 10px 12px;
@@ -60,8 +95,8 @@
 .fest-write textarea:focus { border-color: #fff; outline: none; }
 .fest-write .pill[disabled] { opacity: 0.4; cursor: default; }
 
-.fest-comments { list-style: none; margin: 16px 0 0; padding: 0; }
-.fest-comment { margin: 0 0 12px; padding-left: 12px; border-left: 1px solid var(--line, #333); }
+.fest-comments { list-style: none; margin: 10px 0 0; padding: 0; }
+.fest-comment { margin: 0 0 10px; padding-left: 12px; border-left: 1px solid var(--line, #333); }
 .fest-comment-by { display: flex; align-items: center; gap: 8px; margin: 0; font-size: 13px; }
 .fest-when { color: var(--muted-on-black); }
 .fest-remove {
@@ -71,10 +106,17 @@
 .fest-remove:hover { color: #fff; }
 .fest-comment-text { margin: 2px 0 0; overflow-wrap: anywhere; }
 
+.fest-next ol { list-style: none; margin: 0; padding: 0; }
+.fest-next li { display: flex; gap: 12px; padding: 4px 0; border-bottom: 1px solid #1c1c1c; }
+.fest-next .no { width: 2em; color: var(--muted-on-black); font-variant-numeric: tabular-nums; }
+.fest-next .len { margin-left: auto; color: var(--muted-on-black); font-variant-numeric: tabular-nums; }
+
 .fest-coming .pill, .fest-host .pill { margin-top: 10px; }
 .fest-host { display: flex; gap: 8px; }
 
 @media (max-width: 700px) {
   .fest { padding-top: 20px; }
   .fest-head { gap: 16px; }
+  /* No pointer to hover with: the chat mark is simply there. */
+  .fest-lane.is-now .fest-add { opacity: 1; }
 }

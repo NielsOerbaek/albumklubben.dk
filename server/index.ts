@@ -27,6 +27,8 @@ const app = buildApp({
   adminPassword: env.ADMIN_PASSWORD!,
   sessionSecret: env.SESSION_SECRET!,
   thetaWebhookSecret: env.THETA_WEBHOOK_SECRET,
+  // Into journalctl, via the systemd user service.
+  logger: true,
   webDir: existsSync('dist') ? 'dist' : undefined,
   theta: {
     issuer: env.THETA_ISSUER!.replace(/\/$/, ''),

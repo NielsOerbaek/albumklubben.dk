@@ -29,10 +29,16 @@ export interface AppOptions {
   thetaWebhookSecret?: string
   /** The clock, so a test can decide when a lyttefest starts and ends. */
   now?: () => number
+  /**
+   * Fastify logs nothing unless it is told to, which meant every `app.log.warn` in here — a
+   * refused webhook, a Theta call that failed — went nowhere, and there was no record of a
+   * request either. On it in production (`index.ts`), off under test.
+   */
+  logger?: boolean
 }
 
 export function buildApp(opts: AppOptions): FastifyInstance {
-  const app = Fastify()
+  const app = Fastify({ logger: opts.logger ?? false })
   app.register(cookie, { secret: opts.sessionSecret })
   app.register(formbody)
   app.register(multipart, { limits: { fileSize: 500 * 1024 * 1024 } })

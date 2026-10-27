@@ -24,6 +24,8 @@ const MAX_NOTE = 280
 const MAX_COMMENT = 500
 /** How often the server looks for a reminder to send or a summary to post. */
 export const TICK_MS = 10_000
+/** The bell rings this far ahead of the first track, so there is time to find the album. */
+export const REMIND_BEFORE_MS = 2 * 60 * 1000
 const SUMMARY_LIMIT = 3500 // Theta takes more, but a wall of text helps nobody
 
 declare module 'fastify' {
@@ -169,6 +171,10 @@ export function registerLyttefest(app: FastifyInstance, opts: LyttefestOptions) 
 
     const startsIso = new Date(startsAt).toISOString()
     const id = createFest(db, { albumId, host: who, startsAt: startsIso, note, tracks }, new Date(now()).toISOString())
+    // The host is coming, obviously — and before the card is drawn, so the announcement goes up
+    // saying so. Putting it after the post would leave a card in the group that says nobody is
+    // coming and offers the host no way out of it again.
+    setRsvp(db, id, who, true, new Date(now()).toISOString())
     const fest = getFest(db, id)!
     const externalId = `lyttefest-${id}`
 
@@ -184,6 +190,7 @@ export function registerLyttefest(app: FastifyInstance, opts: LyttefestOptions) 
       })
       setFestPost(db, id, { thetaPostId: post.id, thetaPostUrl: post.url, cardExternalId: externalId, postedAs: 'user' })
     } catch (err) {
+      // The rsvp goes with it: lyttefest_rsvps is ON DELETE CASCADE.
       db.prepare('DELETE FROM lyttefester WHERE id = ?').run(id)
       if (err instanceof ThetaError && err.notEligible) {
         return reply.code(403).send({ error: 'Du kan ikke skrive i gruppen lige nu' })
@@ -191,8 +198,6 @@ export function registerLyttefest(app: FastifyInstance, opts: LyttefestOptions) 
       app.log.warn({ err }, 'lyttefest not announced')
       return reply.code(502).send({ error: 'Theta tog ikke imod opslaget' })
     }
-    // The host is coming, obviously.
-    setRsvp(db, id, who, true, new Date(now()).toISOString())
     return view(getFest(db, id)!, who)
   })
 
@@ -377,20 +382,37 @@ export function registerLyttefest(app: FastifyInstance, opts: LyttefestOptions) 
    * Called on a timer, and once at start-up, so a restart does not lose a reminder or a summary.
    * Each job is claimed in the database before it is done, so it happens once.
    */
+  /** Cards already turned over to "Nu". In memory: a repeat after a restart is a no-op anyway. */
+  const started = new Set<number>()
+
   async function tick() {
     const at = now()
     for (const f of festsFrom(db, new Date(at - MAX_AHEAD_MS).toISOString())) {
       if (f.cancelledAt) continue
-      const where = positionAt(f.tracks, Date.parse(f.startsAt), at)
-      if (where.state === 'nu' && !f.remindedAt && markOnce(db, f.id, 'reminded_at', new Date(at).toISOString())) {
+      const begins = Date.parse(f.startsAt)
+      const where = positionAt(f.tracks, begins, at)
+
+      // The bell, a couple of minutes ahead, so there is time to find the album and press play.
+      if (!f.remindedAt && where.state !== 'slut' && at >= begins - REMIND_BEFORE_MS
+        && markOnce(db, f.id, 'reminded_at', new Date(at).toISOString())) {
         const album = festAlbum(db, f.albumId)
         const coming = listRsvps(db, f.id).map(c => c.sub)
-        push(f.id, 'started', {})
+        const what = `Lyttefesten for ${album?.artist} – ${album?.title}`
         try {
-          await api.notify(coming, `Lyttefesten for ${album?.artist} – ${album?.title} starter nu`, url(f.id))
+          // Late (a restart over the window) means it is already playing: say so rather than lie.
+          await api.notify(coming, at < begins
+            ? `${what} begynder om et par minutter`
+            : `${what} er begyndt`, url(f.id))
         } catch (err) { app.log.warn({ err, fest: f.id }, 'lyttefest reminder not sent') }
-        await refreshCard(getFest(db, f.id)!)
       }
+
+      // The card's badge turns over with the state.
+      if (where.state === 'nu' && !started.has(f.id)) {
+        started.add(f.id)
+        push(f.id, 'started', {})
+        await refreshCard(f)
+      }
+
       if (where.state === 'slut' && !f.summaryPostedAt && markOnce(db, f.id, 'summary_posted_at', new Date(at).toISOString())) {
         push(f.id, 'ended', {})
         await botComment(f, summaryText(f), `lyttefest-${f.id}-summary`)
