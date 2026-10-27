@@ -58,22 +58,25 @@ const str = (v: unknown) => (typeof v === 'string' ? v : null)
 const num = (v: unknown) => (typeof v === 'number' ? v : 0)
 
 /**
- * Theta's own shape for a post, read back. The names below are the ones the API writes with
- * (`body`, `externalId`), but the read side could not be checked against the real thing yet:
- * reading as a person needs their consent to the `feed` scope, which only exists once the new
- * login is in use. See "Mangler stadig" in `docs/theta-app-api.md`.
+ * Theta's own shape for a post, read back, checked against stage on 2026-10-27.
+ *
+ * The text is called `text` coming out and `body` going in — the API is not symmetrical about
+ * that, and a `body` read off a post is simply not there. Both are accepted here so that the post
+ * Theta hands back from a write maps the same way, whichever of the two it carries.
+ *
+ * Theta sends no `pinned` on a post read back either; it puts the pinned ones first in the list
+ * instead, so the order carries it and there is nothing to map.
  */
 function toPost(raw: Record<string, any>): BoardPost {
   return {
     id: String(raw.id),
     author: { sub: String(raw.author?.sub ?? ''), name: str(raw.author?.name) ?? 'Et medlem' },
     title: str(raw.title),
-    body: str(raw.body) ?? '',
-    createdAt: str(raw.createdAt) ?? str(raw.created_at) ?? '',
-    commentCount: num(raw.commentCount ?? raw.comments),
-    attachmentCount: num(raw.attachmentCount ?? raw.attachments?.length),
-    pinned: raw.pinned === true,
-    url: str(raw.url) ?? str(raw.href),
+    body: str(raw.text) ?? str(raw.body) ?? '',
+    createdAt: str(raw.createdAt) ?? '',
+    commentCount: num(raw.commentCount),
+    attachmentCount: num(raw.attachmentCount),
+    url: str(raw.url),
     lyttefest: null, // filled in by the board, which is the side that knows
   }
 }
@@ -82,18 +85,18 @@ function toComment(raw: Record<string, any>): BoardComment {
   return {
     id: String(raw.id),
     author: { sub: String(raw.author?.sub ?? ''), name: str(raw.author?.name) ?? 'Et medlem' },
-    body: str(raw.body) ?? '',
-    createdAt: str(raw.createdAt) ?? str(raw.created_at) ?? '',
+    body: str(raw.text) ?? str(raw.body) ?? '',
+    createdAt: str(raw.createdAt) ?? '',
     depth: num(raw.depth),
   }
 }
 
-/** Theta pages with a cursor; the list itself has gone by a couple of names in the contract. */
+/** Theta pages with a cursor: `{ posts | comments, nextCursor }`. */
 function page<T>(raw: Record<string, any>, map: (r: any) => T): Page<T> {
-  const list = raw.posts ?? raw.comments ?? raw.items ?? raw.data ?? []
+  const list = raw.posts ?? raw.comments ?? []
   return {
     items: (Array.isArray(list) ? list : []).map(map),
-    nextCursor: str(raw.nextCursor) ?? str(raw.meta?.nextCursor) ?? null,
+    nextCursor: str(raw.nextCursor),
   }
 }
 

@@ -9,8 +9,7 @@ export interface BoardPost {
   createdAt: string
   commentCount: number
   attachmentCount: number
-  pinned: boolean
-  /** The post on Theta, where the attachments and everything else are. */
+  /** The post on Theta: where it is read, answered and everything else. */
   url: string | null
   /** Set when this post is a lyttefest the site itself announced, so it can be shown as one. */
   lyttefest: { id: number; artist: string; title: string; coverUrl: string | null } | null
@@ -26,6 +25,11 @@ export interface BoardComment {
 }
 
 export interface Page<T> { items: T[]; nextCursor: string | null }
+
+/** What `/api/board` answers: the posts, and the way into the group itself on Theta. */
+export interface BoardPage extends Page<BoardPost> {
+  groupUrl: string | null
+}
 
 const MONTHS = ['jan.', 'feb.', 'mar.', 'apr.', 'maj', 'jun.', 'jul.', 'aug.', 'sep.', 'okt.', 'nov.', 'dec.']
 const two = (n: number) => String(n).padStart(2, '0')

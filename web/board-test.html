@@ -30,33 +30,20 @@ const POSTS = [
   { id: '3', author: { sub: 's3', name: 'Medlem 3' }, title: 'Pladebørs på lørdag', pinned: false,
     body: 'Der er pladebørs i Valby. Nogen der tager afsted?',
     createdAt: iso(60 * 26), commentCount: 0, attachmentCount: 0, url: 'https://stage.theta.dk/p/3' },
+  { id: '4', author: { sub: 's1', name: 'Medlem 1' }, title: null, pinned: false,
+    body: 'Lyttefest: Kate Bush – The Kick Inside, tirsdag 3. november kl. 11.30',
+    createdAt: iso(60 * 30), commentCount: 1, attachmentCount: 0, url: 'https://stage.theta.dk/p/4',
+    lyttefest: { id: 1, artist: 'Kate Bush', title: 'The Kick Inside', coverUrl: null } },
 ]
-const COMMENTS = [
-  { id: 'c1', author: { sub: 's2', name: 'Medlem 2' }, body: 'Jeg er med.', createdAt: iso(30), depth: 0 },
-  { id: 'c2', author: { sub: 's4', name: 'Medlem 4' }, body: 'Kan først 11.45, men jeg kommer.', createdAt: iso(20), depth: 0 },
-  { id: 'c3', author: { sub: 's1', name: 'Medlem 1' }, body: 'Fint, vi venter med pladen.', createdAt: iso(10), depth: 1 },
-]
+const GROUP_URL = 'https://stage.theta.dk/grupper/122304557724776'
 
-// The server, as it would answer.
+// The server, as it would answer. The board only ever reads.
 const real = window.fetch
 window.fetch = async (url, init) => {
   const path = String(url)
   await new Promise((r) => setTimeout(r, 120))
   const json = (b) => new Response(JSON.stringify(b), { status: 200, headers: { 'content-type': 'application/json' } })
-  if (path.includes('/comments')) {
-    return init?.method === 'POST'
-      ? json({ id: 'ny', author: { sub: 'me', name: 'Dig' }, body: JSON.parse(init.body).body, createdAt: iso(0), depth: 0 })
-      : json({ items: COMMENTS, nextCursor: null })
-  }
-  if (path.startsWith('/api/board')) {
-    if (init?.method === 'POST') {
-      const made = { id: String(POSTS.length + 1), author: { sub: 'me', name: 'Dig' }, title: JSON.parse(init.body).title ?? null,
-        body: JSON.parse(init.body).body, createdAt: iso(0), commentCount: 0, attachmentCount: 0, pinned: false, url: null }
-      POSTS.unshift(made)
-      return json(made)
-    }
-    return json({ items: POSTS, nextCursor: null })
-  }
+  if (path.startsWith('/api/board')) return json({ items: POSTS, nextCursor: null, groupUrl: GROUP_URL })
   return real(url, init)
 }
 

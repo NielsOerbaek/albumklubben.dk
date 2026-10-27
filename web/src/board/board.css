@@ -1,4 +1,5 @@
-/* Opslagstavlen: the group's posts held up over the page, in the site's black and white. */
+/* Opslagstavlen: the group's posts held up over the page, in the site's black and white.
+   Every post is a link into Theta — nothing is written or answered here. */
 .board-dialog {
   position: fixed;
   inset: 0;
@@ -21,46 +22,30 @@
 .board-head h2 { margin: 0; font-size: 22px; font-weight: 300; text-transform: uppercase; }
 .board-head .pill { flex: 0 0 auto; }
 
-.board-list, .board-comments { list-style: none; margin: 0; padding: 0; }
+.board-list { list-style: none; margin: 0; padding: 0; }
 .board-list > li { margin-bottom: 12px; }
 
 .board-post {
+  display: block;
   padding: 14px 16px;
   border: 1px solid var(--line, #333);
   background: #0b0b0b;
-  cursor: pointer;
+  color: inherit;
+  text-decoration: none;
 }
 .board-post:hover, .board-post:focus-visible { border-color: #fff; }
-.board-post.is-open { cursor: default; margin-bottom: 20px; }
-.board-post.is-open:hover { border-color: var(--line, #333); }
 .board-post h3 { margin: 6px 0; font-size: 17px; font-weight: 600; }
-.board-by { margin: 0; font-size: 13px; }
-.board-pin { margin-right: 4px; }
-.board-when { margin-left: 8px; color: var(--muted-on-black, #9ca3af); }
-.board-body { margin: 8px 0 0; overflow-wrap: anywhere; white-space: normal; }
+.board-by { display: flex; align-items: center; gap: 8px; margin: 0; font-size: 13px; }
+.board-tag {
+  padding: 1px 7px;
+  border: 1px solid currentColor; border-radius: 999px;
+  font-size: 11px; text-transform: uppercase; color: #fe3ebe;
+}
+.board-when { color: var(--muted-on-black, #9ca3af); }
+.board-body { margin: 8px 0 0; overflow-wrap: anywhere; }
 .board-meta { display: flex; gap: 16px; margin: 10px 0 0; font-size: 13px; color: var(--muted-on-black, #9ca3af); }
-.board-link { color: inherit; }
-
-.board-comment {
-  margin: 0 0 12px calc(var(--indent, 0) * 20px);
-  padding-left: 12px;
-  border-left: 1px solid var(--line, #333);
-}
-.board-comment .board-body { font-size: 15px; }
-
-.board-write { display: flex; flex-direction: column; gap: 10px; margin-top: 20px; }
-.board-write textarea, .board-title {
-  width: 100%;
-  padding: 10px 12px;
-  border: 1px solid var(--line, #333);
-  background: #0b0b0b;
-  color: #fff;
-  font: inherit;
-  resize: vertical;
-}
-.board-write textarea:focus, .board-title:focus { border-color: #fff; outline: none; }
-.board-write-bar { display: flex; justify-content: flex-end; }
-.board-write .pill[disabled] { opacity: 0.4; cursor: default; }
+.board-go { margin-left: auto; }
+.board-post:hover .board-go { color: #fff; }
 
 .board-note, .board-empty { margin: 12px 0 0; font-size: 13px; color: var(--muted-on-black, #9ca3af); }
 .board-note .pill { margin-left: 8px; }
@@ -68,4 +53,6 @@
 
 @media (max-width: 700px) {
   .board-head { flex-wrap: wrap; gap: 10px; }
+  .board-meta { flex-wrap: wrap; gap: 8px 16px; }
+  .board-go { margin-left: 0; }
 }

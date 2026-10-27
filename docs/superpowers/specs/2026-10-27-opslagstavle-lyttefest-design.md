@@ -351,6 +351,26 @@ the 3D room):
 
 All four were built on 2026-10-27. Where the building had to part from this document, it is here.
 
+### The opslagstavle reads; it does not write (Niels)
+
+The design had the board reading threads, writing posts and writing comments. Niels, once it was
+up: *"Opslagstavlen should just link into the theta post. We should not render threads in the app.
+It is mostly a gimmick in the klubhuset, we would rather things actually happened on theta."*
+
+So the board is a window, not a place:
+
+- A post is a link to itself on Theta. There is no thread view, no comment field and no
+  "Skriv et opslag"; the dialog has one link to the group for writing, and says so.
+- The server keeps `GET /api/board` only. `POST /api/board/posts`,
+  `POST /api/board/posts/:id/comments` and `GET /api/board/posts/:id/comments` are gone, with
+  their tests. `/api/board` now also answers `groupUrl`, which is the way in to the group.
+- `createComment` and `comments` stay on the Theta client in `server/theta-api.ts`: the lyttefest
+  bot writes comments on its own announcement, and the client mirrors the API that
+  `docs/theta-app-api.md` documents.
+
+This also settles what "a reply under each comment" would have been — Theta's App API could not
+have done it anyway, see below.
+
 ### The App API had less in it than the design assumed
 
 The contract was read off stage by asking the API and reading its own validation errors, and
@@ -371,11 +391,11 @@ an object (`{text, tone}`).
 
 ### Two things could not be checked, and are marked in the code
 
-- **The shape of a post read back.** Reading as a person needs their consent to the `feed` scope,
-  which no session has until this login is in use. Every read came back `404`. The mapping in
-  `server/theta-api.ts` (`toPost`, `toComment`) is therefore written from the names the API writes
-  with, and must be checked the first time a member logs in on the new build. It is the only place
-  that knows Theta's read shape.
+- ~~**The shape of a post read back.**~~ Checked once the login was in use, and it was wrong: the
+  text is `text` coming out, not `body`, so every post on the board stood empty until it was
+  fixed. The read shape is now written down in [docs/theta-app-api.md](../../theta-app-api.md).
+  Theta also sends no `pinned` on a post — it puts the pinned ones first in the list instead — so
+  that flag in `BoardPost` is always false and the board shows them in Theta's own order.
 - **How Theta signs an event.** The interop README was not at hand. `verify` in
   `server/theta-webhook.ts` checks an HMAC-SHA256 over `<timestamp>.<raw body>` from a
   `Theta-Signature: t=…,v1=…` header. It fails closed, so a wrong guess refuses events rather than

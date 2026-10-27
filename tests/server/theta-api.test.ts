@@ -44,11 +44,20 @@ describe('Theta App API', () => {
   })
 
   it('reads the group as the person, and pages with a cursor', async () => {
+    // A post exactly as stage hands one back (2026-10-27): the text is `text` on the way out,
+    // though it is `body` on the way in, and there is no `pinned` on it at all.
     const theta = fakeTheta((url) => url.includes('/posts') ? ok({
       posts: [{
-        id: 7, author: { sub: 'sub-9', name: 'Medlem 1' }, title: 'Hej', body: 'Et opslag',
-        createdAt: '2026-10-27T09:00:00.000Z', commentCount: 2, attachments: [{}, {}, {}], pinned: true,
-        url: 'https://theta.test/p/7',
+        id: 377999763244108,
+        url: 'https://theta.test/grupper/122304557724776/opslag/377999763244108',
+        author: { sub: 'sub-9', name: 'Medlem 1', picture: 'https://theta.test/b/9.jpg' },
+        title: 'Hej',
+        text: 'Et opslag',
+        createdAt: '2026-10-27T09:00:00.000Z',
+        editedAt: null,
+        commentCount: 2,
+        attachmentCount: 3,
+        viaApp: { name: 'Albumklubben.dk', postedAsApp: false },
       }],
       nextCursor: 'c2',
     }) : undefined)
@@ -60,9 +69,9 @@ describe('Theta App API', () => {
     expect(url.searchParams.get('cursor')).toBeNull()
     expect(first.nextCursor).toBe('c2')
     expect(first.items[0]).toEqual({
-      id: '7', author: { sub: 'sub-9', name: 'Medlem 1' }, title: 'Hej', body: 'Et opslag',
-      createdAt: '2026-10-27T09:00:00.000Z', commentCount: 2, attachmentCount: 3, pinned: true,
-      url: 'https://theta.test/p/7',
+      id: '377999763244108', author: { sub: 'sub-9', name: 'Medlem 1' }, title: 'Hej', body: 'Et opslag',
+      createdAt: '2026-10-27T09:00:00.000Z', commentCount: 2, attachmentCount: 3,
+      url: 'https://theta.test/grupper/122304557724776/opslag/377999763244108',
       // Theta has no idea what a lyttefest is; the board is the side that fills this in.
       lyttefest: null,
     })

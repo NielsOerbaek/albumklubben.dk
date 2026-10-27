@@ -1,31 +1,38 @@
-import { randomUUID } from 'node:crypto'
 import type { FastifyInstance, FastifyReply } from 'fastify'
 import type { Database } from './db.ts'
 import { festsByPost } from './lyttefest-repo.ts'
-import { ThetaError, type BoardComment, type BoardPost, type Page, type ThetaApi } from './theta-api.ts'
+import { ThetaError, type BoardPost, type Page, type ThetaApi } from './theta-api.ts'
+import type { BoardPage } from '../shared/board.ts'
 
 /**
- * Opslagstavlen: the club's Theta group, read and written as the member who is logged in.
+ * Opslagstavlen: the club's Theta group, read as the member who is logged in.
  *
- * Everything here goes through Theta as that person, so nobody sees a post Theta would not show
- * them. A read is therefore cached per viewer, never across people, and only for half a minute.
+ * Reading only. The club would rather things actually happened on Theta than in a second-rate
+ * copy of it here, so the board shows what is going on and links into the group; writing a post,
+ * answering one and reading a thread are all Theta's own job.
+ *
+ * Every read goes through Theta as that person, so nobody sees a post Theta would not show them.
+ * It is therefore cached per viewer, never across people, and only for half a minute.
  */
 const CACHE_MS = 30_000
-const MAX_BODY = 5000
-const MAX_TITLE = 200
 
 interface Entry { at: number; value: unknown }
 
-const text = (v: unknown, max: number): string | null => {
-  if (typeof v !== 'string') return null
-  const t = v.trim()
-  return t.length === 0 || t.length > max ? null : t
+export interface BoardGroup {
+  issuer: string
+  groupId: string
 }
 
-export function registerBoard(app: FastifyInstance, api: ThetaApi, db: Database) {
+export function registerBoard(app: FastifyInstance, api: ThetaApi, db: Database, group: BoardGroup) {
   // Keyed by viewer first: two members never share an answer.
   const cache = new Map<string, Entry>()
   const drop = () => cache.clear()
+
+  /** The club's group on Theta, for "skriv på Theta" and for an empty board. */
+  const groupUrl = (() => {
+    try { return `${new URL(group.issuer).origin}/grupper/${encodeURIComponent(group.groupId)}` }
+    catch { return null }
+  })()
 
   async function cached<T>(key: string, load: () => Promise<T>): Promise<T> {
     const hit = cache.get(key)
@@ -37,21 +44,20 @@ export function registerBoard(app: FastifyInstance, api: ThetaApi, db: Database)
 
   /** Theta's refusals in plain Danish. A refused read means the session is no good any more:
    * either the member never said yes to reading the group, or they are no longer in it. */
-  function fail(reply: FastifyReply, err: unknown, whenWriting = false): FastifyReply {
-    if (err instanceof ThetaError) {
-      if (err.notEligible) return reply.code(403).send({ error: 'Du kan ikke skrive i gruppen lige nu' })
-      if (err.refused && !whenWriting) return reply.code(401).send({ error: 'Log ind igen' })
-      if (err.refused) return reply.code(404).send({ error: 'Opslaget findes ikke længere' })
-    }
+  function fail(reply: FastifyReply, err: unknown): FastifyReply {
+    if (err instanceof ThetaError && err.refused) return reply.code(401).send({ error: 'Log ind igen' })
     app.log.warn({ err }, 'theta board call failed')
-    return reply.code(502).send({ error: whenWriting ? 'Theta tog ikke imod opslaget' : 'Opslagstavlen kan ikke hentes lige nu' })
+    return reply.code(502).send({ error: 'Opslagstavlen kan ikke hentes lige nu' })
   }
 
   /** Theta does not know a lyttefest from any other post; this side does. */
-  function withFests(page: Page<BoardPost>): Page<BoardPost> {
+  function withFests(page: Page<BoardPost>): BoardPage {
     const fests = festsByPost(db, page.items.map(p => p.id))
-    return fests.size === 0 ? page
-      : { ...page, items: page.items.map(p => ({ ...p, lyttefest: fests.get(p.id) ?? null })) }
+    return {
+      ...page,
+      items: fests.size === 0 ? page.items : page.items.map(p => ({ ...p, lyttefest: fests.get(p.id) ?? null })),
+      groupUrl,
+    }
   }
 
   app.get<{ Querystring: { cursor?: string } }>('/api/board', async (req, reply) => {
@@ -61,45 +67,6 @@ export function registerBoard(app: FastifyInstance, api: ThetaApi, db: Database)
       return withFests(await cached<Page<BoardPost>>(`${sub}|posts|${req.query.cursor ?? ''}`,
         () => api.posts(sub, req.query.cursor)))
     } catch (err) { return fail(reply, err) }
-  })
-
-  app.get<{ Params: { id: string }; Querystring: { cursor?: string } }>('/api/board/posts/:id/comments', async (req, reply) => {
-    const { sub } = req.member!
-    reply.header('Cache-Control', 'no-store')
-    try {
-      return await cached<Page<BoardComment>>(`${sub}|comments|${req.params.id}|${req.query.cursor ?? ''}`,
-        () => api.comments(sub, req.params.id, req.query.cursor))
-    } catch (err) { return fail(reply, err) }
-  })
-
-  app.post<{ Body: { title?: string; body?: string; externalId?: string } }>('/api/board/posts', async (req, reply) => {
-    const { sub } = req.member!
-    const body = text(req.body?.body, MAX_BODY)
-    if (!body) return reply.code(400).send({ error: 'Skriv noget først' })
-    const title = req.body?.title ? text(req.body.title, MAX_TITLE) ?? undefined : undefined
-    try {
-      const post = await api.createPost({
-        author: { type: 'user', sub }, body, title,
-        externalId: text(req.body?.externalId, 200) ?? randomUUID(),
-      })
-      // Theta sends no event for our own writes, so the next read must go to Theta.
-      drop()
-      return post
-    } catch (err) { return fail(reply, err, true) }
-  })
-
-  app.post<{ Params: { id: string }; Body: { body?: string; externalId?: string } }>('/api/board/posts/:id/comments', async (req, reply) => {
-    const { sub } = req.member!
-    const body = text(req.body?.body, MAX_BODY)
-    if (!body) return reply.code(400).send({ error: 'Skriv noget først' })
-    try {
-      const comment = await api.createComment(req.params.id, {
-        author: { type: 'user', sub }, body,
-        externalId: text(req.body?.externalId, 200) ?? randomUUID(),
-      })
-      drop()
-      return comment
-    } catch (err) { return fail(reply, err, true) }
   })
 
   return { drop }

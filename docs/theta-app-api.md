@@ -36,10 +36,32 @@ til `feed`. Ukendte felter i et opslag bliver smidt væk uden fejl.
 `viewer` er påkrævet, og validering af forespørgslen sker, før personen slås op. `cursor` skal
 være mindst ét tegn.
 
-**Svarene er endnu ikke skrevet ned her.** En læsning med klubbens egen `sub` gav `404`, fordi
-den nuværende session på albumklubben.dk kun har sagt ja til `openid profile groups`.
-Læsningen virker først, når logind med `feed` og `posts` er sat i drift, og et medlem har
-logget ind igen. Indtil da står kortlægningen i `server/theta-api.ts` og skal efterprøves.
+Svaret, læst på stage 2026-10-27, da logind med `feed` var i drift:
+
+    { posts: [ {
+        id: string,
+        url: string,                  // opslaget på Theta
+        author: { sub, name, picture },
+        title: string | null,
+        text: string,                 // ← teksten hedder `text` på vej ud
+        createdAt: string,            // ISO
+        editedAt: string | null,
+        commentCount: number,
+        attachmentCount: number,
+        viaApp: { name: string, postedAsApp: boolean } | null,
+      } ],
+      nextCursor: string | null }
+
+Kommentarer kommer som `{ comments: [...], nextCursor }`.
+
+**Teksten hedder `text`, når den kommer ud, og `body`, når den skal ind.** API'et er ikke
+symmetrisk om det, og et `body` læst af et opslag findes slet ikke. Det kostede en omgang:
+de første opslag på tavlen stod tomme.
+
+Der er heller **ingen `pinned`** på et opslag, der læses. Theta lægger selv de hæftede øverst i
+listen, så rækkefølgen bærer det, og `pinned` i `BoardPost` er altid falsk.
+
+`viaApp` siger, hvilken app et opslag er skrevet igennem, og om det var appens egen bot.
 
 ## Skrivninger
 
@@ -87,5 +109,8 @@ Der er ingen titel på en notifikation, og den peger kun via `href`.
 
 ## Mangler stadig
 
-- Svarenes form for opslag og kommentarer (se ovenfor).
-- Hvordan en webhook er underskrevet ("Signed events" i interop-README'en).
+- Hvordan en webhook er underskrevet ("Signed events" i interop-README'en). `verify` i
+  `server/theta-webhook.ts` er det ene sted, der ved det, og den fejler lukket.
+- Formen på `dk.theta.card.action` (`readAction` i `server/lyttefest.ts`, samme sted-princip).
+- Om `comments` har `depth` på en kommentar. Opslaget, der blev kigget på, havde ingen
+  kommentarer, så listen kom tom tilbage. `depth` læses som 0, hvis den ikke er der.
