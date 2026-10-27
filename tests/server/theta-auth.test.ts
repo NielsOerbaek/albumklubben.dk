@@ -4,7 +4,7 @@ import { join } from 'node:path'
 import { describe, expect, it } from 'vitest'
 import { buildApp } from '../../server/app.ts'
 import { openDb } from '../../server/db.ts'
-import { safeNext } from '../../server/theta-auth.ts'
+import { ICON_FILES, safeNext } from '../../server/theta-auth.ts'
 
 const ISSUER = 'https://theta.test/oidc'
 const GROUP = '122304557724776'
@@ -17,9 +17,12 @@ function fakeTheta(groups: { id: string }[]) {
     calls.push({ url, init })
     const json = (body: unknown, status = 200) => new Response(JSON.stringify(body), { status })
     if (url.endsWith('/.well-known/openid-configuration')) {
-      return json({ authorization_endpoint: `${ISSUER}/auth`, token_endpoint: `${ISSUER}/token`, userinfo_endpoint: `${ISSUER}/me` })
+      return json({
+        authorization_endpoint: `${ISSUER}/auth`, token_endpoint: `${ISSUER}/token`,
+        userinfo_endpoint: `${ISSUER}/me`, end_session_endpoint: `${ISSUER}/logout`,
+      })
     }
-    if (url === `${ISSUER}/token`) return json({ access_token: 'at', token_type: 'Bearer' })
+    if (url === `${ISSUER}/token`) return json({ access_token: 'at', id_token: 'id-token-1', token_type: 'Bearer' })
     if (url === `${ISSUER}/me`) return json({ sub: 'sub-1', name: 'Kim', groups })
     return json({}, 404)
   }) as typeof globalThis.fetch
@@ -51,11 +54,15 @@ async function signIn(app: ReturnType<typeof setup>['app'], next = '/klubhuset')
 }
 
 describe('Log ind med Theta', () => {
-  it('lets nobody in without a session: pages redirect to the sign-in, everything else is 401', async () => {
+  it('lets nobody in without a session: pages show the login page, everything else is 401', async () => {
     const { app } = setup()
     const page = await app.inject({ url: '/klubhuset', headers: { accept: 'text/html' } })
-    expect(page.statusCode).toBe(302)
-    expect(page.headers.location).toBe('/auth/login?next=%2Fklubhuset')
+    expect(page.statusCode).toBe(401)
+    expect(page.headers['content-type']).toContain('text/html')
+    // The login page at the address that was asked for, with the way back in the button.
+    expect(page.body).toContain('Log ind med Theta')
+    expect(page.body).toContain('href="/auth/login?next=%2Fklubhuset"')
+    expect(page.body).toContain('Kun for medlemmer af klubbens gruppe på Theta')
     for (const url of ['/api/archive', '/uploads/posters/x.jpg', '/tex/x.png', '/admin']) {
       expect((await app.inject({ url })).statusCode, url).toBe(401)
     }
@@ -70,7 +77,7 @@ describe('Log ind med Theta', () => {
     expect(url.origin + url.pathname).toBe(`${ISSUER}/auth`)
     expect(url.searchParams.get('client_id')).toBe('albumklubben')
     expect(url.searchParams.get('redirect_uri')).toBe('https://ak.test/auth/callback')
-    expect(url.searchParams.get('scope')).toBe('openid profile groups')
+    expect(url.searchParams.get('scope')).toBe('openid profile groups feed posts')
     expect(url.searchParams.get('code_challenge_method')).toBe('S256')
     expect(url.searchParams.get('state')).toBeTruthy()
   })
@@ -112,12 +119,52 @@ describe('Log ind med Theta', () => {
     expect((await app.inject({ url: '/api/archive', headers: { cookie: forged } })).statusCode).toBe(401)
   })
 
-  it('logs out', async () => {
+  it('logs out here and sends the person on to Theta to end the session there too', async () => {
     const { app } = setup()
     const { cb } = await signIn(app)
     const out = await app.inject({ url: '/auth/logout', headers: { cookie: cookieHeader(cb, 'ak_member') } })
-    expect(out.body).toContain('logget ud')
+    expect(out.statusCode).toBe(302)
     expect(out.cookies.find(c => c.name === 'ak_member')?.value).toBe('')
+    const url = new URL(out.headers.location as string)
+    expect(url.origin + url.pathname).toBe(`${ISSUER}/logout`)
+    expect(url.searchParams.get('id_token_hint')).toBe('id-token-1')
+    expect(url.searchParams.get('post_logout_redirect_uri')).toBe('https://ak.test/auth/logged-out')
+  })
+
+  it('logs out without Theta when there is no session to end there', async () => {
+    const { app } = setup()
+    const out = await app.inject({ url: '/auth/logout' })
+    expect(out.statusCode).toBe(302)
+    expect(out.headers.location).toBe('/auth/logged-out')
+  })
+
+  it('says plainly on the way out that Theta still knows who you are', async () => {
+    const { app } = setup()
+    const done = await app.inject({ url: '/auth/logged-out' })
+    expect(done.statusCode).toBe(200)
+    expect(done.body).toContain('Du er logget ud af Albumklubben')
+    expect(done.body).toContain('Du er stadig logget ind på Theta i denne browser')
+    expect(done.body).toContain('href="https://theta.test"')
+    expect(done.body).toContain('Log ind med Theta')
+  })
+
+  it('serves the icon and the manifest without a login, and nothing else', async () => {
+    const { app } = setup()
+    // Without a web directory these are 404s, but the point is that the gate lets them past.
+    for (const path of ICON_FILES) {
+      expect((await app.inject({ url: path })).statusCode, path).toBe(404)
+    }
+    for (const path of ['/icon-256.png', '/manifest.json', '/web/public/icon.svg', '/']) {
+      expect((await app.inject({ url: path })).statusCode, path).toBe(401)
+    }
+  })
+
+  it('shows the icon on the pages outside the gate', async () => {
+    const { app } = setup()
+    const page = await app.inject({ url: '/', headers: { accept: 'text/html' } })
+    expect(page.body).toContain('<link rel="icon" href="/icon.svg" type="image/svg+xml">')
+    expect(page.body).toContain('rel="manifest" href="/manifest.webmanifest"')
+    expect(page.body).toContain('src="/icon.svg"')
   })
 
   it('only follows a next that stays on this site', () => {

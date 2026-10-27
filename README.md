@@ -16,7 +16,7 @@ https://albumklubben.dk og er kun for medlemmer af klubbens gruppe på
 | `server/` | Fastify-server: API (`/api/archive`), uploads, billedskalering (`/thumb`, `/tex`), admin og login med Theta (`theta-auth.ts`). SQLite via `better-sqlite3`. |
 | `web/` | Frontenden (Vite, lit-html, three.js). Bygges til `dist/`, som serveren leverer. |
 | `shared/` | Typer og logik som både server og web bruger (genrer, datoer, tracklister). |
-| `tools/` | `fetch-tracklists.ts` henter tracklister fra MusicBrainz; `smoke.mjs` er et røgtjek mod en kørende side. |
+| `tools/` | `fetch-tracklists.ts` henter tracklister fra MusicBrainz; `make-icons.mjs` tegner ikonet og alle dets størrelser; `smoke.mjs` er et røgtjek mod en kørende side. |
 | `ops/` | Drift: systemd-units, backup, deploy og Caddy. Se [ops/README.md](ops/README.md). |
 | `tests/` | Vitest, for server, web og shared. |
 
