@@ -6,14 +6,25 @@
 | --- | --- |
 | Koerende kode | detached git worktree `/home/theta/albumklubben-live` (egen `node_modules`, `dist/`, `.env`) |
 | Data | `/home/theta/albumklubben-data/` (mode 700): `albumklubben.sqlite` og `uploads/{covers,posters,videos}` |
-| Hemmeligheder | `/home/theta/albumklubben-live/.env` (`ADMIN_PASSWORD`, `SESSION_SECRET`, `SITE_USER`, `SITE_PASSWORD`, `PORT`, `HOST`, `DB_PATH`, `UPLOAD_DIR`). Aldrig i git. |
+| Hemmeligheder | `/home/theta/albumklubben-live/.env` (`ADMIN_PASSWORD`, `SESSION_SECRET`, `THETA_ISSUER`, `THETA_CLIENT_ID`, `THETA_CLIENT_SECRET`, `THETA_GROUP_ID`, `PUBLIC_URL`, `PORT`, `HOST`, `DB_PATH`, `UPLOAD_DIR`). Aldrig i git. |
 | Backups | `/home/theta/albumklubben-backups/<AAAA-MM-DD>/` (mode 700, indeholder personlige fotos), de nyeste 14 beholdes |
-| Caddy | `/etc/caddy/Caddyfile` importerer `/home/theta/albumklubben-ops/Caddyfile` (basic auth med bcrypt-hash, noindex, `request_body` 600MB, proxy til `127.0.0.1:3600`). `ops/Caddyfile.example` er den samme blok med hash erstattet af en pladsholder. |
+| Caddy | `/etc/caddy/Caddyfile` importerer `/home/theta/albumklubben-ops/Caddyfile` (noindex, `request_body` 600MB, proxy til `127.0.0.1:3600`). `ops/Caddyfile.example` er den samme blok med hash erstattet af en pladsholder. |
 | Tjeneste | user-unit `~/.config/systemd/user/albumklubben.service` (linger er slaaet til) |
 | Backup | user-units `albumklubben-backup.service` + `.timer` (hver nat 03:30, `Persistent=true`), symlinket fra live-worktree'ets `ops/` |
 
-Siden: https://albumklubben.dn.osogdata.dk (bruger og kodeord: `SITE_USER` / `SITE_PASSWORD` i `.env`).
-Nyt hash: `caddy hash-password`. Aendring af Caddyfilen kraever `caddy validate` foer `systemctl reload caddy`.
+Siden: https://albumklubben.dn.osogdata.dk. Aendring af Caddyfilen kraever `caddy validate` foer `systemctl reload caddy`.
+
+## Log ind med Theta
+
+Hele siden er kun for medlemmer af Albumklubben-gruppen paa Theta (`server/theta-auth.ts`). Serveren starter ikke uden `THETA_*` og `PUBLIC_URL` i `.env`.
+Theta er OIDC-udbyder; appen beder om `openid profile groups` og lukker ind, naar `groups`-claimet indeholder `THETA_GROUP_ID`. En session varer 7 dage, saa tjekkes medlemskabet igen.
+Kun `/auth/*`, `/healthz` og `/robots.txt` er aabne. `/admin` kraever derudover sit eget `ADMIN_PASSWORD`.
+
+Appen er registreret paa Theta (i dag stage) med `interop-admin` og filen `ops/theta-interop.json`:
+
+    ssh theta-stage@135.181.147.111 'bash -lc "cd ~/theta-stage/backend && set -a && . ./.env && set +a && ALBUMKLUBBEN_CLIENT_SECRET=<hemmelighed> DATABASE_URL=\$DATABASE_ADMIN_URL node --experimental-strip-types tools/interop-admin.ts <sti>/theta-interop.json"'
+
+Hemmeligheden er den samme som `THETA_CLIENT_SECRET` i live-`.env`. Ny hemmelighed: skift begge steder og koer filen igen.
 
 ## Deploy
 

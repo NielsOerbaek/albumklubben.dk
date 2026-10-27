@@ -9,7 +9,8 @@ if (!existsSync('.env')) {
 }
 process.loadEnvFile('.env')
 const env = process.env
-for (const key of ['ADMIN_PASSWORD', 'SESSION_SECRET']) {
+// The site holds members' personal photos: no Theta login, no start.
+for (const key of ['ADMIN_PASSWORD', 'SESSION_SECRET', 'THETA_ISSUER', 'THETA_CLIENT_ID', 'THETA_CLIENT_SECRET', 'THETA_GROUP_ID', 'PUBLIC_URL']) {
   if (!env[key]) {
     console.error(`Mangler ${key} i .env`)
     process.exit(1)
@@ -26,5 +27,12 @@ const app = buildApp({
   adminPassword: env.ADMIN_PASSWORD!,
   sessionSecret: env.SESSION_SECRET!,
   webDir: existsSync('dist') ? 'dist' : undefined,
+  theta: {
+    issuer: env.THETA_ISSUER!.replace(/\/$/, ''),
+    clientId: env.THETA_CLIENT_ID!,
+    clientSecret: env.THETA_CLIENT_SECRET!,
+    groupId: env.THETA_GROUP_ID!,
+    publicUrl: env.PUBLIC_URL!.replace(/\/$/, ''),
+  },
 })
 await app.listen({ host: env.HOST ?? '127.0.0.1', port: Number(env.PORT ?? 3600) })

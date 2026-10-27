@@ -6,6 +6,7 @@ import Fastify, { type FastifyInstance } from 'fastify'
 import { resolve } from 'node:path'
 import { registerApi } from './api.ts'
 import { registerAdmin } from './admin/routes.ts'
+import { registerThetaAuth, type ThetaAuthOptions } from './theta-auth.ts'
 import type { findTracklist } from './musicbrainz.ts'
 import type { Database } from './db.ts'
 
@@ -16,6 +17,8 @@ export interface AppOptions {
   sessionSecret: string
   webDir?: string
   musicbrainz?: typeof findTracklist
+  /** Members-only via Theta. index.ts refuses to start without it; tests may leave it out. */
+  theta?: ThetaAuthOptions
 }
 
 export function buildApp(opts: AppOptions): FastifyInstance {
@@ -23,6 +26,8 @@ export function buildApp(opts: AppOptions): FastifyInstance {
   app.register(cookie, { secret: opts.sessionSecret })
   app.register(formbody)
   app.register(multipart, { limits: { fileSize: 500 * 1024 * 1024 } })
+  // First, so its gate covers every route below.
+  if (opts.theta) registerThetaAuth(app, opts.theta)
   registerApi(app, opts.db, opts.uploadDir)
   registerAdmin(app, opts)
 

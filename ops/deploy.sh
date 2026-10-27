@@ -11,8 +11,9 @@ install_deps() { CI=true pnpm install --frozen-lockfile --prefer-offline; }
 healthy() {
   local port; port=$(grep -m1 '^PORT=' .env | cut -d= -f2-)
   for _ in $(seq 1 20); do
-    local body; body=$(curl -fs "127.0.0.1:${port:-3600}/api/archive" 2>/dev/null) || body=
-    [[ "$body" == '{"meetings":'* ]] && return 0
+    # Everything else is members-only (Log ind med Theta); /healthz is the one open route.
+    local body; body=$(curl -fs "127.0.0.1:${port:-3600}/healthz" 2>/dev/null) || body=
+    [[ "$body" == ok ]] && return 0
     sleep 1
   done
   return 1
