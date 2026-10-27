@@ -61,6 +61,8 @@ async function start() {
   const archive = await fetchArchive()
   const layout = buildClubLayout(archive.meetings)
   const spreads = bookSpreads(archive.meetings)
+  // Every poster in the book's order, for the poster dialog's arrows.
+  const posterOrder = spreads.flatMap((s) => s.posters.map((p) => ({ poster: p, meeting: s.meeting })))
   const club = await buildClub(layout, spreads)
   const meetingById = new Map(archive.meetings.map((m) => [m.id, m]))
   const book = club.book
@@ -181,9 +183,21 @@ async function start() {
         meeting: poster.meeting,
         onAlbum: (album) => { pulled = { album, showTracks: false }; drawOverlay() },
         onClose: closeAll,
+        onPrev: neighbour(-1) ? () => stepPoster(-1) : undefined,
+        onNext: neighbour(1) ? () => stepPoster(1) : undefined,
       }))
     }
     showOverlay(null)
+  }
+
+  /** The poster before or after the open one, in the book's order. */
+  const neighbour = (dir: 1 | -1) => {
+    const at = posterOrder.findIndex((p) => p.poster.id === poster?.poster.id)
+    return at < 0 ? null : posterOrder[at + dir] ?? null
+  }
+  function stepPoster(dir: 1 | -1) {
+    const next = neighbour(dir)
+    if (next) { poster = next; drawOverlay() }
   }
 
   function openDialog() {
@@ -254,6 +268,8 @@ async function start() {
       // One Esc does one thing: it closes a dialog, or else the book (when the browser let us see it).
       if (open()) closeTop()
       else if (book.isOpen() && !locked) closeBook()
+    } else if (poster && !pulled) {
+      if (e.code === 'ArrowLeft' || e.code === 'ArrowRight') stepPoster(e.code === 'ArrowLeft' ? -1 : 1)
     } else if (book.isOpen()) {
       if (locked && PAGE_KEYS[e.code] && !e.repeat) book.turn(PAGE_KEYS[e.code]) // one page a press
     } else if (e.code === 'KeyE' && locked) {
@@ -295,6 +311,7 @@ async function start() {
   if (import.meta.env.DEV) Object.assign(window, { __club: {
     camera, controls, club, layout, book,
     pullOut: (c: CrateView) => { target = c; pullOut() },
+    openPoster: (i: number) => { poster = posterOrder[i]; openDialog() },
     /** What a click on the open book would open now. */
     aim: () => book.aim(centreRay()),
   } })

@@ -12,6 +12,9 @@ export interface PosterOptions {
   meeting: Meeting
   onAlbum: (a: Album) => void
   onClose: () => void
+  /** The posters before and after this one; no arrow where there is none. */
+  onPrev?: () => void
+  onNext?: () => void
 }
 
 /** A poster held up over the page: the full image, its video, the meeting and its albums.
@@ -24,6 +27,8 @@ export function posterDialog(o: PosterOptions): TemplateResult {
   return html`<div class="poster-dialog" @click=${(e: MouseEvent) => { if (e.target === e.currentTarget && e.detail < 2) o.onClose() }}>
     <div class="poster-dialog-inner">
       <div class="poster-dialog-bar">
+        ${o.onPrev ? html`<button class="poster-nav" aria-label="Forrige plakat" title="Forrige plakat (←)" @click=${o.onPrev}>‹</button>` : nothing}
+        ${o.onNext ? html`<button class="poster-nav" aria-label="Næste plakat" title="Næste plakat (→)" @click=${o.onNext}>›</button>` : nothing}
         <button class="poster-close" aria-label="Luk" @click=${o.onClose}>×</button>
       </div>
       <div class="poster-view">

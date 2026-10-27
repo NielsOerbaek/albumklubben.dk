@@ -10,9 +10,9 @@ export const PAGE_ASPECT = 1.4
 const MARGIN = 0.07
 const GAP = 0.04
 
-/** One spread per four posters, newest meeting first; meetings without posters are left out. */
+/** One spread per four posters, in meeting order; meetings without posters are left out. */
 export function bookSpreads(meetings: Meeting[]): Spread[] {
-  return [...meetings].sort((a, b) => b.number - a.number).flatMap((meeting) => {
+  return [...meetings].sort((a, b) => a.number - b.number).flatMap((meeting) => {
     const sorted = [...meeting.posters].sort((a, b) => a.position - b.position)
     const out: Spread[] = []
     for (let i = 0; i < sorted.length; i += 4) out.push({ meeting, posters: sorted.slice(i, i + 4), continued: i > 0 })

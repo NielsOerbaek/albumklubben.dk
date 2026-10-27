@@ -12,12 +12,14 @@
   color: #fff;
 }
 .poster-dialog-inner { width: min(1100px, 100%); margin: 0 auto; }
-.poster-dialog-bar { display: flex; justify-content: flex-end; align-items: center; min-height: 36px; margin-bottom: 12px; }
-.poster-close {
+.poster-dialog-bar { display: flex; justify-content: flex-end; align-items: center; gap: 10px; min-height: 36px; margin-bottom: 12px; }
+.poster-close, .poster-nav {
   width: 36px; height: 36px;
   border: 1px solid #fff; border-radius: 50%;
   background: none; color: #fff; font-size: 22px; line-height: 1; cursor: pointer;
 }
+.poster-nav { font-size: 26px; padding-bottom: 3px; }
+.poster-nav:last-of-type { margin-right: 14px; }
 
 .poster-view { display: flex; flex-wrap: wrap; gap: 32px; align-items: flex-start; }
 /* As wide as the image, which fits the screen's height; the video under it takes that width

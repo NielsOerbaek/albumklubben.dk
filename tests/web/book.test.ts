@@ -7,10 +7,10 @@ const meeting = (number: number, n: number): Meeting =>
   ({ id: number, number, date: null, time: null, theme: null, albums: [], posters: posters(n) })
 
 describe('bookSpreads', () => {
-  it('orders spreads newest meeting first and leaves out meetings without posters', () => {
+  it('orders spreads by meeting number and leaves out meetings without posters', () => {
     const s = bookSpreads([meeting(1, 1), meeting(2, 0), meeting(3, 2)])
-    expect(s.map((x) => x.meeting.number)).toEqual([3, 1])
-    expect(bookSpreads([meeting(3, 1), meeting(1, 1), meeting(2, 1)]).map((x) => x.meeting.number)).toEqual([3, 2, 1])
+    expect(s.map((x) => x.meeting.number)).toEqual([1, 3])
+    expect(bookSpreads([meeting(3, 1), meeting(1, 1), meeting(2, 1)]).map((x) => x.meeting.number)).toEqual([1, 2, 3])
   })
 
   it("splits a meeting's posters by position into spreads of four, marking the rest continued", () => {

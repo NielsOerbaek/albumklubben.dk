@@ -77,3 +77,14 @@ test('the about text is text, not markup', () => {
   expect(d.querySelector('.poster-about b')).toBeNull()
   expect(d.querySelector('.poster-about')!.textContent).toContain('<b>fed</b>')
 })
+
+test('the arrows step to the poster before and after, and are left out at the ends', () => {
+  const steps: string[] = []
+  const d = draw({ onPrev: () => steps.push('prev'), onNext: () => steps.push('next') })
+  d.querySelector<HTMLButtonElement>('[aria-label="Forrige plakat"]')!.click()
+  d.querySelector<HTMLButtonElement>('[aria-label="Næste plakat"]')!.click()
+  expect(steps).toEqual(['prev', 'next'])
+  const first = draw({ onNext: () => {} })
+  expect(first.querySelector('[aria-label="Forrige plakat"]')).toBeNull()
+  expect(first.querySelectorAll('.poster-nav').length).toBe(1)
+})
