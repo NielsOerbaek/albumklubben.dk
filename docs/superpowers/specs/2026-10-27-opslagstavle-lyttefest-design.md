@@ -1,6 +1,7 @@
 # Login page, icon, opslagstavle and lyttefest
 
-Date: 2026-10-27. Owner: Niels. Status: draft for approval.
+Date: 2026-10-27. Owner: Niels. Status: built, 2026-10-27. What the building changed is at the
+bottom, under "Bygget".
 
 Niels asked for four things and said "go with your own recommendations" for everything he
 did not specify. Unless a line says "(Niels)", the choice in it was made by the author of
@@ -344,3 +345,56 @@ the 3D room):
 - The summary comment's exact format and length limits.
 - Whether the session moves server-side (only if the cookie gets too big with the ID token).
 - File and module layout.
+
+
+## Bygget
+
+All four were built on 2026-10-27. Where the building had to part from this document, it is here.
+
+### The App API had less in it than the design assumed
+
+The contract was read off stage by asking the API and reading its own validation errors, and
+written down in [docs/theta-app-api.md](../../theta-app-api.md). Two things in it are not what
+this document took for granted:
+
+- **A comment cannot answer another comment.** `POST /posts/:id/comments` has no `parent`,
+  `parentId`, `replyTo` or `inReplyTo` — they are dropped in silence, which the API does with any
+  field it does not know. So the board dialog has **one comment field per post**, not "a reply
+  field under each comment". A thread read from Theta still shows its `depth`, indented; we just
+  cannot write into it.
+- **A post cannot carry attachments or be pinned from here**, which this document never asked for,
+  but it is worth knowing: the attachment count is read, never written.
+
+The post's text field is `body`, not `text`, and a notification is `{recipients, text, href}` with
+no title. The card is as the design described it, except the buttons are `actions` and the badge is
+an object (`{text, tone}`).
+
+### Two things could not be checked, and are marked in the code
+
+- **The shape of a post read back.** Reading as a person needs their consent to the `feed` scope,
+  which no session has until this login is in use. Every read came back `404`. The mapping in
+  `server/theta-api.ts` (`toPost`, `toComment`) is therefore written from the names the API writes
+  with, and must be checked the first time a member logs in on the new build. It is the only place
+  that knows Theta's read shape.
+- **How Theta signs an event.** The interop README was not at hand. `verify` in
+  `server/theta-webhook.ts` checks an HMAC-SHA256 over `<timestamp>.<raw body>` from a
+  `Theta-Signature: t=…,v1=…` header. It fails closed, so a wrong guess refuses events rather than
+  letting anything in, and it is one function to change. The same goes for `readAction` in
+  `server/lyttefest.ts`, which reads a `dk.theta.card.action`.
+
+Until both are confirmed, the board still works (it re-reads every half minute instead of hearing
+about a post at once) and a lyttefest still works on its own page (the card's buttons in Theta do
+not).
+
+### Smaller things
+
+- **The reminder and the summary** are not one timer per lyttefest. A pass runs every ten seconds
+  and claims each job in the database before doing it, so each happens exactly once however often
+  the pass runs and whatever a restart interrupts. Same promise, less to go wrong.
+- **The session keeps the ID token** in the cookie, as the design's first choice. It is only moved
+  out if the cookie would pass 3.5 kB, and then logout degrades to local-only rather than the
+  browser dropping the session. The session did not have to move to SQLite.
+- `ThetaError` does not use a TypeScript parameter property: the server is run by Node's
+  strip-only mode, which refuses them. `tests/server/strip-types.test.ts` now loads every server
+  module the way Node does, because the test suite compiles with esbuild and would not have
+  noticed.
