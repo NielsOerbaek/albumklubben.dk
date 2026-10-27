@@ -9,10 +9,10 @@ LIVE=$HOME/albumklubben-live
 install_deps() { CI=true pnpm install --frozen-lockfile --prefer-offline; }
 
 healthy() {
-  local port; port=$(grep -m1 '^PORT=' .env | cut -d= -f2-)
+  local host port; host=$(grep -m1 '^HOST=' .env | cut -d= -f2-); port=$(grep -m1 '^PORT=' .env | cut -d= -f2-)
   for _ in $(seq 1 20); do
     # Everything else is members-only (Log ind med Theta); /healthz is the one open route.
-    local body; body=$(curl -fs "127.0.0.1:${port:-3600}/healthz" 2>/dev/null) || body=
+    local body; body=$(curl -fs "${host:-127.0.0.1}:${port:-3600}/healthz" 2>/dev/null) || body=
     [[ "$body" == ok ]] && return 0
     sleep 1
   done
