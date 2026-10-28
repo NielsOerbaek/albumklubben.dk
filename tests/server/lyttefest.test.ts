@@ -277,6 +277,50 @@ describe('hvem der kommer', () => {
   })
 })
 
+describe('båndet på forsiden', () => {
+  const ribbon = (app: any, cookie: string) => app.inject({ url: '/api/lyttefester', headers: { cookie } })
+
+  it('gives the one playing first, then the ones still to come', async () => {
+    const { app, db, albumId } = setup()
+    const cookie = await signIn(app)
+    await make(app, cookie, { albumId })                                   // starts at START
+    const later = seedAlbum(db, LIST)
+    await make(app, cookie, { albumId: later, startsAt: new Date(START + 3 * 3600_000).toISOString() })
+
+    clock = START + 60_000 // a minute into the first one
+    const list = (await ribbon(app, cookie)).json().lyttefester
+    expect(list.map((f: any) => f.state)).toEqual(['nu', 'kommende'])
+    expect(list[0]).toMatchObject({
+      id: 1, artist: 'Kate Bush', title: 'The Kick Inside', state: 'nu', trackNumber: 1, coming: 1,
+    })
+    expect(list[1]).toMatchObject({ id: 2, state: 'kommende', track: null, trackNumber: null })
+  })
+
+  it('says nothing of one that is over, and nothing of one called off', async () => {
+    const { app, albumId } = setup()
+    const cookie = await signIn(app)
+    await make(app, cookie, { albumId })
+    clock = START + 11 * 60_000 // the album is ten minutes long
+    expect((await ribbon(app, cookie)).json().lyttefester).toEqual([])
+
+    clock = START - 60 * 60 * 1000
+    await app.inject({ method: 'POST', url: '/api/lyttefest/1/aflys', headers: { cookie } })
+    expect((await ribbon(app, cookie)).json().lyttefester).toEqual([])
+  })
+
+  it('is empty, not absent, when there is nothing on', async () => {
+    const { app } = setup()
+    const res = await ribbon(app, await signIn(app))
+    expect(res.statusCode).toBe(200)
+    expect(res.json()).toEqual({ lyttefester: [] })
+    expect(res.headers['cache-control']).toBe('no-store')
+  })
+
+  it('is for members only, like everything else', async () => {
+    expect((await setup().app.inject({ url: '/api/lyttefester' })).statusCode).toBe(401)
+  })
+})
+
 describe('ansigterne', () => {
   it('puts the avatar Theta has on the host, on everyone coming and on every comment', async () => {
     const { app, albumId } = setup()

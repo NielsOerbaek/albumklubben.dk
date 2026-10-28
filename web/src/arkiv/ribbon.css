@@ -1,0 +1,53 @@
+/* The lyttefest ribbon: a fat band under the header and over the section pills. It is only there
+   when there is a lyttefest to be at, so it can afford to be loud. */
+.ribbons { display: flex; flex-direction: column; border-bottom: 1px solid var(--line); }
+.ribbon {
+  display: flex;
+  align-items: center;
+  gap: clamp(16px, 2vw, 28px);
+  padding: 0 var(--pad) 0 0;
+  background: #141414;
+  color: #fff;
+  text-decoration: none;
+  border-top: 1px solid var(--line);
+  transition: background .15s ease;
+}
+.ribbons .ribbon:first-child { border-top: 0; }
+.ribbon:hover { background: #1d1d1d; }
+.ribbon-cover {
+  width: clamp(84px, 9vw, 132px);
+  aspect-ratio: 1;
+  object-fit: cover;
+  display: block;
+  flex: none;
+  background: #111;
+}
+.ribbon-text { display: flex; flex-direction: column; gap: 3px; min-width: 0; padding: 16px 0; }
+.ribbon-kicker { font-size: 13px; text-transform: uppercase; letter-spacing: .06em; color: var(--muted); }
+.ribbon-album {
+  font-size: clamp(22px, 2.6vw, 36px); font-weight: 300; line-height: 1.05; letter-spacing: -.01em;
+  overflow-wrap: anywhere;
+}
+.ribbon-when { font-size: clamp(14px, 1.3vw, 17px); color: var(--muted); }
+.ribbon-go { margin-left: auto; padding-left: 16px; font-size: 28px; flex: none; color: var(--muted); }
+.ribbon:hover .ribbon-go { color: #fff; }
+
+/* One playing right now is the loud one: the club's own pink, and a kicker that pulses. */
+.ribbon.is-now { background: #2a0f22; }
+.ribbon.is-now:hover { background: #3a1430; }
+.ribbon.is-now .ribbon-kicker { color: #fe3ebe; }
+.ribbon.is-now .ribbon-when { color: #f0b7dd; }
+.ribbon.is-now .ribbon-kicker::before {
+  content: ''; display: inline-block; vertical-align: middle;
+  width: 8px; height: 8px; margin: -2px 7px 0 0;
+  border-radius: 50%; background: #fe3ebe;
+  animation: ribbon-pulse 1.6s ease-in-out infinite;
+}
+@keyframes ribbon-pulse { 0%, 100% { opacity: 1 } 50% { opacity: .25 } }
+@media (prefers-reduced-motion: reduce) { .ribbon.is-now .ribbon-kicker::before { animation: none } }
+
+@media (max-width: 700px) {
+  .ribbon { gap: 14px; }
+  .ribbon-text { padding: 12px 0; }
+  .ribbon-go { display: none; }
+}

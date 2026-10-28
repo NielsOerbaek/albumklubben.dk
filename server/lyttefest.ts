@@ -7,7 +7,7 @@ import {
   type FestRow,
 } from './lyttefest-repo.ts'
 import {
-  festTracks, formatLength, positionAt, totalSeconds, trackIndexAt,
+  festTracks, formatLength, formatWhen, positionAt, totalSeconds, trackIndexAt,
   type FestPerson, type FestView,
 } from '../shared/lyttefest.ts'
 import { faces } from './members.ts'
@@ -18,6 +18,8 @@ import { faces } from './members.ts'
  * announced in the club's group with a card, and the live comments stay here until it is over,
  * when the bot puts them in the group as one comment — one post per lyttefest, no more.
  */
+export { formatWhen }
+
 const MIN_AHEAD_MS = 10 * 60 * 1000
 const MAX_AHEAD_MS = 60 * 24 * 60 * 60 * 1000
 const MAX_NOTE = 280
@@ -50,17 +52,6 @@ const text = (v: unknown, max: number): string | null => {
   return t.length === 0 || t.length > max ? null : t
 }
 
-/** "tirsdag 3. november kl. 11.30", in Copenhagen time, which is the time the club lives in. */
-export function formatWhen(iso: string): string {
-  const d = new Date(iso)
-  if (Number.isNaN(d.getTime())) return ''
-  const parts = new Intl.DateTimeFormat('da-DK', {
-    timeZone: 'Europe/Copenhagen', weekday: 'long', day: 'numeric', month: 'long',
-    hour: '2-digit', minute: '2-digit', hour12: false,
-  }).formatToParts(d)
-  const get = (type: string) => parts.find(p => p.type === type)?.value ?? ''
-  return `${get('weekday')} ${get('day')}. ${get('month')} kl. ${get('hour')}.${get('minute')}`
-}
 
 export function registerLyttefest(app: FastifyInstance, opts: LyttefestOptions) {
   const { db, api } = opts
@@ -246,6 +237,37 @@ export function registerLyttefest(app: FastifyInstance, opts: LyttefestOptions) 
         trackNumber: show.p.track?.number ?? null,
       },
     }
+  })
+
+  /**
+   * The lyttefester worth telling anyone about: the one playing now, and the ones still to come.
+   * For the ribbon on the front page. A finished or cancelled one is nobody's news.
+   */
+  app.get('/api/lyttefester', async (_req, reply) => {
+    reply.header('Cache-Control', 'no-store')
+    const at = now()
+    const lyttefester = festsFrom(db, new Date(at - MAX_AHEAD_MS).toISOString())
+      .filter(f => !f.cancelledAt)
+      .map(f => ({ f, p: positionAt(f.tracks, Date.parse(f.startsAt), at) }))
+      .filter(({ p }) => p.state === 'nu' || p.state === 'kommende')
+      .map(({ f, p }) => {
+        const album = festAlbum(db, f.albumId)
+        return {
+          id: f.id,
+          artist: album?.artist ?? '',
+          title: album?.title ?? '',
+          coverUrl: album?.coverUrl ?? null,
+          startsAt: f.startsAt,
+          state: p.state,
+          track: p.track?.title ?? null,
+          trackNumber: p.track?.number ?? null,
+          coming: listRsvps(db, f.id).length,
+        }
+      })
+    // The one playing now first, then the next one up.
+    lyttefester.sort((a, b) => Number(b.state === 'nu') - Number(a.state === 'nu')
+      || a.startsAt.localeCompare(b.startsAt))
+    return { lyttefester }
   })
 
   app.get<{ Params: { id: string } }>('/api/albums/:id/lyttefester', async (req, reply) => {

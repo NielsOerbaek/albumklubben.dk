@@ -6,6 +6,8 @@ import { fetchArchive } from '../api.ts'
 import type { Album } from '../../../shared/types.ts'
 import type { MapView } from '../../../shared/projection.ts'
 import { filtered, type Filter } from './filters.ts'
+import { ribbonView } from './ribbon.ts'
+import type { FestBrief } from '../../../shared/lyttefest.ts'
 import { coverflowView } from './coverflow.ts'
 import { mapView } from './map.ts'
 import { statsView } from './stats.ts'
@@ -45,6 +47,8 @@ let status: 'loading' | 'error' | 'ready' = 'loading'
 /** The meeting the intro shows, and the poster of it held up in a dialog. */
 let pick: NextPick | null = null
 let posterId: number | null = null
+/** Lyttefester playing now or still to come, for the ribbon. Empty until they are fetched. */
+let fests: FestBrief[] = []
 
 const app = document.getElementById('app')!
 /** The section in the hash, if any; the old `#vaeggen` tab lives on as Tal. */
@@ -104,7 +108,7 @@ function body(): TemplateResult {
   if (status === 'loading') return html`<p class="note">Henter albums…</p>`
   if (status === 'error') return html`<p class="note">Arkivet kunne ikke hentes. Prøv at genindlæse siden.</p>`
   if (!state.entries.length) return html`<p class="note">Der er ingen albums i arkivet endnu.</p>`
-  return html`${nextView(pick, nextActions)}${sections()}<section id="hylden" class="sec">${coverflowView(state, actions)}</section>
+  return html`${nextView(pick, nextActions)}${ribbonView(fests)}${sections()}<section id="hylden" class="sec">${coverflowView(state, actions)}</section>
     <section id="kortet" class="sec">${head('Kortet', mapLine())}${mapView(state, actions)}</section>
     <section id="tal" class="sec">${head('Tal', 'Arkivet i tal')}${statsView(state, actions)}</section>${dialog()}`
 }
@@ -121,6 +125,22 @@ function sections(): TemplateResult {
 function draw() {
   render(html`${topBarTemplate(null)}${body()}`, app)
 }
+
+/**
+ * The lyttefest ribbon's own fetch: the front page does not wait for it, and a Theta that is slow
+ * or down leaves the page as it is rather than holding the archive back.
+ */
+async function loadFests() {
+  try {
+    const res = await fetch('/api/lyttefester', { headers: { accept: 'application/json' } })
+    if (!res.ok) return
+    fests = ((await res.json()) as { lyttefester?: FestBrief[] }).lyttefester ?? []
+    draw()
+  } catch { /* no ribbon, and nothing said about it */ }
+}
+// The countdown in the ribbon counts, and a lyttefest starts while the page is open.
+setInterval(() => { if (fests.length > 0 && !document.hidden) draw() }, 30_000)
+document.addEventListener('visibilitychange', () => { if (!document.hidden) void loadFests() })
 
 /** Brings the hash's section into view; without one, the intro at the top. */
 function scrollToSection(behavior: ScrollBehavior) {
@@ -140,6 +160,7 @@ window.addEventListener('hashchange', () => {
 })
 draw()
 void loadMe(draw)
+void loadFests()
 fetchArchive().then(
   (archive) => {
     state.entries = archive.meetings.flatMap((m) => m.albums.map((album) => ({ album, n: m.number })))

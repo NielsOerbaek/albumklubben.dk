@@ -89,6 +89,18 @@ export function formatCountdown(seconds: number): string {
   return `om ${s} sekunder`
 }
 
+/** "tirsdag 3. november kl. 11.30", in Copenhagen time, which is the time the club lives in. */
+export function formatWhen(iso: string): string {
+  const d = new Date(iso)
+  if (Number.isNaN(d.getTime())) return ''
+  const parts = new Intl.DateTimeFormat('da-DK', {
+    timeZone: 'Europe/Copenhagen', weekday: 'long', day: 'numeric', month: 'long',
+    hour: '2-digit', minute: '2-digit', hour12: false,
+  }).formatToParts(d)
+  const get = (type: string) => parts.find(p => p.type === type)?.value ?? ''
+  return `${get('weekday')} ${get('day')}. ${get('month')} kl. ${get('hour')}.${get('minute')}`
+}
+
 /**
  * Where the lyttefest is at `now`: before it, on a track, or over. `startsAt` and `now` are
  * milliseconds. A cancelled lyttefest is `aflyst` whatever the clock says.
@@ -187,6 +199,25 @@ export interface FestView {
   you: { sub: string; coming: boolean; host: boolean }
   /** The server's clock when it answered, so the page can measure its own offset to it. */
   now: string
+}
+
+/**
+ * A lyttefest seen from outside its own page: the ribbon on the front page, and the screen in the
+ * room. Enough to say what is playing and when, and nothing of what was said during it.
+ */
+export interface FestBrief {
+  id: number
+  artist: string
+  title: string
+  coverUrl: string | null
+  /** UTC ISO. */
+  startsAt: string
+  state: FestState
+  /** The track playing now, while one is. */
+  track: string | null
+  trackNumber: number | null
+  /** How many have said they are coming. */
+  coming: number
 }
 
 /** A lyttefest as it is listed beside its album. */

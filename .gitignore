@@ -4,3 +4,7 @@ var
 .env
 .superpowers/
 data
+
+# Scratch scripts from a session; never part of the repo.
+*.tmp.mjs
+*.tmp.ts

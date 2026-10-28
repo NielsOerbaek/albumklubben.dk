@@ -15,6 +15,8 @@ https://albumklubben.dk og er kun for medlemmer af klubbens gruppe på
 
   Den er altså kun på en computer, ligesom rummet selv (under 900 px vises Klubhuset ikke).
   Gruppen kan læses på Theta derudover.
+- **Lyttefest-båndet** ligger øverst på forsiden, under bjælken og over afsnits-pillerne, når der
+  er en lyttefest i gang eller på vej. Ellers er det der slet ikke.
 - **/lyttefest/:id** er en lyttefest: et album, et tidspunkt, og så trykker alle play på deres
   egne højttalere. Siden tæller gennem tracklisten, så alle er samme sted, og samler
   kommentarerne undervejs.
