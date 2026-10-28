@@ -52,14 +52,30 @@ test('each of a band\'s covers says which member it stands for; a soloist\'s say
   expect(women.items[0].member).toBeUndefined()
 })
 
-test('a gender column counts people first, not a share that would add up past the whole', () => {
+test('a gender column counts people first, then their share, then the albums', () => {
   const [men] = columns('gender', [
     { album: album(0, { lineup: toLineup({ men: 4 }) }), n: 1 },
     { album: album(1, { lineup: toLineup({ men: 1 }) }), n: 1 },
   ])
   expect(men.label).toBe('Mænd')
   expect(men.items).toHaveLength(5)
-  expect(men.sub).toBe('5 personer · 2 albums')
+  expect(men.sub).toBe('5 personer · 100% · 2 albums')
+})
+
+test('the shares are of people, so they add to a hundred', () => {
+  // Three men and one woman on one album, one woman on another: 3 of 5 and 2 of 5.
+  const cols = columns('gender', [
+    { album: album(0, { lineup: toLineup({ men: 3, women: 1 }) }), n: 1 },
+    { album: album(1, { lineup: toLineup({ women: 1 }) }), n: 1 },
+  ])
+  expect(cols.map((c) => c.sub)).toEqual(['3 personer · 60% · 1 album', '2 personer · 40% · 2 albums'])
+  // The albums do not add to the whole — one band is in both bars — and carry no percentage.
+  expect(cols.reduce((n, c) => n + Number(/· (\d+) albums?$/.exec(c.sub!)![1]), 0)).toBe(3)
+})
+
+test('one person on their own is all of them', () => {
+  const [men] = columns('gender', [{ album: album(0, { lineup: toLineup({ men: 1 }) }), n: 1 }])
+  expect(men.sub).toBe('1 person · 100% · 1 album')
 })
 
 test('headline numbers', () => {
@@ -107,7 +123,7 @@ test('a band of four makes a bar four covers long, each saying which member it i
   expect(tiles.map((t) => t.getAttribute('aria-label'))).toEqual([
     'Kunstner 1, Album 1 (1 af 4)', 'Kunstner 1, Album 1 (2 af 4)',
     'Kunstner 1, Album 1 (3 af 4)', 'Kunstner 1, Album 1 (4 af 4)'])
-  expect(koen.querySelector('.blabel')!.textContent).toContain('4 personer · 1 album')
+  expect(koen.querySelector('.blabel')!.textContent).toContain('4 personer · 100% · 1 album')
   // All the bars in one scroller, so their lengths can be held against each other.
   expect(koen.querySelectorAll('.bars')).toHaveLength(1)
 })

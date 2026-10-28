@@ -42,7 +42,7 @@ function group(entries: Entry[], keyOf: (e: Entry) => string, order: (keys: stri
 function genderColumns(entries: Entry[]): Column[] {
   // An album nobody has counted yet stands under Andet rather than dropping out of the chart.
   const of = (e: Entry) => (lineupTotal(e.album.lineup) > 0 ? e.album.lineup : { ...EMPTY_LINEUP, other: 1 })
-  return LINEUP_KEYS.flatMap((key: LineupKey) => {
+  const bars = LINEUP_KEYS.map((key: LineupKey) => {
     const items: ColumnItem[] = []
     let albums = 0
     for (const entry of entries) {
@@ -51,9 +51,21 @@ function genderColumns(entries: Entry[]): Column[] {
       albums++
       for (let i = 1; i <= n; i++) items.push({ entry, member: n > 1 ? { i, of: n } : undefined })
     }
-    if (items.length === 0) return [] // a column nobody is in is not drawn
+    return { key, items, albums }
+  })
+  // The share is of people, not of albums: everybody is in exactly one of these bars, so these
+  // add to a hundred. The albums do not — a band of several genders is in several bars — which
+  // is why the album count stands at the end without a percentage of its own.
+  const everyone = bars.reduce((n, b) => n + b.items.length, 0)
+  return bars.flatMap(({ key, items, albums }) => {
+    if (items.length === 0) return [] // a bar nobody is in is not drawn
     const people = `${items.length} ${items.length === 1 ? 'person' : 'personer'}`
-    return [{ label: LINEUP_LABEL[key], items, sub: `${people} · ${albums} ${albums === 1 ? 'album' : 'albums'}` }]
+    const share = `${Math.round((100 * items.length) / everyone)}%`
+    return [{
+      label: LINEUP_LABEL[key],
+      items,
+      sub: `${people} · ${share} · ${albums} ${albums === 1 ? 'album' : 'albums'}`,
+    }]
   })
 }
 
