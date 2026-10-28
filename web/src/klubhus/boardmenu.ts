@@ -62,6 +62,15 @@ export function menuItems(state: BoardState): MenuItem[] {
   return items
 }
 
+/**
+ * The row you land on moving `by` from `selected`, in a menu of `count`. It stops at either end
+ * rather than coming round, the way the records in a crate do: pressing on past the last row
+ * should leave you on the last row, not back at the top with no sign that you have been round.
+ */
+export function nextRow(selected: number, by: number, count: number): number {
+  return Math.min(count - 1, Math.max(0, selected + by))
+}
+
 /** The first row to draw, so the one you are on is always on screen. */
 export function windowStart(selected: number, count: number, rows: number, was = 0): number {
   if (count <= rows) return 0
@@ -256,7 +265,9 @@ export function createBoardMenu(opts: BoardMenuOptions): BoardMenu {
   const move = (by: number) => {
     const count = menuItems(opts.board.state()).length
     if (count === 0) return
-    selected = (selected + by + count) % count
+    const next = nextRow(selected, by, count)
+    if (next === selected) return
+    selected = next
     draw()
   }
 

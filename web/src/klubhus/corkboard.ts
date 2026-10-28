@@ -15,7 +15,7 @@ import { textureUrl } from '../api.ts'
  * The board is filled in after the room has loaded, so a slow Theta never holds the room up, and
  * when it cannot be fetched it says so on a note rather than staying empty.
  */
-const { mat, shadedBox } = kit
+const { decal, shadedBox } = kit
 
 // Six notes, three across and two down. The texture is the board's own grid: 6 texels a character.
 const COLS = 3
@@ -173,7 +173,10 @@ export function createCorkBoard(layout: ClubLayout): CorkBoard {
   const frame = shadedBox(DEPTH, BOARD_H + 0.1, width + 0.1, FRAME)
   object.add(at(frame, x - DEPTH / 2, BOARD_Y, z))
 
-  const face = new THREE.Mesh(new THREE.PlaneGeometry(width, BOARD_H, 6, 4), mat('#ffffff', texture))
+  // A decal, so the frame four millimetres behind it cannot poke through: the vertices of both
+  // are snapped to the PS1 grid, and at this size that is more than four millimetres of wobble.
+  // It showed as dark shapes wandering across the notes.
+  const face = new THREE.Mesh(new THREE.PlaneGeometry(width, BOARD_H, 6, 4), decal('#ffffff', texture))
   object.add(at(face, x - DEPTH - 0.004, BOARD_Y, z, -Math.PI / 2))
 
   return {

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { fitLine, menuItems, windowStart } from '../../web/src/klubhus/boardmenu.ts'
+import { fitLine, menuItems, nextRow, windowStart } from '../../web/src/klubhus/boardmenu.ts'
 import type { BoardState } from '../../web/src/board/board.ts'
 import type { BoardPost } from '../../shared/board.ts'
 
@@ -94,5 +94,28 @@ describe('en linje i menuen', () => {
   it('does not fall over on a line with no room in it', () => {
     expect(fitLine('Noget', 3)).toBe('NOG')
     expect(fitLine('', 20)).toBe('')
+  })
+})
+
+describe('at gå op og ned i menuen', () => {
+  it('moves one row at a time, either way', () => {
+    expect(nextRow(2, 1, 6)).toBe(3)
+    expect(nextRow(2, -1, 6)).toBe(1)
+  })
+
+  it('stays on the last row at the foot, and on the first at the head', () => {
+    expect(nextRow(5, 1, 6)).toBe(5)
+    expect(nextRow(0, -1, 6)).toBe(0)
+  })
+
+  it('does not come round from one end to the other', () => {
+    // What it used to do, and what the crates used to do before them.
+    expect(nextRow(5, 1, 6)).not.toBe(0)
+    expect(nextRow(0, -1, 6)).not.toBe(5)
+  })
+
+  it('has nowhere to go in a menu of one', () => {
+    expect(nextRow(0, 1, 1)).toBe(0)
+    expect(nextRow(0, -1, 1)).toBe(0)
   })
 })
