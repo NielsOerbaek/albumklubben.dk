@@ -403,6 +403,9 @@ comment should show in a tiny hover thing."*
   track the card hangs from that end rather than from its middle, placed off the percentage the
   mark already has rather than by measuring anything. It is `aria-hidden` and gone on a touch
   screen: every comment is also in the list below, so nothing is reachable only by hovering.
+- **The avatar URL is public**, checked once a member had logged in on the new build:
+  `https://stage.theta.dk/api/v1/media/<id>/s256`, `200 image/jpeg` with no Theta session. The
+  browser fetches it straight, without cookies and without a referrer.
 
 ### The summary is a count, and the bar says who you are (Niels)
 

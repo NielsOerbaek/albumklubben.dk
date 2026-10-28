@@ -74,6 +74,13 @@ der ikke lige har skrevet noget. Derfor skriver `server/members.ts` navn og bill
 logind, og lyttefesten henter ansigterne derfra. Et medlem, der ikke har været logget ind siden,
 har ingen avatar her, og så tegnes deres initialer i stedet.
 
+En avatar-URL ser sådan ud og kan hentes af enhver, uden logind på Theta (tjekket 2026-10-28,
+`200 image/jpeg`):
+
+    https://stage.theta.dk/api/v1/media/<id>/s256
+
+Browseren henter den altså direkte, uden cookies og uden referrer.
+
 ## Skrivninger
 
     POST /api/v1/app/posts
@@ -125,6 +132,3 @@ Der er ingen titel på en notifikation, og den peger kun via `href`.
 - Formen på `dk.theta.card.action` (`readAction` i `server/lyttefest.ts`, samme sted-princip).
 - Om `comments` har `depth` på en kommentar. Opslaget, der blev kigget på, havde ingen
   kommentarer, så listen kom tom tilbage. `depth` læses som 0, hvis den ikke er der.
-- Om en avatar-URL kan hentes af browseren uden et logind på Theta. Den sættes direkte i et
-  `img` (uden cookies og uden referrer), og kan den ikke hentes, står initialerne der allerede.
-  Det er altså synligt, hvis den ikke kan, og intet går i stykker imens.
