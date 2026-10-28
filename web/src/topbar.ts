@@ -13,9 +13,15 @@ const meTemplate = () => {
         <span class="topbar-name">${me.name}</span></span>`
 }
 
+/** The club's group on Theta, which is where things are written and answered. */
+const groupTemplate = () => {
+  const url = currentMe()?.groupUrl
+  return url ? html`<a class="pill" href=${url} target="_blank" rel="noreferrer">Thetagruppe</a>` : nothing
+}
+
 /**
  * The shared thin black top bar: the wordmark (the front page) and Klubhuset. `right` holds pills
- * (toggles), then who you are and the way out.
+ * (toggles), then who you are, the club's group on Theta and the way out.
  *
  * Opslagstavlen is not here any more. It is the cork board on the wall in Klubhuset, opened by
  * walking up to it and clicking — a thing in the room rather than a dialog over every page.
@@ -30,6 +36,7 @@ export function topBarTemplate(
       ${LINKS.map(([id, text, href]) =>
         html`<a href=${href} aria-current=${active === id ? 'page' : nothing}>${text}</a>`)}
     </nav>
-    <div class="topbar-right">${right ?? nothing}${meTemplate()}<a class="pill" href="/auth/logout">Log ud</a></div>
+    <div class="topbar-right">${right ?? nothing}${meTemplate()}${groupTemplate()}<a
+      class="pill" href="/auth/logout">Log ud</a></div>
   </header>`
 }

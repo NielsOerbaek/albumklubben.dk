@@ -1,7 +1,7 @@
 import type { FastifyInstance, FastifyReply } from 'fastify'
 import type { Database } from './db.ts'
 import { festsByPost } from './lyttefest-repo.ts'
-import { ThetaError, type BoardPost, type Page, type ThetaApi } from './theta-api.ts'
+import { groupUrl, ThetaError, type BoardPost, type Page, type ThetaApi } from './theta-api.ts'
 import type { BoardPage } from '../shared/board.ts'
 
 /**
@@ -28,11 +28,8 @@ export function registerBoard(app: FastifyInstance, api: ThetaApi, db: Database,
   const cache = new Map<string, Entry>()
   const drop = () => cache.clear()
 
-  /** The club's group on Theta, for "skriv på Theta" and for an empty board. */
-  const groupUrl = (() => {
-    try { return `${new URL(group.issuer).origin}/grupper/${encodeURIComponent(group.groupId)}` }
-    catch { return null }
-  })()
+  /** The club's group on Theta, for "skriv i gruppen" and for an empty board. */
+  const url = groupUrl(group.issuer, group.groupId)
 
   async function cached<T>(key: string, load: () => Promise<T>): Promise<T> {
     const hit = cache.get(key)
@@ -56,7 +53,7 @@ export function registerBoard(app: FastifyInstance, api: ThetaApi, db: Database,
     return {
       ...page,
       items: fests.size === 0 ? page.items : page.items.map(p => ({ ...p, lyttefest: fests.get(p.id) ?? null })),
-      groupUrl,
+      groupUrl: url,
     }
   }
 

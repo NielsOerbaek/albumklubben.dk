@@ -47,7 +47,7 @@ export function buildApp(opts: AppOptions): FastifyInstance {
   if (opts.theta) {
     // Every login tells us what a member looks like now; it is the only time Theta says.
     registerThetaAuth(app, { ...opts.theta, onLogin: who => rememberMember(opts.db, who) })
-    registerMe(app, opts.db)
+    registerMe(app, opts.db, opts.theta)
     const api = opts.thetaApi ?? createThetaApi(opts.theta)
     const board = registerBoard(app, api, opts.db, opts.theta)
     const fest = registerLyttefest(app, {

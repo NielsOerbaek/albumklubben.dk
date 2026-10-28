@@ -10,10 +10,15 @@ import type { Face } from './face.ts'
  * when it starts and draws again when the answer comes; until then the bar is simply the way it
  * has always been.
  */
-let me: Face | null = null
+export interface Me extends Face {
+  /** The club's group on Theta, which the bar links to. Null if the server could not say. */
+  groupUrl: string | null
+}
+
+let me: Me | null = null
 
 /** The member, once `loadMe` has answered. Null before that, and if the ask failed. */
-export const currentMe = (): Face | null => me
+export const currentMe = (): Me | null => me
 
 /** Asks once, then calls back so the page can draw the bar again with a face in it. */
 export async function loadMe(drawn: () => void): Promise<void> {
@@ -21,9 +26,9 @@ export async function loadMe(drawn: () => void): Promise<void> {
   try {
     const res = await fetch('/api/me', { headers: { accept: 'application/json' } })
     if (!res.ok) return
-    const who = await res.json() as Face
+    const who = await res.json() as Me
     if (typeof who?.sub !== 'string' || typeof who?.name !== 'string') return
-    me = who
+    me = { ...who, groupUrl: typeof who.groupUrl === 'string' ? who.groupUrl : null }
   } catch { return } // Offline, or the session has gone: the bar does without a name.
   drawn()
 }

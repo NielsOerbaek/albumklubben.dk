@@ -424,6 +424,11 @@ right corner, so i can see who i am logged in as."*
   belongs to. The session is an httpOnly cookie, so the page cannot read it: `/api/me` answers
   from the session and the `members` row, `web/src/me.ts` asks once per page and the bar draws
   again when the answer comes. On a narrow bar the name is dropped and the face is left.
+- **A "Thetagruppe" link sits between you and Log ud**, since the opslagstavle left the bar and
+  the group is where things are actually written. `/api/me` answers its address along with the
+  name and the face, because that is the one call the bar makes; `/api/board` answers it too, for
+  the menu in the room. Both read it off `groupUrl` in `server/theta-api.ts`, which is now the
+  only place that knows what a group's address on Theta looks like.
 
 ### The opslagstavle is a thing in the room (Niels)
 

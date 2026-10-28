@@ -48,7 +48,7 @@ describe('hvem man er logget ind som', () => {
   })
 
   test('shows the name and the face, and draws again when the answer comes', async () => {
-    answer({ sub: 'sub-1', name: 'Niels Ørbæk Chemnitz', picture: 'https://theta.test/a/1.jpg' })
+    answer({ sub: 'sub-1', name: 'Niels Ørbæk Chemnitz', picture: 'https://theta.test/a/1.jpg', groupUrl: 'https://theta.test/grupper/1' })
     const bar = await freshBar()
     const drawn = vi.fn()
     await bar.loadMe(drawn)
@@ -61,7 +61,31 @@ describe('hvem man er logget ind som', () => {
     // The name is on the element too, for the narrow bar where only the face is shown.
     expect(d.querySelector('.topbar-me')?.getAttribute('title')).toBe('Niels Ørbæk Chemnitz')
     // And it stands beside the way out, not instead of it.
-    expect(d.querySelector('.topbar-right .pill')?.getAttribute('href')).toBe('/auth/logout')
+    expect([...d.querySelectorAll('.topbar-right .pill')].map(a => a.getAttribute('href')))
+      .toContain('/auth/logout')
+  })
+
+  test('links to the club\'s group, between you and the way out', async () => {
+    answer({ sub: 's', name: 'Dig', picture: null, groupUrl: 'https://theta.test/grupper/1' })
+    const bar = await freshBar()
+    await bar.loadMe(() => {})
+    const right = [...draw(bar.topBarTemplate(null)).querySelectorAll('.topbar-right > *')]
+    // The initials are in the face, so the text is squeezed before it is read.
+    const says = (e: Element) => (e.textContent ?? '').replace(/\s+/g, ' ').trim()
+    expect(right.map(says)).toEqual(['D Dig', 'Thetagruppe', 'Log ud'])
+    const group = right[1] as HTMLAnchorElement
+    expect(group.getAttribute('href')).toBe('https://theta.test/grupper/1')
+    // It leaves the site, so it opens in its own tab and tells Theta nothing about where from.
+    expect(group.getAttribute('target')).toBe('_blank')
+    expect(group.getAttribute('rel')).toBe('noreferrer')
+  })
+
+  test('leaves the group out when the server could not say where it is', async () => {
+    answer({ sub: 's', name: 'Dig', picture: null, groupUrl: null })
+    const bar = await freshBar()
+    await bar.loadMe(() => {})
+    const d = draw(bar.topBarTemplate(null))
+    expect([...d.querySelectorAll('.topbar-right a')].map(a => a.textContent?.trim())).toEqual(['Log ud'])
   })
 
   test('falls back to the initials when Theta has no picture for you', async () => {

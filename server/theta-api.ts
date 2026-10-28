@@ -38,6 +38,15 @@ export class ThetaError extends Error {
 
 export type { BoardAuthor, BoardComment, BoardPost, Page } from '../shared/board.ts'
 
+/**
+ * The club's group on Theta, as a member would open it. The issuer is the OIDC one
+ * (`.../oidc`), so only its origin is kept. Null when the issuer is not a URL we can read.
+ */
+export function groupUrl(issuer: string, groupId: string): string | null {
+  try { return `${new URL(issuer).origin}/grupper/${encodeURIComponent(groupId)}` }
+  catch { return null }
+}
+
 export type CardTone = 'neutral' | 'info' | 'success' | 'warning' | 'danger'
 export interface Card {
   version: 'theta.card/v1'

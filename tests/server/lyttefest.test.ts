@@ -306,7 +306,12 @@ describe('ansigterne', () => {
     const { app } = setup()
     const cookie = await signIn(app)
     const me = await app.inject({ url: '/api/me', headers: { cookie } })
-    expect(me.json()).toEqual({ sub: 'sub-1', name: 'Medlem Een', picture: 'https://theta.test/avatars/1.jpg' })
+    expect(me.json()).toEqual({
+      sub: 'sub-1', name: 'Medlem Een', picture: 'https://theta.test/avatars/1.jpg',
+      // The bar links to the group, and this is the one call it makes. The issuer is the OIDC
+      // one (`.../oidc`), so only its origin is kept.
+      groupUrl: `https://theta.test/grupper/${GROUP}`,
+    })
     expect(me.headers['cache-control']).toBe('no-store')
   })
 

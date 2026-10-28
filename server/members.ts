@@ -1,5 +1,6 @@
 import type { FastifyInstance } from 'fastify'
 import type { Database } from './db.ts'
+import { groupUrl } from './theta-api.ts'
 import type { FestFace, FestPerson } from '../shared/lyttefest.ts'
 
 /**
@@ -63,14 +64,24 @@ export function faces(db: Database, subs: string[]) {
 }
 
 /**
- * Who you are, for the top bar: the name and the face of the session reading the page. It is on
- * every page of the site, so it answers from the session cookie and one row, and never caches —
- * the whole point of it is to be right about who is logged in.
+ * What the top bar needs: who you are — the name and the face of the session reading the page —
+ * and the way to the club's group on Theta. The bar is on every page of the site, so it answers
+ * from the session cookie and one row, and never caches: the whole point of it is to be right
+ * about who is logged in.
+ *
+ * The group's address rides along because the bar links to it and this is the one call it makes.
+ * `/api/board` answers it too, for the opslagstavle in the room, which is read on its own.
  */
-export function registerMe(app: FastifyInstance, db: Database): void {
+export function registerMe(app: FastifyInstance, db: Database, group: { issuer: string; groupId: string }): void {
+  const url = groupUrl(group.issuer, group.groupId)
   app.get('/api/me', async (req, reply) => {
     const who = req.member!
     reply.header('Cache-Control', 'no-store')
-    return { sub: who.sub, name: who.name, picture: picturesOf(db, [who.sub]).get(who.sub) ?? null }
+    return {
+      sub: who.sub,
+      name: who.name,
+      picture: picturesOf(db, [who.sub]).get(who.sub) ?? null,
+      groupUrl: url,
+    }
   })
 }
