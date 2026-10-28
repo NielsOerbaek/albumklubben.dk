@@ -43,9 +43,15 @@ Kun `/auth/*`, `/healthz`, `/robots.txt`, ikonfilerne, `/manifest.webmanifest` o
 
 **Log ud** rydder sessionen her og sender videre til Thetas `end_session_endpoint`. Det afslutter ikke Thetas eget login i browseren (det er en POST-knap, vi ikke kan sende folk igennem), og `/auth/logged-out` siger det rent ud.
 
-Appen er registreret paa Theta (i dag stage) med `interop-admin` og filen `ops/theta-interop.json`:
+Appen er registreret paa Theta-prod (app.theta.dk, gruppen Albumklubben `247726796489962`) siden 2026-10-28, med `interop-admin` og filen `ops/theta-interop.json`. Backend-imaget har ingen `tools/`, saa vaerktoejet laegges ind i en pod:
 
-    ssh theta-stage@135.181.147.111 'bash -lc "cd ~/theta-stage/backend && set -a && . ./.env && set +a && ALBUMKLUBBEN_CLIENT_SECRET=<hemmelighed> DATABASE_URL=\$DATABASE_ADMIN_URL node --experimental-strip-types tools/interop-admin.ts <sti>/theta-interop.json"'
+    export KUBECONFIG=~/ogtal.onedrive/osogdata/computerrome/teknisk/kubeconfig
+    P=$(kubectl -n theta get pod -l app=theta-backend -o name | head -1)
+    kubectl -n theta exec -i $P -- sh -c "mkdir -p /tmp/ia/tools && cd /tmp/ia && ln -sf /app/src src && ln -sf /app/node_modules node_modules && ln -sf /app/package.json package.json && cat > tools/interop-admin.ts" < <theta-app>/backend/tools/interop-admin.ts
+    kubectl -n theta exec -i $P -- sh -c "cat > /tmp/ia/interop.json" < ops/theta-interop.json
+    kubectl -n theta exec $P -- env ALBUMKLUBBEN_CLIENT_SECRET=<hemmelighed> ALBUMKLUBBEN_WEBHOOK_SECRET=<hemmelighed> sh -c "cd /tmp/ia && DATABASE_URL=\$DATABASE_ADMIN_URL node --experimental-strip-types tools/interop-admin.ts interop.json; rm -rf /tmp/ia"
+
+Foer 2026-10-28 var appen paa stage; den registrering er fjernet, og lyttefest-tabellerne og `members` blev toemt ved skiftet (subs fra stage).
 
 Hemmeligheden er den samme som `THETA_CLIENT_SECRET` i live-`.env`. Ny hemmelighed eller nyt domaene: skift begge steder og koer filen igen.
 
