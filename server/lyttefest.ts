@@ -11,6 +11,7 @@ import {
   type FestPerson, type FestView,
 } from '../shared/lyttefest.ts'
 import { firstName } from '../shared/board.ts'
+import { faces } from './members.ts'
 
 /**
  * Lyttefesten: a member picks an album and a time; at that time everyone presses play on their
@@ -81,17 +82,22 @@ export function registerLyttefest(app: FastifyInstance, opts: LyttefestOptions) 
   function view(f: FestRow, who: FestPerson): FestView | null {
     const album = festAlbum(db, f.albumId)
     if (!album) return null
+    const coming = listRsvps(db, f.id)
+    const comments = listComments(db, f.id)
+    // One look-up for the whole page: the host, everyone coming and everyone who has said
+    // something. The rows carry the name they were written with; the face comes from Theta.
+    const face = faces(db, [f.host.sub, ...coming.map(c => c.sub), ...comments.map(c => c.sub)])
     return {
       id: f.id,
       album,
-      host: f.host,
+      host: face.of(f.host),
       startsAt: f.startsAt,
       note: f.note,
       tracks: f.tracks,
       cancelled: f.cancelledAt !== null,
       thetaUrl: f.thetaPostUrl,
-      coming: listRsvps(db, f.id),
-      comments: listComments(db, f.id),
+      coming: coming.map(face.of),
+      comments: comments.map(face.of),
       you: { sub: who.sub, coming: isComing(db, f.id, who.sub), host: who.sub === f.host.sub },
       now: new Date(now()).toISOString(),
     }
@@ -257,7 +263,10 @@ export function registerLyttefest(app: FastifyInstance, opts: LyttefestOptions) 
     if (fest.cancelledAt) return reply.code(409).send({ error: 'Lyttefesten er aflyst' })
     const coming = req.body?.coming !== false
     setRsvp(db, fest.id, req.member!, coming, new Date(now()).toISOString())
-    const people = listRsvps(db, fest.id)
+    // The same list goes out to everyone watching and back to whoever pressed, faces and all:
+    // the page puts the answer straight into what it is drawing.
+    const rows = listRsvps(db, fest.id)
+    const people = rows.map(faces(db, rows.map(r => r.sub)).of)
     push(fest.id, 'coming', people)
     void refreshCard(getFest(db, fest.id)!)
     return { coming: people }
@@ -271,8 +280,9 @@ export function registerLyttefest(app: FastifyInstance, opts: LyttefestOptions) 
     const body = text(req.body?.text, MAX_COMMENT)
     if (!body) return reply.code(400).send({ error: 'Skriv noget først' })
     const at = now()
-    const comment = addComment(db, fest.id, req.member!, body,
+    const row = addComment(db, fest.id, req.member!, body,
       trackIndexAt(fest.tracks, Date.parse(fest.startsAt), at), new Date(at).toISOString())
+    const comment = faces(db, [row.sub]).of(row)
     push(fest.id, 'comment', comment)
     return comment
   })

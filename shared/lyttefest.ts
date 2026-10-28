@@ -146,7 +146,8 @@ export interface FestAlbum {
   meetingNumber: number
 }
 
-export interface FestComment {
+/** A comment as it is stored: the name is the one its author had when they wrote it. */
+export interface FestCommentRow {
   id: number
   sub: string
   name: string
@@ -156,12 +157,23 @@ export interface FestComment {
   createdAt: string
 }
 
+/** The same, with a face on it. See `FestFace`. */
+export interface FestComment extends FestCommentRow { picture: string | null }
+
 export interface FestPerson { sub: string; name: string }
+
+/**
+ * A member with the avatar Theta has for them. It is not stored on the lyttefest's own rows —
+ * those keep the name as it was written — but looked up by `sub` when the page is built, so a
+ * member who changes their picture on Theta changes it everywhere here at once. Null when Theta
+ * has none, or when they have not logged in since the site started keeping them.
+ */
+export interface FestFace extends FestPerson { picture: string | null }
 
 export interface FestView {
   id: number
   album: FestAlbum
-  host: FestPerson
+  host: FestFace
   /** UTC ISO. */
   startsAt: string
   note: string | null
@@ -169,7 +181,7 @@ export interface FestView {
   cancelled: boolean
   /** The announcement in the club's group, to read it there. */
   thetaUrl: string | null
-  coming: FestPerson[]
+  coming: FestFace[]
   comments: FestComment[]
   /** About the member reading the page. */
   you: { sub: string; coming: boolean; host: boolean }

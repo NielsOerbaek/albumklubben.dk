@@ -21,7 +21,12 @@ const oidc = (sub: string) => (async (input: string | URL) => {
     return json({ authorization_endpoint: `${ISSUER}/auth`, token_endpoint: `${ISSUER}/token`, userinfo_endpoint: `${ISSUER}/me` })
   }
   if (url === `${ISSUER}/token`) return json({ access_token: 'at', id_token: 'idt' })
-  return json({ sub, name: sub === 'sub-1' ? 'Medlem Een' : 'Medlem To', groups: [{ id: GROUP }] })
+  // Theta sends the avatar with the rest of the `profile` claims; `sub-2` has none, as a member
+  // who never set one does.
+  return json({
+    sub, name: sub === 'sub-1' ? 'Medlem Een' : 'Medlem To', groups: [{ id: GROUP }],
+    ...(sub === 'sub-1' ? { picture: 'https://theta.test/avatars/1.jpg' } : {}),
+  })
 }) as typeof globalThis.fetch
 
 /** Theta, recording what the site asked it to post, update and notify. */
@@ -271,6 +276,61 @@ describe('hvem der kommer', () => {
     await make(app, cookie, { albumId })
     const twice = await app.inject({ method: 'POST', url: '/api/lyttefest/1/rsvp', headers: { cookie }, payload: { coming: true } })
     expect(twice.json().coming).toHaveLength(1)
+  })
+})
+
+describe('ansigterne', () => {
+  it('puts the avatar Theta has on the host, on everyone coming and on every comment', async () => {
+    const { app, albumId } = setup()
+    const cookie = await signIn(app)
+    await make(app, cookie, { albumId })
+    clock = START + 10_000
+    await app.inject({ method: 'POST', url: '/api/lyttefest/1/comments', headers: { cookie }, payload: { text: 'Hvilken åbning' } })
+
+    const fest = (await app.inject({ url: '/api/lyttefest/1', headers: { cookie } })).json()
+    expect(fest.host.picture).toBe('https://theta.test/avatars/1.jpg')
+    expect(fest.coming[0].picture).toBe('https://theta.test/avatars/1.jpg')
+    expect(fest.comments[0].picture).toBe('https://theta.test/avatars/1.jpg')
+  })
+
+  it('answers a new comment with the face on it, because that is what goes out live', async () => {
+    const { app, albumId } = setup()
+    const cookie = await signIn(app)
+    await make(app, cookie, { albumId })
+    clock = START + 10_000
+    const made = await app.inject({ method: 'POST', url: '/api/lyttefest/1/comments', headers: { cookie }, payload: { text: 'Nu' } })
+    expect(made.json().picture).toBe('https://theta.test/avatars/1.jpg')
+    const rsvp = await app.inject({ method: 'POST', url: '/api/lyttefest/1/rsvp', headers: { cookie }, payload: { coming: true } })
+    expect(rsvp.json().coming[0].picture).toBe('https://theta.test/avatars/1.jpg')
+  })
+
+  it('has no face for a member Theta has no picture for, and shows the page all the same', async () => {
+    const { app, albumId } = setup({}, 'sub-2')
+    const cookie = await signIn(app)
+    await make(app, cookie, { albumId })
+    const fest = (await app.inject({ url: '/api/lyttefest/1', headers: { cookie } })).json()
+    expect(fest.host).toEqual({ sub: 'sub-2', name: 'Medlem To', picture: null })
+  })
+
+  it('has no face for someone who pressed the button in Theta and has never logged in here', async () => {
+    const { app, albumId } = setup()
+    const cookie = await signIn(app)
+    await make(app, cookie, { albumId })
+    const event = {
+      specversion: '1.0', type: 'dk.theta.card.action', id: 'ev-1',
+      data: { externalId: 'lyttefest-1', action: { id: 'kommer' }, user: { sub: 'sub-9', name: 'Medlem Ni' } },
+    }
+    const raw = JSON.stringify(event)
+    const t = Math.floor(Date.now() / 1000)
+    await app.inject({
+      method: 'POST', url: '/theta/webhook', payload: raw,
+      headers: {
+        'content-type': 'application/json',
+        'theta-signature': `t=${t},v1=${createHmac('sha256', SECRET).update(`${t}.`).update(raw).digest('hex')}`,
+      },
+    })
+    const fest = (await app.inject({ url: '/api/lyttefest/1', headers: { cookie } })).json()
+    expect(fest.coming.find((c: any) => c.sub === 'sub-9').picture).toBeNull()
   })
 })
 

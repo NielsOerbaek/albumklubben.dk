@@ -1,5 +1,6 @@
 import { createHash, randomBytes } from 'node:crypto'
 import type { FastifyInstance, FastifyReply, FastifyRequest } from 'fastify'
+import { pictureUrl } from './members.ts'
 
 /**
  * "Log ind med Theta": the whole site is for members of the club's Theta group. Theta is an
@@ -15,6 +16,11 @@ export interface ThetaAuthOptions {
   groupId: string // the club's Theta group id, as the claim carries it
   publicUrl: string // this site's origin, e.g. https://albumklubben.dk
   fetch?: typeof fetch
+  /**
+   * Called with what Theta says about a member each time they log in. The login itself does not
+   * wait for it and does not fail on it: a face is nice to have, not a reason to be shut out.
+   */
+  onLogin?: (who: { sub: string; name: string; picture: string | null }) => void
 }
 
 const SESSION = 'ak_member'
@@ -193,12 +199,17 @@ export function registerThetaAuth(app: FastifyInstance, opts: ThetaAuthOptions) 
       req.log.warn({ status: infoRes.status }, 'theta userinfo failed')
       return html(502, 'Login fejlede', `<p>Theta svarede ikke som ventet.</p>${loginButton(saved.next)}`)
     }
-    const info = await infoRes.json() as { sub: string; name?: string; groups?: { id: string }[] }
+    const info = await infoRes.json() as { sub: string; name?: string; picture?: string; groups?: { id: string }[] }
     if (!Array.isArray(info.groups) || !info.groups.some(g => String(g.id) === opts.groupId)) {
       return html(403, 'Kun for medlemmer',
         `<p>Albumklubben er for medlemmer af Albumklubben-gruppen på Theta. Spørg en af klubbens admins om at blive meldt ind.</p>${loginButton(saved.next)}`)
     }
     const session: Member = { sub: info.sub, name: info.name ?? '', exp: Math.floor(Date.now() / 1000) + DAY, idt: id_token }
+    // The avatar is kept on our side, not in the cookie: the cookie is already near its limit,
+    // and a face is wanted for everyone on a page, not only for whoever is reading it.
+    try {
+      opts.onLogin?.({ sub: info.sub, name: session.name, picture: pictureUrl(info.picture, opts.issuer) })
+    } catch (err) { req.log.warn({ err }, 'member not remembered') }
     let value = JSON.stringify(session)
     if (encodeURIComponent(value).length > COOKIE_LIMIT) {
       // Rather lose the honest logout than have the browser drop the whole session.

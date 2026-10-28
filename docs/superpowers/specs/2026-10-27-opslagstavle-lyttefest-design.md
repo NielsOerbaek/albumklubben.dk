@@ -387,6 +387,23 @@ have done it anyway, see below.
   seen, the webhook logs what arrived when it refuses — the header names, the signature's own
   value, and the field names of a card action — so one press is enough to put the scheme right.
 
+### Faces on the lyttefest (Niels)
+
+*"I would like to pull in theta user avatars, and when i hover over comment on the timeline, the
+comment should show in a tiny hover thing."*
+
+- **A member's face is the avatar Theta has for them**, on the host, on everyone coming, on every
+  comment, and on the timeline itself, where the plain white dot is now the writer's face.
+- **It comes from the login, not from the App API**, which has no way to look a member up by sub.
+  `server/members.ts` writes down name and picture each time someone logs in, and the page's
+  faces are read from there — so a member who changes their picture on Theta changes it
+  everywhere here at once, and a member who has not logged in since shows their initials. The
+  initials are not a placeholder waiting for the real thing: for that member they are it.
+- **Hovering a face on the bar shows what was said**, in a card above it. Near either end of a
+  track the card hangs from that end rather than from its middle, placed off the percentage the
+  mark already has rather than by measuring anything. It is `aria-hidden` and gone on a touch
+  screen: every comment is also in the list below, so nothing is reachable only by hovering.
+
 ### The App API had less in it than the design assumed
 
 The contract was read off stage by asking the API and reading its own validation errors, and

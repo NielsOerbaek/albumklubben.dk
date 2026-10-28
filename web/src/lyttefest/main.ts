@@ -5,10 +5,11 @@ import './lyttefest.css'
 import { topBarTemplate } from '../topbar.ts'
 import { createBoard } from '../board/board.ts'
 import { thumbUrl } from '../api.ts'
+import { faceTemplate } from '../face.ts'
 import { formatPostTime } from '../../../shared/board.ts'
 import {
   catchUpText, formatClock, formatCountdown, formatLength, positionAt, searchLinks, totalSeconds,
-  type FestComment, type FestPosition, type FestTrack, type FestView,
+  type FestComment, type FestFace, type FestPosition, type FestTrack, type FestView,
 } from '../../../shared/lyttefest.ts'
 
 /**
@@ -151,6 +152,10 @@ const focusWrite = () => document.querySelector<HTMLTextAreaElement>('.fest-writ
 
 const person = (name: string) => html`<span class="fest-person">${name}</span>`
 
+/** A face and a name together, which is how a member is named anywhere there is room for it. */
+const named = (who: FestFace, size = 22) =>
+  html`<span class="fest-named">${faceTemplate(who, size)}${person(who.name)}</span>`
+
 /** Where a comment was written, in words: "4. Wuthering Heights · 1:32". */
 function stampOf(c: FestComment): string {
   const at = commentAt(c)
@@ -161,11 +166,31 @@ function stampOf(c: FestComment): string {
 function commentTemplate(c: FestComment): TemplateResult {
   const mine = fest !== null && (c.sub === fest.you.sub || fest.you.host)
   return html`<li class="fest-comment" id=${`k${c.id}`}>
-    <p class="fest-comment-by">${person(c.name)}
+    <p class="fest-comment-by">${named(c)}
       <span class="fest-when">${stampOf(c)}</span>
       ${mine ? html`<button class="fest-remove" aria-label="Fjern kommentaren" @click=${() => remove(c.id)}>×</button>` : nothing}</p>
     <p class="fest-comment-text">${c.text}</p>
   </li>`
+}
+
+/**
+ * A comment where it was written: the writer's face on the bar, and what they said in a card that
+ * comes up under the pointer, so a whole track can be read without going down the list.
+ *
+ * The card is placed off the percentage we already have rather than by measuring: near either end
+ * of the bar it hangs from that end instead of from the middle, which is what keeps it on the
+ * page. The mark is `aria-hidden` throughout — every comment is also in the list below, where it
+ * can be read and removed, so nothing here is only reachable by hovering.
+ */
+function markTemplate(c: FestComment, x: number): TemplateResult {
+  const side = x < 18 ? 'at-start' : x > 82 ? 'at-end' : ''
+  return html`<span class="fest-mark ${side}" aria-hidden="true" style=${`left:${x}%`}>
+    ${faceTemplate(c, 16)}
+    <span class="fest-peek">
+      <span class="fest-peek-by">${c.name} <span class="fest-when">${stampOf(c)}</span></span>
+      <span class="fest-peek-text">${c.text}</span>
+    </span>
+  </span>`
 }
 
 /**
@@ -186,8 +211,7 @@ function laneTemplate(track: FestTrack, p: FestPosition, said: FestComment[]): T
     </p>
     <div class="fest-lane-bar">
       <div class="fest-lane-fill" style=${`width:${filled}%`}></div>
-      ${said.map(c => html`<span class="fest-mark" aria-hidden="true" style=${`left:${at(c)}%`}
-        title=${`${c.name}: ${c.text}`}></span>`)}
+      ${said.map(c => markTemplate(c, at(c)))}
       ${isNow ? html`
         <span class="fest-playhead" style=${`left:${filled}%`}></span>
         <button class="fest-add" style=${`left:${filled}%`} title="Skriv herfra"
@@ -233,9 +257,9 @@ const comingTemplate = (f: FestView, p: FestPosition) => {
   const over = p.state === 'slut' || p.state === 'aflyst'
   return html`<section class="fest-coming">
     <h2>${over ? 'Kom' : 'Kommer'} (${f.coming.length})</h2>
-    <p>${f.coming.length === 0
-      ? (over ? 'Ingen nåede det.' : 'Ingen har sagt ja endnu.')
-      : f.coming.map((c, i) => html`${i > 0 ? ', ' : ''}${person(c.name)}`)}</p>
+    ${f.coming.length === 0
+      ? html`<p>${over ? 'Ingen nåede det.' : 'Ingen har sagt ja endnu.'}</p>`
+      : html`<ul class="fest-people">${f.coming.map(c => html`<li>${named(c, 26)}</li>`)}</ul>`}
     ${over ? nothing : html`<button class="pill ${f.you.coming ? 'on' : ''}" @click=${() => rsvp(!f.you.coming)}>
       ${f.you.coming ? 'Jeg kommer ikke alligevel' : 'Jeg kommer'}</button>`}
   </section>`
@@ -304,7 +328,7 @@ function body(): TemplateResult {
         <h1>${f.album.artist} – ${f.album.title}</h1>
         <p class="fest-facts">
           ${f.album.year ? html`${f.album.year} · ` : nothing}${formatLength(totalSeconds(f.tracks))}
-          · Vært: ${person(f.host.name)}
+          · Vært: ${named(f.host, 20)}
           ${f.thetaUrl ? html` · <a href=${f.thetaUrl} target="_blank" rel="noreferrer">Opslaget på Theta</a>` : nothing}
         </p>
         ${f.note ? html`<p class="fest-lead">${f.note}</p>` : nothing}

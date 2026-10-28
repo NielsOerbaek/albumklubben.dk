@@ -78,6 +78,15 @@ CREATE TABLE IF NOT EXISTS lyttefest_comments (
   created_at TEXT NOT NULL,
   deleted_at TEXT
 );
+-- Who the club is, as Theta knows them, written down at each login. Theta's App API has no way
+-- to look a member up by sub, and a lyttefest's own rows keep the name their author had when
+-- they wrote, so this is the one place an avatar comes from.
+CREATE TABLE IF NOT EXISTS members (
+  sub TEXT PRIMARY KEY,
+  name TEXT NOT NULL,
+  picture TEXT,
+  updated_at TEXT NOT NULL
+);
 CREATE INDEX IF NOT EXISTS lyttefester_album ON lyttefester(album_id);
 CREATE INDEX IF NOT EXISTS lyttefester_time ON lyttefester(starts_at);
 CREATE INDEX IF NOT EXISTS lyttefest_comments_fest ON lyttefest_comments(lyttefest_id, created_at);

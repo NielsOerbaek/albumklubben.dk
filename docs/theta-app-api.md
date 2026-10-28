@@ -63,6 +63,17 @@ listen, så rækkefølgen bærer det, og `pinned` i `BoardPost` er altid falsk.
 
 `viaApp` siger, hvilken app et opslag er skrevet igennem, og om det var appens egen bot.
 
+## Ansigter
+
+`picture` på en forfatter er den samme avatar, som OIDC'ens `userinfo` (`/oidc/me`) giver under
+`profile`-scopet. Det står i udbyderens `claims_supported`: `sub`, `name`, `picture`, `email`,
+`email_verified`, `verifications`, `groups`, `sid`, `auth_time`, `iss`.
+
+App API'et kan **ikke** slå et medlem op på en `sub`, så der er ingen vej til et ansigt på en,
+der ikke lige har skrevet noget. Derfor skriver `server/members.ts` navn og billede ned ved hvert
+logind, og lyttefesten henter ansigterne derfra. Et medlem, der ikke har været logget ind siden,
+har ingen avatar her, og så tegnes deres initialer i stedet.
+
 ## Skrivninger
 
     POST /api/v1/app/posts
@@ -114,3 +125,6 @@ Der er ingen titel på en notifikation, og den peger kun via `href`.
 - Formen på `dk.theta.card.action` (`readAction` i `server/lyttefest.ts`, samme sted-princip).
 - Om `comments` har `depth` på en kommentar. Opslaget, der blev kigget på, havde ingen
   kommentarer, så listen kom tom tilbage. `depth` læses som 0, hvis den ikke er der.
+- Om en avatar-URL kan hentes af browseren uden et logind på Theta. Den sættes direkte i et
+  `img` (uden cookies og uden referrer), og kan den ikke hentes, står initialerne der allerede.
+  Det er altså synligt, hvis den ikke kan, og intet går i stykker imens.

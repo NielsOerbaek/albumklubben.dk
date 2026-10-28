@@ -20,6 +20,10 @@
 .fest-facts { margin: 0; font-size: 14px; color: var(--muted-on-black); }
 .fest-facts a, .fest-find a { color: inherit; }
 .fest-person { color: #fff; }
+.fest-named { display: inline-flex; align-items: center; gap: 6px; min-width: 0; color: #fff; }
+
+/* Who is coming: the faces, with the names beside them. */
+.fest-people { list-style: none; display: flex; flex-wrap: wrap; gap: 8px 18px; margin: 0; padding: 0; font-size: 14px; }
 
 .fest-countdown { margin: 32px 0 4px; font-size: clamp(20px, 3.4vw, 28px); font-weight: 300; }
 .fest-lead { margin: 8px 0 0; color: var(--muted-on-black); }
@@ -49,19 +53,44 @@
 .fest-lane-head .len { margin-left: auto; color: var(--muted-on-black); font-variant-numeric: tabular-nums; }
 
 .fest-lane-bar { position: relative; height: 6px; background: #262626; }
+/* The peek card hangs above the bar, so nothing along the way may clip it. */
+.fest-lanes, .fest-lane, .fest-lane-bar { overflow: visible; }
 .fest-lane.is-now .fest-lane-bar { height: 10px; }
 .fest-lane-fill { height: 100%; background: #4a4a4a; }
 .fest-lane.is-now .fest-lane-fill { background: var(--card-bg, #fff); transition: width 1s linear; }
 
-/* A comment, where it was written. */
+/* A comment, where it was written: the writer's face on the bar. */
 .fest-mark {
   position: absolute; top: 50%;
-  width: 7px; height: 7px;
-  margin: -3.5px 0 0 -3.5px;
-  border-radius: 50%;
-  background: #fff;
+  margin: -8px 0 0 -8px;
+  line-height: 0;
+  z-index: 1;
 }
-.fest-mark:hover { background: var(--card-bg, #fff); transform: scale(1.4); }
+.fest-mark .face { box-shadow: 0 0 0 1px #000; transition: transform 0.12s; }
+.fest-mark:hover { z-index: 6; }
+.fest-mark:hover .face { transform: scale(1.35); box-shadow: 0 0 0 1px #fff; }
+
+/* What they said, under the pointer. Near either end of the bar the card hangs from that end
+   rather than from its middle, which is what keeps it on the page without measuring anything. */
+.fest-peek {
+  position: absolute; bottom: calc(100% + 8px); left: 50%;
+  transform: translateX(-50%);
+  width: max-content; max-width: min(260px, 60vw);
+  padding: 7px 9px;
+  border: 1px solid #fff;
+  background: #000;
+  font-size: 12px; line-height: 1.35;
+  text-align: left;
+  opacity: 0; visibility: hidden;
+  transition: opacity 0.12s;
+}
+.fest-mark.at-start .fest-peek { left: -8px; transform: none; }
+.fest-mark.at-end .fest-peek { left: auto; right: -8px; transform: none; }
+.fest-mark:hover .fest-peek { opacity: 1; visibility: visible; }
+/* What was said is the point of the card, so it is the bright part; who and when is the label. */
+.fest-peek-by { display: block; font-size: 11px; color: var(--muted-on-black); }
+.fest-peek-by .fest-when { margin-left: 4px; }
+.fest-peek-text { display: block; margin-top: 3px; color: #fff; overflow-wrap: anywhere; }
 
 .fest-playhead {
   position: absolute; top: -3px; bottom: -3px;
@@ -113,6 +142,11 @@
 
 .fest-coming .pill, .fest-host .pill { margin-top: 10px; }
 .fest-host { display: flex; gap: 8px; }
+
+@media (hover: none) {
+  /* Nothing to hover with: a card that opens on a tap would stay open. The list below says it all. */
+  .fest-peek { display: none; }
+}
 
 @media (max-width: 700px) {
   .fest { padding-top: 20px; }

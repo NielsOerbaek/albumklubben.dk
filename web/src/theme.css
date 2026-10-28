@@ -36,7 +36,28 @@ button { font: inherit; color: inherit; }
 .topbar-link:hover { text-decoration: underline; text-underline-offset: 4px; }
 .topbar-right { margin-left: auto; display: flex; gap: 6px; }
 
-/* Pills are the only rounded elements. */
+/* A member's face: the avatar Theta has for them, with their initials underneath it, which is
+   what shows when there is no picture and when the one there is will not load. */
+.face {
+  position: relative;
+  flex: none;
+  display: inline-flex; align-items: center; justify-content: center;
+  width: var(--face-size, 24px); height: var(--face-size, 24px);
+  border-radius: 50%;
+  overflow: hidden;
+  background: hsl(var(--face-hue, 0) 36% 26%);
+  color: #fff;
+  font-size: calc(var(--face-size, 24px) * 0.42);
+  font-weight: 400;
+  line-height: 1;
+  letter-spacing: 0;
+  text-transform: uppercase;
+  user-select: none;
+  vertical-align: -0.28em;
+}
+.face-img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+
+/* Pills and faces are the only rounded elements. */
 .pill { height: 22px; padding: 0 9px; border-radius: 999px; border: 1px solid #fff; background: transparent;
   color: #fff; font-size: 12px; font-weight: 300; text-transform: uppercase; cursor: pointer;
   display: inline-flex; align-items: center; text-decoration: none; }

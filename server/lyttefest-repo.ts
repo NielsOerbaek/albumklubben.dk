@@ -1,6 +1,6 @@
 import type { Database } from './db.ts'
 import type { BoardPost } from '../shared/board.ts'
-import type { FestAlbum, FestComment, FestPerson, FestSummary, FestTrack } from '../shared/lyttefest.ts'
+import type { FestAlbum, FestCommentRow, FestPerson, FestSummary, FestTrack } from '../shared/lyttefest.ts'
 
 type BoardPostFest = NonNullable<BoardPost['lyttefest']>
 
@@ -41,7 +41,7 @@ const toFest = (r: Row): FestRow => ({
   createdAt: r.created_at,
 })
 
-const toComment = (r: Row): FestComment => ({
+const toComment = (r: Row): FestCommentRow => ({
   id: r.id, sub: r.sub, name: r.name, trackIndex: r.track_index, text: r.text, createdAt: r.created_at,
 })
 
@@ -140,14 +140,14 @@ export const isComing = (db: Database, id: number, sub: string): boolean =>
 // --- What was said ------------------------------------------------------------------------------
 
 export function addComment(db: Database, id: number, who: FestPerson, text: string,
-  trackIndex: number | null, now = new Date().toISOString()): FestComment {
+  trackIndex: number | null, now = new Date().toISOString()): FestCommentRow {
   const insert = db.prepare(`INSERT INTO lyttefest_comments
     (lyttefest_id, sub, name, track_index, text, created_at) VALUES (?, ?, ?, ?, ?, ?)`)
     .run(id, who.sub, who.name, trackIndex, text, now)
   return { id: Number(insert.lastInsertRowid), sub: who.sub, name: who.name, trackIndex, text, createdAt: now }
 }
 
-export const listComments = (db: Database, id: number): FestComment[] =>
+export const listComments = (db: Database, id: number): FestCommentRow[] =>
   (db.prepare(`SELECT * FROM lyttefest_comments WHERE lyttefest_id = ? AND deleted_at IS NULL
     ORDER BY created_at, id`).all(id) as Row[]).map(toComment)
 

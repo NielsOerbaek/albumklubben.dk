@@ -8,7 +8,8 @@
 <body class="lyttefest">
 <!-- Dev only (not in the Vite build inputs): the lyttefest page on a made-up lyttefest, so the
      three states can be looked at without Theta. ?tid=foer|nu|slut picks one. The people are
-     invented, like the seed data. -->
+     invented, like the seed data, and so are their faces: a drawn-on-the-spot avatar for some,
+     none for others, so both what Theta gives us and the initials we fall back to are on screen. -->
 <div id="app"></div>
 <script type="module">
 const state = new URLSearchParams(location.search).get('tid') ?? 'nu'
@@ -25,23 +26,35 @@ const startsAt = new Date(Date.now() + (offsets[state] ?? 0)).toISOString()
 // album: 10 s in is track 1, 190 s in is track 2, and so on.
 const at = (secondsIn) => new Date(Date.parse(startsAt) + secondsIn * 1000).toISOString()
 
+/** A stand-in for a Theta avatar: a flat colour with a ring, as a data URI. */
+const avatar = (hue) => 'data:image/svg+xml;utf8,' + encodeURIComponent(
+  `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 40 40"><rect width="40" height="40" fill="hsl(${hue} 45% 40%)"/>`
+  + `<circle cx="20" cy="15" r="7" fill="hsl(${hue} 55% 76%)"/>`
+  + `<circle cx="20" cy="40" r="14" fill="hsl(${hue} 55% 76%)"/></svg>`)
+// Medlem 2 has no picture on Theta, so their initials stand in everywhere a face is drawn.
+const P = { s1: avatar(28), s2: null, me: avatar(205) }
+
 const FEST = {
   id: 1,
   album: { id: 1, artist: 'Kate Bush', title: 'The Kick Inside', year: 1978, coverUrl: null,
     cardColor: '#be7472', meetingNumber: 13 },
-  host: { sub: 's1', name: 'Medlem 1' },
+  host: { sub: 's1', name: 'Medlem 1', picture: P.s1 },
   startsAt,
   note: 'Jeg har hørt den hundrede gange, men aldrig sammen med nogen.',
   tracks: TRACKS,
   cancelled: false,
   thetaUrl: 'https://stage.theta.dk/p/1',
-  coming: [{ sub: 's1', name: 'Medlem 1' }, { sub: 's2', name: 'Medlem 2' }, { sub: 'me', name: 'Dig' }],
+  coming: [{ sub: 's1', name: 'Medlem 1', picture: P.s1 }, { sub: 's2', name: 'Medlem 2', picture: P.s2 },
+    { sub: 'me', name: 'Dig', picture: P.me }],
+  // 12 s and 176 s in are the two ends of track 1, where the peek card has to hang from the end
+  // rather than from its middle; 95 s and 99 s are close enough that the two faces overlap.
   comments: [
-    { id: 1, sub: 's2', name: 'Medlem 2', trackIndex: null, text: 'Klar her!', createdAt: at(-30) },
-    { id: 2, sub: 's2', name: 'Medlem 2', trackIndex: 0, text: 'Den åbning!', createdAt: at(12) },
-    { id: 3, sub: 'me', name: 'Dig', trackIndex: 0, text: 'Enig. Hvad er det for en lyd?', createdAt: at(95) },
-    { id: 4, sub: 's1', name: 'Medlem 1', trackIndex: 0, text: 'Vent på omkvædet', createdAt: at(166) },
-    { id: 5, sub: 's1', name: 'Medlem 1', trackIndex: 1, text: 'Saxofonen kommer nu', createdAt: at(184) },
+    { id: 1, sub: 's2', name: 'Medlem 2', trackIndex: null, text: 'Klar her!', createdAt: at(-30), picture: P.s2 },
+    { id: 2, sub: 's2', name: 'Medlem 2', trackIndex: 0, text: 'Den åbning!', createdAt: at(12), picture: P.s2 },
+    { id: 3, sub: 'me', name: 'Dig', trackIndex: 0, text: 'Enig. Hvad er det for en lyd?', createdAt: at(95), picture: P.me },
+    { id: 4, sub: 's1', name: 'Medlem 1', trackIndex: 0, text: 'Den kommer igen til sidst, hør efter', createdAt: at(99), picture: P.s1 },
+    { id: 5, sub: 's1', name: 'Medlem 1', trackIndex: 0, text: 'Vent på omkvædet', createdAt: at(176), picture: P.s1 },
+    { id: 6, sub: 's1', name: 'Medlem 1', trackIndex: 1, text: 'Saxofonen kommer nu', createdAt: at(184), picture: P.s1 },
   ],
   you: { sub: 'me', coming: true, host: false },
   now: new Date().toISOString(),
@@ -54,15 +67,16 @@ window.fetch = async (url, init) => {
   if (path === '/api/lyttefest/1') return json({ ...FEST, now: new Date().toISOString() })
   if (path.endsWith('/rsvp')) {
     const coming = JSON.parse(init.body).coming
-    FEST.coming = coming ? [...FEST.coming, { sub: 'me', name: 'Dig' }] : FEST.coming.filter((c) => c.sub !== 'me')
+    FEST.coming = coming ? [...FEST.coming, { sub: 'me', name: 'Dig', picture: P.me }] : FEST.coming.filter((c) => c.sub !== 'me')
     return json({ coming: FEST.coming })
   }
   if (path.endsWith('/comments')) {
-    const made = { id: Date.now(), sub: 'me', name: 'Dig', trackIndex: 1, text: JSON.parse(init.body).text, createdAt: new Date().toISOString() }
+    const made = { id: Date.now(), sub: 'me', name: 'Dig', trackIndex: 1, picture: P.me,
+      text: JSON.parse(init.body).text, createdAt: new Date().toISOString() }
     FEST.comments.push(made)
     return json(made)
   }
-  if (path.startsWith('/api/board')) return json({ items: [], nextCursor: null })
+  if (path.startsWith('/api/board')) return json({ items: [], nextCursor: null, groupUrl: null })
   return real(url, init)
 }
 // The page reads which lyttefest it is from the address.
