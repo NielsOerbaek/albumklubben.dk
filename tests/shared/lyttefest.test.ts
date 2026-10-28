@@ -117,8 +117,23 @@ describe('i ord', () => {
 
   it('links to the album wherever people listen, without asking anyone\'s API', () => {
     const links = searchLinks('Kate Bush', 'The Kick Inside')
-    expect(links.map(l => l.name)).toEqual(['Spotify', 'Apple Music', 'YouTube Music', 'Tidal'])
-    expect(links[0].url).toContain('Kate%20Bush%20The%20Kick%20Inside')
+    // Qobuz first: it is the one the club uses. The library last: it is not a streaming service.
+    expect(links.map(l => l.name)).toEqual(
+      ['Qobuz', 'Spotify', 'Apple Music', 'YouTube Music', 'Tidal', 'Biblioteket'])
+    expect(links[0].url).toBe('https://www.qobuz.com/dk-en/search?q=Kate%20Bush%20The%20Kick%20Inside')
     expect(links.every(l => l.url.startsWith('https://'))).toBe(true)
+    expect(links.every(l => l.url.includes('Kate') && l.url.includes('Kick'))).toBe(true)
+  })
+
+  it('writes the library search the way bibliotek.dk writes it itself', () => {
+    const library = searchLinks('Savage Rose', 'Black Angel').at(-1)!
+    expect(library.url).toBe('https://bibliotek.dk/find/simpel?q.all=Savage+Rose+Black+Angel')
+  })
+
+  it('escapes an artist that would otherwise break the address', () => {
+    const [qobuz, , , , , library] = searchLinks('AC/DC', 'Back in Black')
+    expect(qobuz.url).toContain('AC%2FDC')
+    expect(library.url).toContain('AC%2FDC')
+    expect(() => new URL(library.url)).not.toThrow()
   })
 })

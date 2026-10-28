@@ -134,14 +134,26 @@ export function trackIndexAt(tracks: FestTrack[], startsAt: number, at: number):
   return p.track ? p.track.number - 1 : null
 }
 
-/** Plain search links, so each member can find the album wherever they listen. */
+/**
+ * Plain search links, so each member can find the album wherever they listen — and, last, on the
+ * shelf: bibliotek.dk is every Danish library at once, which is free and often has the old ones
+ * no service carries.
+ *
+ * Qobuz is first because it is the one the club uses. Its search lives under a country and a
+ * language (`dk-en`: Qobuz has no Danish of its own, the way it has no Finnish), not at a plain
+ * `/search`, which is a 404.
+ */
 export function searchLinks(artist: string, title: string): { name: string; url: string }[] {
   const q = encodeURIComponent(`${artist} ${title}`)
+  // bibliotek.dk's own form writes spaces as plus signs; `URLSearchParams` does the same.
+  const library = new URLSearchParams({ 'q.all': `${artist} ${title}` })
   return [
+    { name: 'Qobuz', url: `https://www.qobuz.com/dk-en/search?q=${q}` },
     { name: 'Spotify', url: `https://open.spotify.com/search/${q}` },
     { name: 'Apple Music', url: `https://music.apple.com/dk/search?term=${q}` },
     { name: 'YouTube Music', url: `https://music.youtube.com/search?q=${q}` },
     { name: 'Tidal', url: `https://tidal.com/search?q=${q}` },
+    { name: 'Biblioteket', url: `https://bibliotek.dk/find/simpel?${library}` },
   ]
 }
 
