@@ -62,6 +62,13 @@ interface Record {
   t: number
 }
 
+/**
+ * The record you land on flipping `dir` from `front`, in a crate of `n`. It stops at either end:
+ * at the back of the crate there is nothing more to flip, and at the front you are already there.
+ */
+export const nextFront = (front: number, dir: 1 | -1, n: number): number =>
+  Math.min(n - 1, Math.max(0, front + dir))
+
 export interface CrateView {
   spec: CrateSpec
   /** World position of the crate's centre, at the height of the records. */
@@ -69,7 +76,7 @@ export interface CrateView {
   /** Index of the record you are looking at. */
   front: number
   frontAlbum(): Album | null
-  /** Flips one record forward (1) or back (-1), wrapping round at the ends. */
+  /** Flips one record forward (1) or back (-1). Stops at either end rather than coming round. */
   flip(dir: 1 | -1): void
   update(dt: number): void
 }
@@ -126,7 +133,11 @@ function buildCrate(spec: CrateSpec, baseY: number, crateWood: THREE.Texture): {
     frontAlbum: () => records[view.front]?.album ?? null,
     flip(dir) {
       if (n < 2) return
-      view.front = (view.front + dir + n) % n
+      const next = nextFront(view.front, dir, n)
+      // The last record is the last one: flipping on at the end does nothing, the way it does
+      // in a real crate. Coming round to the front again only makes you lose your place.
+      if (next === view.front) return
+      view.front = next
       records.forEach((rec, j) => {
         const to = j < view.front ? FWD_TILT : -BACK_TILT
         if (to === rec.to) return
@@ -135,7 +146,9 @@ function buildCrate(spec: CrateSpec, baseY: number, crateWood: THREE.Texture): {
         rec.t = 0
       })
       showCovers()
-      coverTexture(records[(view.front + 1) % n].album)?.catch(() => {}) // warm the next one
+      // Warm the one you are heading for, where there is one.
+      const coming = records[view.front + dir]
+      if (coming) coverTexture(coming.album)?.catch(() => {})
     },
     update(dt) {
       for (const rec of records) {
