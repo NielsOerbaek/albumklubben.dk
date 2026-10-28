@@ -2,6 +2,9 @@ node_modules
 dist
 var
 .env
+# ...and the copies taken before a secret is changed, which hold the old one.
+.env.*
+!.env.example
 .superpowers/
 data
 
