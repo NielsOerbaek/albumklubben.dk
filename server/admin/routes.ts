@@ -14,6 +14,7 @@ import { parseAlbumForm, parseMeetingForm, parsePosterForm } from './forms.ts'
 import {
   albumForm, meetingPage, meetingsPage, newMeetingPage, notFoundPage, posterForm,
 } from './views.ts'
+import { LINEUP_KEYS } from '../../shared/gender.ts'
 
 type Fields = Record<string, string>
 type Kind = 'cover' | 'image' | 'video'
@@ -133,7 +134,8 @@ export function registerAdmin(app: FastifyInstance, { db, uploadDir, adminPasswo
   // Albums
   const albumValues = (a: Album): Fields => ({
     artist: a.artist, title: a.title, year: a.year?.toString() ?? '', origin: a.origin, country: a.country,
-    lat: a.lat?.toString() ?? '', lng: a.lng?.toString() ?? '', genre: a.genre, gender: a.gender,
+    lat: a.lat?.toString() ?? '', lng: a.lng?.toString() ?? '', genre: a.genre,
+    ...Object.fromEntries(LINEUP_KEYS.map((k) => [`lineup_${k}`, String(a.lineup[k])])),
     status: a.status, picked_by_name: a.pickedByName ?? '', picked_by_workplace: a.pickedByWorkplace ?? '',
     story: a.story ?? '', card_color: a.cardColor, tracklist: a.tracklist ?? '',
   })

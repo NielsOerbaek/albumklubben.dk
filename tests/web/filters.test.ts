@@ -2,9 +2,10 @@ import { expect, test } from 'vitest'
 import { matches, recentLabel, recentYears } from '../../web/src/arkiv/filters.ts'
 import type { Entry } from '../../web/src/arkiv/main.ts'
 import type { Album } from '../../shared/types.ts'
+import { EMPTY_LINEUP } from '../../shared/gender.ts'
 
 const base: Album = { id: 1, meetingId: 1, position: 0, artist: 'A', title: 'T', year: 2001, origin: '',
-  country: 'USA', lat: null, lng: null, genre: '', gender: '', status: '', pickedByName: null,
+  country: 'USA', lat: null, lng: null, genre: '', lineup: EMPTY_LINEUP, status: '', pickedByName: null,
   pickedByWorkplace: null, story: null, cardColor: '#000000', coverUrl: null, tracklist: null }
 const entry = (patch: Partial<Album>): Entry => ({ album: { ...base, ...patch }, n: 1 })
 

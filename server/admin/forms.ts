@@ -1,4 +1,5 @@
 import type { AlbumInput, MeetingInput, PosterInput } from '../../shared/types.ts'
+import type { Lineup, LineupKey } from '../../shared/gender.ts'
 
 type Fields = Record<string, string>
 export type Parsed<T> = { ok: true; value: T } | { ok: false; errors: Record<string, string> }
@@ -45,11 +46,20 @@ export function parseAlbumForm(f: Fields): Parsed<Omit<AlbumInput, 'coverPath'>>
   return done(errors, {
     artist: text(f, 'artist'), title: text(f, 'title'), year,
     origin: text(f, 'origin'), country: text(f, 'country'), lat, lng,
-    genre: text(f, 'genre'), gender: text(f, 'gender'), status: text(f, 'status'),
+    genre: text(f, 'genre'), lineup: lineupFrom(f), status: text(f, 'status'),
     pickedByName: optional(f, 'picked_by_name'), pickedByWorkplace: optional(f, 'picked_by_workplace'),
     story: optional(f, 'story'), cardColor: text(f, 'card_color').toLowerCase(),
     tracklist: optional({ tracklist: (f.tracklist ?? '').replace(/\r\n?/g, '\n') }, 'tracklist'),
   })
+}
+
+/** Who is in the band: four counts, where anything blank or not a number is nobody. */
+function lineupFrom(f: Fields): Lineup {
+  const one = (name: LineupKey) => {
+    const n = Number((f[`lineup_${name}`] ?? '').trim())
+    return Number.isFinite(n) && n > 0 ? Math.floor(n) : 0
+  }
+  return { men: one('men'), women: one('women'), nonbinary: one('nonbinary'), other: one('other') }
 }
 
 /** Caption and about are the text fields; image and video come from the upload. */

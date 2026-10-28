@@ -3,10 +3,11 @@ import { expect, test } from 'vitest'
 import { render } from 'lit-html'
 import { albumDialog, albumTemplate, inkFor } from '../../web/src/album.ts'
 import type { Album } from '../../shared/types.ts'
+import { toLineup } from '../../shared/gender.ts'
 
 const drukqs: Album = { id: 1, meetingId: 1, position: 0, artist: 'Aphex Twin', title: 'Drukqs', year: 2001,
   origin: 'Storbritannien, Cornwall', country: 'Storbritannien', lat: null, lng: null, genre: 'IDM',
-  gender: 'Mand', status: 'Aktiv', pickedByName: 'Medlem 9', pickedByWorkplace: 'Arbejdsplads B',
+  lineup: toLineup({ men: 1 }), status: 'Aktiv', pickedByName: 'Medlem 9', pickedByWorkplace: 'Arbejdsplads B',
   story: 'En stemme.', cardColor: '#262d66', coverUrl: null, tracklist: null }
 
 const draw = (t: unknown) => { const d = document.createElement('div'); render(t as never, d); return d }
@@ -22,7 +23,7 @@ test('inkFor picks readable text', () => {
 test('the panel shows the card content', () => {
   const t = text(view(drukqs))
   for (const s of ['MØDE 6', 'Aphex Twin, Drukqs (2001)', 'Kunstners oprindelsesland: Storbritannien, Cornwall',
-    'Genre: IDM', 'Køn: Mand', 'Status: Aktiv', 'Nostalgialbum: Valgt af Medlem 9, Arbejdsplads B', 'En stemme.']) {
+    'Genre: IDM', 'Køn: 1 mand', 'Status: Aktiv', 'Nostalgialbum: Valgt af Medlem 9, Arbejdsplads B', 'En stemme.']) {
     expect(t).toContain(s)
   }
 })

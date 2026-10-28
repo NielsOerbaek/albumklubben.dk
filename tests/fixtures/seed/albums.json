@@ -14,12 +14,17 @@
       "approximate": true
     },
     "genre": "Alternativ pop og Singer-Songwriter",
-    "gender": "Kvinde",
     "status": "I live, født d. 2. maj 1985",
     "pickedBy": null,
     "story": null,
     "cardColor": "#302c21",
-    "cover": "covers/01-lily-allen-west-end-girl.png"
+    "cover": "covers/01-lily-allen-west-end-girl.png",
+    "lineup": {
+      "men": 0,
+      "women": 1,
+      "nonbinary": 0,
+      "other": 0
+    }
   },
   {
     "id": "01-lo-borges-og-milton-nascimento-clube-da-esquina",
@@ -36,12 +41,17 @@
       "approximate": true
     },
     "genre": "MPB (Música popular brasileira) og Jazz",
-    "gender": "Mand",
     "status": "Døde d. 2. nov 2025 (73 år)",
     "pickedBy": null,
     "story": null,
     "cardColor": "#455e4c",
-    "cover": "covers/01-lo-borges-og-milton-nascimento-clube-da-esquina.png"
+    "cover": "covers/01-lo-borges-og-milton-nascimento-clube-da-esquina.png",
+    "lineup": {
+      "men": 1,
+      "women": 0,
+      "nonbinary": 0,
+      "other": 0
+    }
   },
   {
     "id": "02-rosalia-lux",
@@ -58,12 +68,17 @@
       "approximate": true
     },
     "genre": "Art-pop og Eksperimentel pop",
-    "gender": "Kvinde",
     "status": "I live, født d. 25. sept 1992",
     "pickedBy": null,
     "story": null,
     "cardColor": "#798ea2",
-    "cover": "covers/02-rosalia-lux.png"
+    "cover": "covers/02-rosalia-lux.png",
+    "lineup": {
+      "men": 0,
+      "women": 1,
+      "nonbinary": 0,
+      "other": 0
+    }
   },
   {
     "id": "02-marvin-gaye-what-s-going-on",
@@ -80,12 +95,17 @@
       "approximate": true
     },
     "genre": "Soul",
-    "gender": "Mand",
     "status": "Døde d. 1. april 1984 (44 år)",
     "pickedBy": null,
     "story": null,
     "cardColor": "#28392c",
-    "cover": "covers/02-marvin-gaye-what-s-going-on.png"
+    "cover": "covers/02-marvin-gaye-what-s-going-on.png",
+    "lineup": {
+      "men": 1,
+      "women": 0,
+      "nonbinary": 0,
+      "other": 0
+    }
   },
   {
     "id": "03-princess-nokia-girls",
@@ -102,12 +122,17 @@
       "approximate": true
     },
     "genre": "Hip Hop & Rap",
-    "gender": "Kvinde",
     "status": "I live, født 14. jun 1992",
     "pickedBy": null,
     "story": null,
     "cardColor": "#561314",
-    "cover": "covers/03-princess-nokia-girls.png"
+    "cover": "covers/03-princess-nokia-girls.png",
+    "lineup": {
+      "men": 0,
+      "women": 1,
+      "nonbinary": 0,
+      "other": 0
+    }
   },
   {
     "id": "03-destiny-s-child-destiny-fulfilled",
@@ -124,12 +149,17 @@
       "approximate": true
     },
     "genre": "R&B",
-    "gender": "Tre kvinder",
     "status": "I live, K. Rowland og Beyoncé født i 1981, Michelle Williams født i 1979 (Ikke aktiv som gruppe længere)",
     "pickedBy": null,
     "story": null,
     "cardColor": "#8c4c37",
-    "cover": "covers/03-destiny-s-child-destiny-fulfilled.png"
+    "cover": "covers/03-destiny-s-child-destiny-fulfilled.png",
+    "lineup": {
+      "men": 0,
+      "women": 3,
+      "nonbinary": 0,
+      "other": 0
+    }
   },
   {
     "id": "04-bts-wings",
@@ -146,12 +176,17 @@
       "approximate": true
     },
     "genre": "K-Pop",
-    "gender": "Syv mænd",
     "status": "I live, medlemmerne er født i 1992, 1993, 1994, 1995 og 1997",
     "pickedBy": null,
     "story": null,
     "cardColor": "#000000",
-    "cover": "covers/04-bts-wings.png"
+    "cover": "covers/04-bts-wings.png",
+    "lineup": {
+      "men": 7,
+      "women": 0,
+      "nonbinary": 0,
+      "other": 0
+    }
   },
   {
     "id": "04-patina-uvejr",
@@ -168,12 +203,17 @@
       "approximate": true
     },
     "genre": "Pop",
-    "gender": "Tre mænd",
     "status": "I live, medlemmerne er født i 1992, 1995 og 1996",
     "pickedBy": null,
     "story": null,
     "cardColor": "#be7472",
-    "cover": "covers/04-patina-uvejr.png"
+    "cover": "covers/04-patina-uvejr.png",
+    "lineup": {
+      "men": 3,
+      "women": 0,
+      "nonbinary": 0,
+      "other": 0
+    }
   },
   {
     "id": "05-ethel-cain-preacher-s-daughter",
@@ -190,12 +230,17 @@
       "approximate": true
     },
     "genre": "Americana og Roots Rock",
-    "gender": "Transkvinde",
     "status": "I live, født d. 24. mar 1998",
     "pickedBy": null,
     "story": null,
     "cardColor": "#663118",
-    "cover": "covers/05-ethel-cain-preacher-s-daughter.png"
+    "cover": "covers/05-ethel-cain-preacher-s-daughter.png",
+    "lineup": {
+      "men": 0,
+      "women": 1,
+      "nonbinary": 0,
+      "other": 0
+    }
   },
   {
     "id": "05-turnstile-never-enough",
@@ -212,12 +257,17 @@
       "approximate": true
     },
     "genre": "Punk",
-    "gender": "4 mænd og 1 kvinde",
     "status": "I live, medlemmerne er født i 1990",
     "pickedBy": null,
     "story": null,
     "cardColor": "#a8c6e0",
-    "cover": "covers/05-turnstile-never-enough.png"
+    "cover": "covers/05-turnstile-never-enough.png",
+    "lineup": {
+      "men": 4,
+      "women": 1,
+      "nonbinary": 0,
+      "other": 0
+    }
   },
   {
     "id": "06-everything-but-the-girl-temperamental",
@@ -234,12 +284,17 @@
       "approximate": true
     },
     "genre": "House og Soul",
-    "gender": "1 mand og 1 kvinde",
     "status": "I live, begge er født i 1962",
     "pickedBy": null,
     "story": null,
     "cardColor": "#908ea5",
-    "cover": "covers/06-everything-but-the-girl-temperamental.png"
+    "cover": "covers/06-everything-but-the-girl-temperamental.png",
+    "lineup": {
+      "men": 1,
+      "women": 1,
+      "nonbinary": 0,
+      "other": 0
+    }
   },
   {
     "id": "06-aphex-twin-drukqs",
@@ -256,12 +311,17 @@
       "approximate": true
     },
     "genre": "Drill n Bass og IDM",
-    "gender": "Mand",
     "status": "I live, født d. 18. aug 1971",
     "pickedBy": null,
     "story": null,
     "cardColor": "#bb692d",
-    "cover": "covers/06-aphex-twin-drukqs.png"
+    "cover": "covers/06-aphex-twin-drukqs.png",
+    "lineup": {
+      "men": 1,
+      "women": 0,
+      "nonbinary": 0,
+      "other": 0
+    }
   },
   {
     "id": "07-fontaines-d-c-skinty-fia",
@@ -278,12 +338,17 @@
       "approximate": true
     },
     "genre": "Indierock og Postpunk",
-    "gender": "5 mænd",
     "status": "I live, medlemmerne er født i 1993, 1994 og 1995",
     "pickedBy": null,
     "story": null,
     "cardColor": "#b9120a",
-    "cover": "covers/07-fontaines-d-c-skinty-fia.png"
+    "cover": "covers/07-fontaines-d-c-skinty-fia.png",
+    "lineup": {
+      "men": 5,
+      "women": 0,
+      "nonbinary": 0,
+      "other": 0
+    }
   },
   {
     "id": "07-bjorn-svin-kan-tropisk",
@@ -300,12 +365,17 @@
       "approximate": true
     },
     "genre": "Elektronisk og Techno",
-    "gender": "Mand",
     "status": "I live, født d. 2. aug 1975",
     "pickedBy": null,
     "story": null,
     "cardColor": "#fe3ebe",
-    "cover": "covers/07-bjorn-svin-kan-tropisk.png"
+    "cover": "covers/07-bjorn-svin-kan-tropisk.png",
+    "lineup": {
+      "men": 1,
+      "women": 0,
+      "nonbinary": 0,
+      "other": 0
+    }
   },
   {
     "id": "08-lykke-li-wounded-rhymes",
@@ -322,12 +392,17 @@
       "approximate": true
     },
     "genre": "Indiepop",
-    "gender": "Kvinde",
     "status": "I live, født d. 18. mar 1986",
     "pickedBy": null,
     "story": null,
     "cardColor": "#7b7373",
-    "cover": "covers/08-lykke-li-wounded-rhymes.png"
+    "cover": "covers/08-lykke-li-wounded-rhymes.png",
+    "lineup": {
+      "men": 0,
+      "women": 1,
+      "nonbinary": 0,
+      "other": 0
+    }
   },
   {
     "id": "08-jane-remover-revengeseekerz",
@@ -344,12 +419,17 @@
       "approximate": true
     },
     "genre": "Digicore og EDM",
-    "gender": "Nonbinær",
     "status": "I live, født d. 26. sept 2003",
     "pickedBy": null,
     "story": null,
     "cardColor": "#000000",
-    "cover": "covers/08-jane-remover-revengeseekerz.png"
+    "cover": "covers/08-jane-remover-revengeseekerz.png",
+    "lineup": {
+      "men": 0,
+      "women": 0,
+      "nonbinary": 1,
+      "other": 0
+    }
   },
   {
     "id": "09-tanner-adell-buckle-bunny-deluxe",
@@ -366,12 +446,17 @@
       "approximate": true
     },
     "genre": "Country",
-    "gender": "Kvinde",
     "status": "I live, født d. 27. jun 1996",
     "pickedBy": null,
     "story": null,
     "cardColor": "#8f8f51",
-    "cover": "covers/09-tanner-adell-buckle-bunny-deluxe.png"
+    "cover": "covers/09-tanner-adell-buckle-bunny-deluxe.png",
+    "lineup": {
+      "men": 0,
+      "women": 1,
+      "nonbinary": 0,
+      "other": 0
+    }
   },
   {
     "id": "09-tool-lateralus",
@@ -388,12 +473,17 @@
       "approximate": true
     },
     "genre": "Progressiv metal og progressiv rock",
-    "gender": "4 mænd",
     "status": "I live, medlemmerne er født i 1961, 1964, 1965 og 1971",
     "pickedBy": null,
     "story": null,
     "cardColor": "#6a3142",
-    "cover": "covers/09-tool-lateralus.png"
+    "cover": "covers/09-tool-lateralus.png",
+    "lineup": {
+      "men": 4,
+      "women": 0,
+      "nonbinary": 0,
+      "other": 0
+    }
   },
   {
     "id": "10-vulvatorious-vulvatorious",
@@ -410,12 +500,17 @@
       "approximate": true
     },
     "genre": "Black metal",
-    "gender": "3 kvinder, 2 mænd",
     "status": "I live, forsangeren er født d. 16. feb 1990",
     "pickedBy": null,
     "story": null,
     "cardColor": "#000000",
-    "cover": "covers/10-vulvatorious-vulvatorious.png"
+    "cover": "covers/10-vulvatorious-vulvatorious.png",
+    "lineup": {
+      "men": 2,
+      "women": 3,
+      "nonbinary": 0,
+      "other": 0
+    }
   },
   {
     "id": "10-smag-pa-dig-selv-this-is-why-we-lost",
@@ -432,12 +527,17 @@
       "approximate": true
     },
     "genre": "Akustisk techno og Jazz",
-    "gender": "3 mænd",
     "status": "I live, medlemmerne er født i 1996 og 1997",
     "pickedBy": null,
     "story": null,
     "cardColor": "#8f8385",
-    "cover": "covers/10-smag-pa-dig-selv-this-is-why-we-lost.png"
+    "cover": "covers/10-smag-pa-dig-selv-this-is-why-we-lost.png",
+    "lineup": {
+      "men": 3,
+      "women": 0,
+      "nonbinary": 0,
+      "other": 0
+    }
   },
   {
     "id": "11-robert-plant-now-and-zen",
@@ -454,12 +554,17 @@
       "approximate": true
     },
     "genre": "Klassisk rock",
-    "gender": "Mand",
     "status": "I live, født d. 20. aug 1948",
     "pickedBy": null,
     "story": null,
     "cardColor": "#5762a7",
-    "cover": "covers/11-robert-plant-now-and-zen.png"
+    "cover": "covers/11-robert-plant-now-and-zen.png",
+    "lineup": {
+      "men": 1,
+      "women": 0,
+      "nonbinary": 0,
+      "other": 0
+    }
   },
   {
     "id": "11-vishal-shekhar-om-shanti-om",
@@ -476,12 +581,17 @@
       "approximate": true
     },
     "genre": "Bollywood og EDM",
-    "gender": "2 mænd",
     "status": "I live, født d. 28. jun 1973 og 29. nov 1978",
     "pickedBy": null,
     "story": null,
     "cardColor": "#7e4880",
-    "cover": "covers/11-vishal-shekhar-om-shanti-om.png"
+    "cover": "covers/11-vishal-shekhar-om-shanti-om.png",
+    "lineup": {
+      "men": 2,
+      "women": 0,
+      "nonbinary": 0,
+      "other": 0
+    }
   },
   {
     "id": "12-drake-views",
@@ -498,12 +608,17 @@
       "approximate": true
     },
     "genre": "Hip Hop og rap",
-    "gender": "Mand",
     "status": "I live, født d. 24. okt 1986",
     "pickedBy": null,
     "story": null,
     "cardColor": "#4c5b63",
-    "cover": "covers/12-drake-views.png"
+    "cover": "covers/12-drake-views.png",
+    "lineup": {
+      "men": 1,
+      "women": 0,
+      "nonbinary": 0,
+      "other": 0
+    }
   },
   {
     "id": "12-kendrick-lamar-to-pimp-a-butterfly",
@@ -520,12 +635,17 @@
       "approximate": true
     },
     "genre": "Hip Hop og rap",
-    "gender": "Mand",
     "status": "I live, født d. 17. jun 1987",
     "pickedBy": null,
     "story": null,
     "cardColor": "#ad9fa0",
-    "cover": "covers/12-kendrick-lamar-to-pimp-a-butterfly.png"
+    "cover": "covers/12-kendrick-lamar-to-pimp-a-butterfly.png",
+    "lineup": {
+      "men": 1,
+      "women": 0,
+      "nonbinary": 0,
+      "other": 0
+    }
   },
   {
     "id": "13-kate-bush-the-kick-inside",
@@ -542,12 +662,17 @@
       "approximate": true
     },
     "genre": "Progressiv rock og progressiv pop",
-    "gender": "Kvinde",
     "status": "I live, født d. 30. jul 1958",
     "pickedBy": null,
     "story": null,
     "cardColor": "#efa04a",
-    "cover": "covers/13-kate-bush-the-kick-inside.png"
+    "cover": "covers/13-kate-bush-the-kick-inside.png",
+    "lineup": {
+      "men": 0,
+      "women": 1,
+      "nonbinary": 0,
+      "other": 0
+    }
   },
   {
     "id": "13-charli-xcx-wuthering-heights",
@@ -564,12 +689,17 @@
       "approximate": true
     },
     "genre": "Symfonisk pop og soundtrack",
-    "gender": "Kvinde",
     "status": "I live, født d. 2. aug 1992",
     "pickedBy": null,
     "story": null,
     "cardColor": "#5e4a3f",
-    "cover": "covers/13-charli-xcx-wuthering-heights.png"
+    "cover": "covers/13-charli-xcx-wuthering-heights.png",
+    "lineup": {
+      "men": 0,
+      "women": 1,
+      "nonbinary": 0,
+      "other": 0
+    }
   },
   {
     "id": "14-blink-182-enema-of-the-state",
@@ -586,7 +716,6 @@
       "approximate": true
     },
     "genre": "Pop-punk og Skatepunk",
-    "gender": "3 mænd",
     "status": "I live, medlemmerne er født i 1972 og 1975",
     "pickedBy": {
       "name": "Medlem 11",
@@ -594,7 +723,13 @@
     },
     "story": "Jeg hedder Medlem 11, og det her album har fulgt mig længe.",
     "cardColor": "#254158",
-    "cover": "covers/14-blink-182-enema-of-the-state.png"
+    "cover": "covers/14-blink-182-enema-of-the-state.png",
+    "lineup": {
+      "men": 3,
+      "women": 0,
+      "nonbinary": 0,
+      "other": 0
+    }
   },
   {
     "id": "14-gorillaz-demon-days",
@@ -611,7 +746,6 @@
       "approximate": true
     },
     "genre": "Indie rock og Pop",
-    "gender": "3 mænd eller 2 mænd, 1 kvinde og 1 nonbinær (det virtuelle band)",
     "status": "I live, medlemmerne er født i 1968 og 1970",
     "pickedBy": {
       "name": "Medlem 5",
@@ -619,7 +753,13 @@
     },
     "story": "Jeg hedder Medlem 5, og det her album har fulgt mig længe.",
     "cardColor": "#001721",
-    "cover": "covers/14-gorillaz-demon-days.png"
+    "cover": "covers/14-gorillaz-demon-days.png",
+    "lineup": {
+      "men": 2,
+      "women": 1,
+      "nonbinary": 1,
+      "other": 0
+    }
   },
   {
     "id": "15-alphabeat-alphabeat",
@@ -636,7 +776,6 @@
       "approximate": true
     },
     "genre": "Pop",
-    "gender": "5 mænd og 1 kvinde",
     "status": "I live, medlemmerne er født i midten af 1980'erne (Ikke aktiv som gruppe længere)",
     "pickedBy": {
       "name": "Medlem 1",
@@ -644,7 +783,13 @@
     },
     "story": "Jeg hedder Medlem 1, og det her album har fulgt mig længe.",
     "cardColor": "#f53487",
-    "cover": "covers/15-alphabeat-alphabeat.png"
+    "cover": "covers/15-alphabeat-alphabeat.png",
+    "lineup": {
+      "men": 5,
+      "women": 1,
+      "nonbinary": 0,
+      "other": 0
+    }
   },
   {
     "id": "15-mika-life-in-cartoon-motion",
@@ -661,7 +806,6 @@
       "approximate": true
     },
     "genre": "Pop",
-    "gender": "Mand",
     "status": "I live, født d. 18. aug 1983",
     "pickedBy": {
       "name": "Medlem 8",
@@ -669,7 +813,13 @@
     },
     "story": "Jeg hedder Medlem 8, og det her album har fulgt mig længe.",
     "cardColor": "#c9a172",
-    "cover": "covers/15-mika-life-in-cartoon-motion.png"
+    "cover": "covers/15-mika-life-in-cartoon-motion.png",
+    "lineup": {
+      "men": 1,
+      "women": 0,
+      "nonbinary": 0,
+      "other": 0
+    }
   },
   {
     "id": "16-mew-frengers",
@@ -686,7 +836,6 @@
       "approximate": true
     },
     "genre": "Indierock",
-    "gender": "4 mænd",
     "status": "I live, medlemmerne er født i 1976 og 1979 (Ikke aktiv som gruppe længere)",
     "pickedBy": {
       "name": "Medlem 7",
@@ -694,7 +843,13 @@
     },
     "story": "Jeg hedder Medlem 7, og det her album har fulgt mig længe.",
     "cardColor": "#ccc1b4",
-    "cover": "covers/16-mew-frengers.png"
+    "cover": "covers/16-mew-frengers.png",
+    "lineup": {
+      "men": 4,
+      "women": 0,
+      "nonbinary": 0,
+      "other": 0
+    }
   },
   {
     "id": "16-eminem-the-marshall-mathers-lp",
@@ -711,7 +866,6 @@
       "approximate": true
     },
     "genre": "Hip Hop & Rap",
-    "gender": "Mand",
     "status": "I live, født d. 17. okt 1972",
     "pickedBy": {
       "name": "Medlem 4",
@@ -719,7 +873,13 @@
     },
     "story": "Jeg hedder Medlem 4, og det her album har fulgt mig længe.",
     "cardColor": "#6d6c6a",
-    "cover": "covers/16-eminem-the-marshall-mathers-lp.png"
+    "cover": "covers/16-eminem-the-marshall-mathers-lp.png",
+    "lineup": {
+      "men": 1,
+      "women": 0,
+      "nonbinary": 0,
+      "other": 0
+    }
   },
   {
     "id": "17-charli-xcx-music-fashion-film",
@@ -736,12 +896,17 @@
       "approximate": true
     },
     "genre": "Indierock",
-    "gender": "Kvinde",
     "status": "I live, født d. 2. aug 1992",
     "pickedBy": null,
     "story": null,
     "cardColor": "#8f8f8f",
-    "cover": "covers/17-charli-xcx-music-fashion-film.png"
+    "cover": "covers/17-charli-xcx-music-fashion-film.png",
+    "lineup": {
+      "men": 0,
+      "women": 1,
+      "nonbinary": 0,
+      "other": 0
+    }
   },
   {
     "id": "17-zara-larsson-midnight-sun",
@@ -758,12 +923,17 @@
       "approximate": true
     },
     "genre": "Pop",
-    "gender": "Kvinde",
     "status": "I live, født d. 16. dec 1997",
     "pickedBy": null,
     "story": null,
     "cardColor": "#0493ca",
-    "cover": "covers/17-zara-larsson-midnight-sun.png"
+    "cover": "covers/17-zara-larsson-midnight-sun.png",
+    "lineup": {
+      "men": 0,
+      "women": 1,
+      "nonbinary": 0,
+      "other": 0
+    }
   },
   {
     "id": "18-troye-sivan-something-to-give-each-other",
@@ -780,12 +950,17 @@
       "approximate": true
     },
     "genre": "Pop og synth-pop",
-    "gender": "Mand",
     "status": "I live, født d. 5. jun 1995",
     "pickedBy": null,
     "story": null,
     "cardColor": "#402a23",
-    "cover": "covers/18-troye-sivan-something-to-give-each-other.png"
+    "cover": "covers/18-troye-sivan-something-to-give-each-other.png",
+    "lineup": {
+      "men": 1,
+      "women": 0,
+      "nonbinary": 0,
+      "other": 0
+    }
   },
   {
     "id": "18-horse-lords-demand-to-be-taken-to-heaven-alive",
@@ -802,12 +977,17 @@
       "approximate": true
     },
     "genre": "Eksperimenterende rock",
-    "gender": "4 mænd",
     "status": "I live, medlemmerne er født i starten af 1990'erne",
     "pickedBy": null,
     "story": null,
     "cardColor": "#01729b",
-    "cover": "covers/18-horse-lords-demand-to-be-taken-to-heaven-alive.png"
+    "cover": "covers/18-horse-lords-demand-to-be-taken-to-heaven-alive.png",
+    "lineup": {
+      "men": 4,
+      "women": 0,
+      "nonbinary": 0,
+      "other": 0
+    }
   },
   {
     "id": "19-beck-midnite-vultures",
@@ -824,7 +1004,6 @@
       "approximate": true
     },
     "genre": "Funk rock og alternativ rock",
-    "gender": "Mand",
     "status": "I live, født d. 8. jul 1970",
     "pickedBy": {
       "name": "Medlem 2",
@@ -832,7 +1011,13 @@
     },
     "story": "Jeg hedder Medlem 2, og det her album har fulgt mig længe.",
     "cardColor": "#58b945",
-    "cover": "covers/19-beck-midnite-vultures.png"
+    "cover": "covers/19-beck-midnite-vultures.png",
+    "lineup": {
+      "men": 1,
+      "women": 0,
+      "nonbinary": 0,
+      "other": 0
+    }
   },
   {
     "id": "19-psyched-up-janis-hi-fi-low-life",
@@ -849,7 +1034,6 @@
       "approximate": true
     },
     "genre": "Punk rock og Shoegaze",
-    "gender": "4 mænd",
     "status": "I live, forsangeren er født d. 24. jul 1973 (Ikke aktiv som gruppe længere)",
     "pickedBy": {
       "name": "Medlem 3",
@@ -857,7 +1041,13 @@
     },
     "story": "Jeg hedder Medlem 3, og det her album har fulgt mig længe.",
     "cardColor": "#8f827b",
-    "cover": "covers/19-psyched-up-janis-hi-fi-low-life.png"
+    "cover": "covers/19-psyched-up-janis-hi-fi-low-life.png",
+    "lineup": {
+      "men": 4,
+      "women": 0,
+      "nonbinary": 0,
+      "other": 0
+    }
   },
   {
     "id": "20-sufjan-stevens-sufjan-stevens-invites-you-to-come-on-feel-the-illinoise",
@@ -874,12 +1064,17 @@
       "approximate": true
     },
     "genre": "Folk, Indie og Indie rock",
-    "gender": "Mand",
     "status": "I live, født d. 1. jul 1975",
     "pickedBy": null,
     "story": null,
     "cardColor": "#2a536b",
-    "cover": "covers/20-sufjan-stevens-sufjan-stevens-invites-you-to-come-on-feel-the-illinoise.png"
+    "cover": "covers/20-sufjan-stevens-sufjan-stevens-invites-you-to-come-on-feel-the-illinoise.png",
+    "lineup": {
+      "men": 1,
+      "women": 0,
+      "nonbinary": 0,
+      "other": 0
+    }
   },
   {
     "id": "20-bjork-vespertine",
@@ -896,12 +1091,17 @@
       "approximate": true
     },
     "genre": "Art pop og Electronica",
-    "gender": "Kvinde",
     "status": "I live, født d. 21. nov 1965",
     "pickedBy": null,
     "story": null,
     "cardColor": "#a9a9a9",
-    "cover": "covers/20-bjork-vespertine.png"
+    "cover": "covers/20-bjork-vespertine.png",
+    "lineup": {
+      "men": 0,
+      "women": 1,
+      "nonbinary": 0,
+      "other": 0
+    }
   },
   {
     "id": "21-jeff-buckley-grace",
@@ -918,7 +1118,6 @@
       "approximate": true
     },
     "genre": "Alternativ rock",
-    "gender": "Mand",
     "status": "Døde d. 29. maj 1997 (30 år)",
     "pickedBy": {
       "name": "Medlem 9",
@@ -926,7 +1125,13 @@
     },
     "story": "Jeg hedder Medlem 9, og det her album har fulgt mig længe.",
     "cardColor": "#262d66",
-    "cover": "covers/21-jeff-buckley-grace.png"
+    "cover": "covers/21-jeff-buckley-grace.png",
+    "lineup": {
+      "men": 1,
+      "women": 0,
+      "nonbinary": 0,
+      "other": 0
+    }
   },
   {
     "id": "21-one-direction-four",
@@ -943,7 +1148,6 @@
       "approximate": true
     },
     "genre": "Pop og pop rock",
-    "gender": "5 mænd",
     "status": "Medlemmerne er født i 1991, 1993 og 1994. Liam Payne døde d. 16. oktober 2024. (Ikke aktiv som gruppe længere)",
     "pickedBy": {
       "name": "Medlem 10",
@@ -951,7 +1155,13 @@
     },
     "story": "Jeg hedder Medlem 10, og det her album har fulgt mig længe.",
     "cardColor": "#8d5537",
-    "cover": "covers/21-one-direction-four.png"
+    "cover": "covers/21-one-direction-four.png",
+    "lineup": {
+      "men": 5,
+      "women": 0,
+      "nonbinary": 0,
+      "other": 0
+    }
   },
   {
     "id": "22-spleen-united-neanderthal",
@@ -968,7 +1178,6 @@
       "approximate": true
     },
     "genre": "Elektronisk rock og elektropop",
-    "gender": "5 mænd",
     "status": "I live, medlemmerne er født i 1982",
     "pickedBy": {
       "name": "Medlem 6",
@@ -976,7 +1185,13 @@
     },
     "story": null,
     "cardColor": "#ee2a30",
-    "cover": "covers/22-spleen-united-neanderthal.png"
+    "cover": "covers/22-spleen-united-neanderthal.png",
+    "lineup": {
+      "men": 5,
+      "women": 0,
+      "nonbinary": 0,
+      "other": 0
+    }
   },
   {
     "id": "22-savage-rose-black-angel",
@@ -993,11 +1208,16 @@
       "approximate": true
     },
     "genre": "Rock, Soul og Blues",
-    "gender": "Kvinde",
     "status": "I live, forsangeren er født d. 29. august 1948",
     "pickedBy": null,
     "story": null,
     "cardColor": "#669bc1",
-    "cover": "covers/22-savage-rose-black-angel.png"
+    "cover": "covers/22-savage-rose-black-angel.png",
+    "lineup": {
+      "men": 0,
+      "women": 1,
+      "nonbinary": 0,
+      "other": 0
+    }
   }
 ]

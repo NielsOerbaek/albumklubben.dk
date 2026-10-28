@@ -1,6 +1,7 @@
 import { html, nothing, type TemplateResult } from 'lit-html'
 import { parseTracklist } from '../../shared/tracklist.ts'
 import type { Album } from '../../shared/types.ts'
+import { describeLineup } from '../../shared/gender.ts'
 import './album.css'
 
 export function inkFor(hex: string): '#121316' | '#ffffff' {
@@ -27,7 +28,7 @@ function infoTemplate(album: Album, meetingNumber: number): TemplateResult {
     <div class="album-facts">
       ${row('Kunstners oprindelsesland:', origin)}
       ${row('Genre:', album.genre)}
-      ${row('Køn:', album.gender)}
+      ${row('Køn:', describeLineup(album.lineup))}
       ${row('Status:', album.status)}
     </div>
     ${pick ? html`<p class="album-pick"><strong>Nostalgialbum:</strong> ${pick}</p>` : nothing}

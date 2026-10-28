@@ -9,10 +9,11 @@ import {
 } from '../../server/repo.ts'
 import type { AlbumInput } from '../../shared/types.ts'
 import { tmp } from '../tmp.ts'
+import { EMPTY_LINEUP } from '../../shared/gender.ts'
 
 const album = (over: Partial<AlbumInput> = {}): AlbumInput => ({
   artist: 'A', title: 'T', year: 1999, origin: 'Danmark', country: 'DK', lat: 55, lng: 12,
-  genre: 'Pop', gender: 'Mand', status: 'Aktiv', pickedByName: null, pickedByWorkplace: null,
+  genre: 'Pop', lineup: EMPTY_LINEUP, status: 'Aktiv', pickedByName: null, pickedByWorkplace: null,
   story: null, cardColor: '#ff0000', coverPath: null, tracklist: null, ...over,
 })
 const meeting = (number = 1) => ({ number, date: '2024-01-01', time: '12:00', theme: null })

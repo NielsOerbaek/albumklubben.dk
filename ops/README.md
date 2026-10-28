@@ -59,6 +59,19 @@ Tjekker commit'en ud i live-worktree'et, `pnpm install --frozen-lockfile`, bygge
 Fejler install, build eller tjekket, ruller scriptet tilbage: forrige commit tjekkes ud igen, `node_modules` geninstalleres, den gamle `dist/` bevares (tjenesten genstartes kun hvis den var skiftet) og scriptet afslutter med fejl. Siden er altsaa uaendret efter en mislykket deploy.
 Status: `systemctl --user status albumklubben`, log: `journalctl --user -u albumklubben`.
 
+## Engangsmigreringer
+
+Skemaændringer, der skal køres i hånden, ligger i `tools/`. De køres med tjenesten stoppet og
+efter en backup (`systemctl --user start albumklubben-backup.service`):
+
+    systemctl --user stop albumklubben
+    node --experimental-strip-types tools/<migrering>.ts ~/albumklubben-data/albumklubben.sqlite
+    cd ~/albumklubben && git pull && ops/deploy.sh main    # deploy starter tjenesten igen
+
+- `gender-to-lineup.ts` (kørt 2026-10-28): læste den gamle fritekst-linje `gender` om til
+  `lineup_men/_women/_nonbinary/_other` og droppede `gender`. Kørt på databasen, på
+  `data/albums.json` og på `tests/fixtures/`. `--dry` viser, hvad den ville gøre.
+
 ## Backup
 
 Koeres hver nat. Manuelt: `systemctl --user start albumklubben-backup.service`.

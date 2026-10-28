@@ -3,10 +3,11 @@ import { render } from 'lit-html'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { createLyttefestPanel } from '../../web/src/lyttefest/start.ts'
 import type { Album } from '../../shared/types.ts'
+import { EMPTY_LINEUP } from '../../shared/gender.ts'
 
 const album = (tracklist: string | null): Album => ({
   id: 7, meetingId: 1, position: 1, artist: 'Kate Bush', title: 'The Kick Inside', year: 1978,
-  origin: '', country: '', lat: null, lng: null, genre: '', gender: '', status: '',
+  origin: '', country: '', lat: null, lng: null, genre: '', lineup: EMPTY_LINEUP, status: '',
   pickedByName: null, pickedByWorkplace: null, story: null, cardColor: '#fe3ebe',
   coverUrl: null, tracklist,
 })

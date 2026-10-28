@@ -1,6 +1,8 @@
+import type { Lineup } from './gender.ts'
+
 export interface Album { id: number; meetingId: number; position: number; artist: string; title: string;
   year: number | null; origin: string; country: string; lat: number | null; lng: number | null;
-  genre: string; gender: string; status: string; pickedByName: string | null;
+  genre: string; lineup: Lineup; status: string; pickedByName: string | null;
   pickedByWorkplace: string | null; story: string | null; cardColor: string; coverUrl: string | null;
   tracklist: string | null }
 export interface Poster { id: number; meetingId: number; position: number; imageUrl: string;

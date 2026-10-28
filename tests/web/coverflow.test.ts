@@ -4,6 +4,7 @@ import { render } from 'lit-html'
 import { CENTRE_GAP, SIDE_STEP, coverPose, coverflowView } from '../../web/src/arkiv/coverflow.ts'
 import type { Actions, Entry, State } from '../../web/src/arkiv/main.ts'
 import type { Album } from '../../shared/types.ts'
+import { EMPTY_LINEUP } from '../../shared/gender.ts'
 
 test('the centre cover faces you', () => {
   expect(coverPose(0)).toEqual({ x: 0, z: 0, rotateY: 0, zIndex: 1000 })
@@ -28,7 +29,7 @@ test('zIndex falls with the distance from the centre', () => {
 
 const album = (i: number, patch: Partial<Album> = {}): Album => ({ id: i + 1, meetingId: 1, position: i % 2,
   artist: `Kunstner ${i + 1}`, title: `Album ${i + 1}`, year: 1990 + i, origin: '', country: 'USA', lat: null,
-  lng: null, genre: 'Rock', gender: 'Mand', status: 'Aktiv', pickedByName: null, pickedByWorkplace: null,
+  lng: null, genre: 'Rock', lineup: EMPTY_LINEUP, status: 'Aktiv', pickedByName: null, pickedByWorkplace: null,
   story: null, cardColor: '#262d66', coverUrl: `/uploads/covers/${i + 1}.jpg`, tracklist: null, ...patch })
 
 /** 44 albums, two per meeting, oldest first; every fifth one (ids 5, 10, ... 40) is Danish. */

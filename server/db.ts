@@ -23,7 +23,12 @@ CREATE TABLE IF NOT EXISTS albums (
   lat REAL,
   lng REAL,
   genre TEXT NOT NULL DEFAULT '',
-  gender TEXT NOT NULL DEFAULT '',
+  -- Who is in the band, counted. It was one free-text line until 2026-10-28; see
+  -- tools/gender-to-lineup.ts, which is what turned the lines into these.
+  lineup_men INTEGER NOT NULL DEFAULT 0,
+  lineup_women INTEGER NOT NULL DEFAULT 0,
+  lineup_nonbinary INTEGER NOT NULL DEFAULT 0,
+  lineup_other INTEGER NOT NULL DEFAULT 0,
   status TEXT NOT NULL DEFAULT '',
   picked_by_name TEXT,
   picked_by_workplace TEXT,
@@ -94,9 +99,9 @@ CREATE INDEX IF NOT EXISTS albums_meeting ON albums(meeting_id, position);
 CREATE INDEX IF NOT EXISTS posters_meeting ON posters(meeting_id, position);
 `
 
-function addColumn(db: Database, table: string, column: string) {
+function addColumn(db: Database, table: string, column: string, type = 'TEXT') {
   const cols = db.prepare(`PRAGMA table_info(${table})`).all() as { name: string }[]
-  if (!cols.some(c => c.name === column)) db.exec(`ALTER TABLE ${table} ADD COLUMN ${column} TEXT`)
+  if (!cols.some(c => c.name === column)) db.exec(`ALTER TABLE ${table} ADD COLUMN ${column} ${type}`)
 }
 
 export function openDb(path: string): Database {
@@ -105,5 +110,10 @@ export function openDb(path: string): Database {
   db.exec(SCHEMA)
   addColumn(db, 'albums', 'tracklist')
   addColumn(db, 'posters', 'about')
+  // A database made before the lineup columns gets them empty; filling them from the old free-text
+  // `gender` line, and dropping that line, is tools/gender-to-lineup.ts, run by hand once.
+  for (const k of ['men', 'women', 'nonbinary', 'other']) {
+    addColumn(db, 'albums', `lineup_${k}`, 'INTEGER NOT NULL DEFAULT 0')
+  }
   return db
 }

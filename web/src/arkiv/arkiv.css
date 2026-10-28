@@ -48,6 +48,17 @@ body.arkiv { min-height: 100vh; }
 .tile:hover { opacity: .85; }
 .tile:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
 .tile img { width: 100%; height: 100%; object-fit: cover; display: block; }
+/* How many of a column's kind are on this album — only on Køn, and only when it is more than one. */
+.tile-badge {
+  position: absolute; right: 2px; bottom: 2px;
+  min-width: 15px; height: 15px; padding: 0 3px;
+  border-radius: 999px;
+  background: rgb(0 0 0 / 0.78);
+  box-shadow: 0 0 0 1px rgb(255 255 255 / 0.35);
+  color: #fff;
+  font-size: 10px; line-height: 15px; font-variant-numeric: tabular-nums;
+  text-align: center;
+}
 .columns { padding: 32px var(--pad) 16px; overflow-x: auto; }
 .colrow { display: flex; gap: 18px; align-items: flex-end; }
 .column { flex: 0 0 auto; display: flex; flex-direction: column; gap: 6px; align-items: center; }

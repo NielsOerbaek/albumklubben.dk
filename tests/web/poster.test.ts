@@ -3,9 +3,10 @@ import { expect, test } from 'vitest'
 import { render } from 'lit-html'
 import { posterDialog } from '../../web/src/poster.ts'
 import type { Album, Meeting, Poster } from '../../shared/types.ts'
+import { EMPTY_LINEUP } from '../../shared/gender.ts'
 
 const album = (id: number, artist: string, title: string, coverUrl: string | null): Album => ({ id, meetingId: 4,
-  position: id, artist, title, year: 2001, origin: '', country: '', lat: null, lng: null, genre: '', gender: '',
+  position: id, artist, title, year: 2001, origin: '', country: '', lat: null, lng: null, genre: '', lineup: EMPTY_LINEUP,
   status: '', pickedByName: null, pickedByWorkplace: null, story: null, cardColor: '#262d66', coverUrl, tracklist: null })
 
 const poster: Poster = { id: 9, meetingId: 4, position: 0, imageUrl: '/uploads/posters/9.png', caption: 'Forårsmødet',

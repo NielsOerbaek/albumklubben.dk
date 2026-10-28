@@ -10,7 +10,8 @@ type Row = Record<string, any>
 const toAlbum = (r: Row): Album => ({
   id: r.id, meetingId: r.meeting_id, position: r.position, artist: r.artist, title: r.title,
   year: r.year, origin: r.origin, country: r.country, lat: r.lat, lng: r.lng, genre: r.genre,
-  gender: r.gender, status: r.status, pickedByName: r.picked_by_name,
+  lineup: { men: r.lineup_men, women: r.lineup_women, nonbinary: r.lineup_nonbinary, other: r.lineup_other },
+  status: r.status, pickedByName: r.picked_by_name,
   pickedByWorkplace: r.picked_by_workplace, story: r.story, cardColor: r.card_color,
   coverUrl: url(r.cover_path), tracklist: r.tracklist,
 })
@@ -63,16 +64,19 @@ export function deleteMeeting(db: Database, id: number): string[] {
 }
 
 const ALBUM_COLS = `artist = ?, title = ?, year = ?, origin = ?, country = ?, lat = ?, lng = ?,
-  genre = ?, gender = ?, status = ?, picked_by_name = ?, picked_by_workplace = ?, story = ?,
+  genre = ?, lineup_men = ?, lineup_women = ?, lineup_nonbinary = ?, lineup_other = ?,
+  status = ?, picked_by_name = ?, picked_by_workplace = ?, story = ?,
   card_color = ?, cover_path = ?, tracklist = ?`
 const albumArgs = (i: AlbumInput) => [i.artist, i.title, i.year, i.origin, i.country, i.lat, i.lng,
-  i.genre, i.gender, i.status, i.pickedByName, i.pickedByWorkplace, i.story, i.cardColor, i.coverPath, i.tracklist]
+  i.genre, i.lineup.men, i.lineup.women, i.lineup.nonbinary, i.lineup.other,
+  i.status, i.pickedByName, i.pickedByWorkplace, i.story, i.cardColor, i.coverPath, i.tracklist]
 
 export function createAlbum(db: Database, meetingId: number, i: AlbumInput): number {
   const pos = nextPosition(db, 'albums', meetingId)
   const id = db.prepare(`INSERT INTO albums (meeting_id, position, artist, title, year, origin, country,
-    lat, lng, genre, gender, status, picked_by_name, picked_by_workplace, story, card_color, cover_path, tracklist)
-    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`)
+    lat, lng, genre, lineup_men, lineup_women, lineup_nonbinary, lineup_other,
+    status, picked_by_name, picked_by_workplace, story, card_color, cover_path, tracklist)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`)
     .run(meetingId, pos, ...albumArgs(i)).lastInsertRowid
   return Number(id)
 }

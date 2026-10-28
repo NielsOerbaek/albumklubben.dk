@@ -3,6 +3,7 @@ import { dirname, extname, join } from 'node:path'
 import type { Database } from './db.ts'
 import { createAlbum, createMeeting, createPoster, isEmpty, updateAlbum } from './repo.ts'
 import type { AlbumInput } from '../shared/types.ts'
+import { toLineup } from '../shared/gender.ts'
 
 const readJson = (dataDir: string, name: string) => JSON.parse(readFileSync(join(dataDir, name), 'utf8'))
 
@@ -29,7 +30,7 @@ export function seed(db: Database, dataDir: string, uploadDir: string) {
         const input: AlbumInput = {
           artist: a.artist, title: a.title, year: a.year ?? null, origin: a.origin ?? '',
           country: a.country ?? '', lat: a.location?.lat ?? null, lng: a.location?.lng ?? null,
-          genre: a.genre ?? '', gender: a.gender ?? '', status: a.status ?? '',
+          genre: a.genre ?? '', lineup: toLineup(a.lineup), status: a.status ?? '',
           pickedByName: a.pickedBy?.name ?? null, pickedByWorkplace: a.pickedBy?.workplace ?? null,
           story: a.story ?? null, cardColor: a.cardColor, coverPath: null,
           tracklist: tracklists.find(t => t.artist === a.artist && t.title === a.title)?.tracklist ?? null,

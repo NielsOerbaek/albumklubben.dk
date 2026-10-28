@@ -34,6 +34,10 @@ https://albumklubben.dk og er kun for medlemmer af klubbens gruppe på
 
 TypeScript køres direkte af Node (`--experimental-strip-types`), der er intet build-trin for serveren.
 
+Hvem der er i bandet står som fire tal på albummet (`lineup`: mænd, kvinder, nonbinære, andet),
+ikke som en fritekst-linje. Derfor har statistikken få søjler, et album med fire mænd bærer et
+lille 4, og et band med flere køn står i hver af deres søjler. Se [shared/gender.ts](shared/gender.ts).
+
 ## Data, som ikke er i git
 
 Klubbens rigtige data (`data/`: eksporten fra Figma-prototypen med covers, plakater,

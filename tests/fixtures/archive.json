@@ -19,13 +19,18 @@
           "lat": 51.507,
           "lng": -0.128,
           "genre": "Alternativ pop og Singer-Songwriter",
-          "gender": "Kvinde",
           "status": "I live, født d. 2. maj 1985",
           "pickedByName": null,
           "pickedByWorkplace": null,
           "story": null,
           "cardColor": "#302c21",
-          "coverUrl": "/uploads/covers/1.jpg"
+          "coverUrl": "/uploads/covers/1.jpg",
+          "lineup": {
+            "men": 0,
+            "women": 1,
+            "nonbinary": 0,
+            "other": 0
+          }
         },
         {
           "id": 2,
@@ -39,13 +44,18 @@
           "lat": -19.917,
           "lng": -43.934,
           "genre": "MPB (Música popular brasileira) og Jazz",
-          "gender": "Mand",
           "status": "Døde d. 2. nov 2025 (73 år)",
           "pickedByName": null,
           "pickedByWorkplace": null,
           "story": null,
           "cardColor": "#455e4c",
-          "coverUrl": "/uploads/covers/2.png"
+          "coverUrl": "/uploads/covers/2.png",
+          "lineup": {
+            "men": 1,
+            "women": 0,
+            "nonbinary": 0,
+            "other": 0
+          }
         }
       ],
       "posters": []
@@ -69,13 +79,18 @@
           "lat": 41.385,
           "lng": 2.173,
           "genre": "Art-pop og Eksperimentel pop",
-          "gender": "Kvinde",
           "status": "I live, født d. 25. sept 1992",
           "pickedByName": null,
           "pickedByWorkplace": null,
           "story": null,
           "cardColor": "#798ea2",
-          "coverUrl": "/uploads/covers/3.jpg"
+          "coverUrl": "/uploads/covers/3.jpg",
+          "lineup": {
+            "men": 0,
+            "women": 1,
+            "nonbinary": 0,
+            "other": 0
+          }
         },
         {
           "id": 4,
@@ -89,13 +104,18 @@
           "lat": 38.907,
           "lng": -77.037,
           "genre": "Soul",
-          "gender": "Mand",
           "status": "Døde d. 1. april 1984 (44 år)",
           "pickedByName": null,
           "pickedByWorkplace": null,
           "story": null,
           "cardColor": "#28392c",
-          "coverUrl": "/uploads/covers/4.jpg"
+          "coverUrl": "/uploads/covers/4.jpg",
+          "lineup": {
+            "men": 1,
+            "women": 0,
+            "nonbinary": 0,
+            "other": 0
+          }
         }
       ],
       "posters": [
@@ -128,13 +148,18 @@
           "lat": 40.794,
           "lng": -73.944,
           "genre": "Hip Hop & Rap",
-          "gender": "Kvinde",
           "status": "I live, født 14. jun 1992",
           "pickedByName": null,
           "pickedByWorkplace": null,
           "story": null,
           "cardColor": "#561314",
-          "coverUrl": "/uploads/covers/5.png"
+          "coverUrl": "/uploads/covers/5.png",
+          "lineup": {
+            "men": 0,
+            "women": 1,
+            "nonbinary": 0,
+            "other": 0
+          }
         },
         {
           "id": 6,
@@ -148,13 +173,18 @@
           "lat": 29.76,
           "lng": -95.37,
           "genre": "R&B",
-          "gender": "Tre kvinder",
           "status": "I live, K. Rowland og Beyoncé født i 1981, Michelle Williams født i 1979 (Ikke aktiv som gruppe længere)",
           "pickedByName": null,
           "pickedByWorkplace": null,
           "story": null,
           "cardColor": "#8c4c37",
-          "coverUrl": "/uploads/covers/6.jpg"
+          "coverUrl": "/uploads/covers/6.jpg",
+          "lineup": {
+            "men": 0,
+            "women": 3,
+            "nonbinary": 0,
+            "other": 0
+          }
         }
       ],
       "posters": []
@@ -178,13 +208,18 @@
           "lat": 37.567,
           "lng": 126.978,
           "genre": "K-Pop",
-          "gender": "Syv mænd",
           "status": "I live, medlemmerne er født i 1992, 1993, 1994, 1995 og 1997",
           "pickedByName": null,
           "pickedByWorkplace": null,
           "story": null,
           "cardColor": "#000000",
-          "coverUrl": "/uploads/covers/7.png"
+          "coverUrl": "/uploads/covers/7.png",
+          "lineup": {
+            "men": 7,
+            "women": 0,
+            "nonbinary": 0,
+            "other": 0
+          }
         },
         {
           "id": 8,
@@ -198,13 +233,18 @@
           "lat": 55.06,
           "lng": 10.607,
           "genre": "Pop",
-          "gender": "Tre mænd",
           "status": "I live, medlemmerne er født i 1992, 1995 og 1996",
           "pickedByName": null,
           "pickedByWorkplace": null,
           "story": null,
           "cardColor": "#be7472",
-          "coverUrl": "/uploads/covers/8.jpg"
+          "coverUrl": "/uploads/covers/8.jpg",
+          "lineup": {
+            "men": 3,
+            "women": 0,
+            "nonbinary": 0,
+            "other": 0
+          }
         }
       ],
       "posters": []
@@ -228,13 +268,18 @@
           "lat": 30.438,
           "lng": -84.281,
           "genre": "Americana og Roots Rock",
-          "gender": "Transkvinde",
           "status": "I live, født d. 24. mar 1998",
           "pickedByName": null,
           "pickedByWorkplace": null,
           "story": null,
           "cardColor": "#663118",
-          "coverUrl": "/uploads/covers/9.jpg"
+          "coverUrl": "/uploads/covers/9.jpg",
+          "lineup": {
+            "men": 0,
+            "women": 1,
+            "nonbinary": 0,
+            "other": 0
+          }
         },
         {
           "id": 10,
@@ -248,13 +293,18 @@
           "lat": 39.29,
           "lng": -76.612,
           "genre": "Punk",
-          "gender": "4 mænd og 1 kvinde",
           "status": "I live, medlemmerne er født i 1990",
           "pickedByName": null,
           "pickedByWorkplace": null,
           "story": null,
           "cardColor": "#a8c6e0",
-          "coverUrl": "/uploads/covers/10.jpg"
+          "coverUrl": "/uploads/covers/10.jpg",
+          "lineup": {
+            "men": 4,
+            "women": 1,
+            "nonbinary": 0,
+            "other": 0
+          }
         }
       ],
       "posters": []
@@ -278,13 +328,18 @@
           "lat": 53.745,
           "lng": -0.336,
           "genre": "House og Soul",
-          "gender": "1 mand og 1 kvinde",
           "status": "I live, begge er født i 1962",
           "pickedByName": null,
           "pickedByWorkplace": null,
           "story": null,
           "cardColor": "#908ea5",
-          "coverUrl": "/uploads/covers/11.png"
+          "coverUrl": "/uploads/covers/11.png",
+          "lineup": {
+            "men": 1,
+            "women": 1,
+            "nonbinary": 0,
+            "other": 0
+          }
         },
         {
           "id": 12,
@@ -298,13 +353,18 @@
           "lat": 52.668,
           "lng": -8.63,
           "genre": "Drill n Bass og IDM",
-          "gender": "Mand",
           "status": "I live, født d. 18. aug 1971",
           "pickedByName": null,
           "pickedByWorkplace": null,
           "story": null,
           "cardColor": "#bb692d",
-          "coverUrl": "/uploads/covers/12.jpg"
+          "coverUrl": "/uploads/covers/12.jpg",
+          "lineup": {
+            "men": 1,
+            "women": 0,
+            "nonbinary": 0,
+            "other": 0
+          }
         }
       ],
       "posters": []
@@ -328,13 +388,18 @@
           "lat": 53.35,
           "lng": -6.26,
           "genre": "Indierock og Postpunk",
-          "gender": "5 mænd",
           "status": "I live, medlemmerne er født i 1993, 1994 og 1995",
           "pickedByName": null,
           "pickedByWorkplace": null,
           "story": null,
           "cardColor": "#b9120a",
-          "coverUrl": "/uploads/covers/13.png"
+          "coverUrl": "/uploads/covers/13.png",
+          "lineup": {
+            "men": 5,
+            "women": 0,
+            "nonbinary": 0,
+            "other": 0
+          }
         },
         {
           "id": 14,
@@ -348,13 +413,18 @@
           "lat": 55.443,
           "lng": 11.79,
           "genre": "Elektronisk og Techno",
-          "gender": "Mand",
           "status": "I live, født d. 2. aug 1975",
           "pickedByName": null,
           "pickedByWorkplace": null,
           "story": null,
           "cardColor": "#fe3ebe",
-          "coverUrl": "/uploads/covers/14.jpg"
+          "coverUrl": "/uploads/covers/14.jpg",
+          "lineup": {
+            "men": 1,
+            "women": 0,
+            "nonbinary": 0,
+            "other": 0
+          }
         }
       ],
       "posters": []
@@ -378,13 +448,18 @@
           "lat": 55.43,
           "lng": 13.82,
           "genre": "Indiepop",
-          "gender": "Kvinde",
           "status": "I live, født d. 18. mar 1986",
           "pickedByName": null,
           "pickedByWorkplace": null,
           "story": null,
           "cardColor": "#7b7373",
-          "coverUrl": "/uploads/covers/15.jpg"
+          "coverUrl": "/uploads/covers/15.jpg",
+          "lineup": {
+            "men": 0,
+            "women": 1,
+            "nonbinary": 0,
+            "other": 0
+          }
         },
         {
           "id": 16,
@@ -398,13 +473,18 @@
           "lat": 40.736,
           "lng": -74.172,
           "genre": "Digicore og EDM",
-          "gender": "Nonbinær",
           "status": "I live, født d. 26. sept 2003",
           "pickedByName": null,
           "pickedByWorkplace": null,
           "story": null,
           "cardColor": "#000000",
-          "coverUrl": "/uploads/covers/16.jpg"
+          "coverUrl": "/uploads/covers/16.jpg",
+          "lineup": {
+            "men": 0,
+            "women": 0,
+            "nonbinary": 1,
+            "other": 0
+          }
         }
       ],
       "posters": []
@@ -428,13 +508,18 @@
           "lat": 38.04,
           "lng": -84.503,
           "genre": "Country",
-          "gender": "Kvinde",
           "status": "I live, født d. 27. jun 1996",
           "pickedByName": null,
           "pickedByWorkplace": null,
           "story": null,
           "cardColor": "#8f8f51",
-          "coverUrl": "/uploads/covers/17.png"
+          "coverUrl": "/uploads/covers/17.png",
+          "lineup": {
+            "men": 0,
+            "women": 1,
+            "nonbinary": 0,
+            "other": 0
+          }
         },
         {
           "id": 18,
@@ -448,13 +533,18 @@
           "lat": 34.052,
           "lng": -118.244,
           "genre": "Progressiv metal og progressiv rock",
-          "gender": "4 mænd",
           "status": "I live, medlemmerne er født i 1961, 1964, 1965 og 1971",
           "pickedByName": null,
           "pickedByWorkplace": null,
           "story": null,
           "cardColor": "#6a3142",
-          "coverUrl": "/uploads/covers/18.jpg"
+          "coverUrl": "/uploads/covers/18.jpg",
+          "lineup": {
+            "men": 4,
+            "women": 0,
+            "nonbinary": 0,
+            "other": 0
+          }
         }
       ],
       "posters": []
@@ -478,13 +568,18 @@
           "lat": 54.83,
           "lng": 11.135,
           "genre": "Black metal",
-          "gender": "3 kvinder, 2 mænd",
           "status": "I live, forsangeren er født d. 16. feb 1990",
           "pickedByName": null,
           "pickedByWorkplace": null,
           "story": null,
           "cardColor": "#000000",
-          "coverUrl": "/uploads/covers/19.jpg"
+          "coverUrl": "/uploads/covers/19.jpg",
+          "lineup": {
+            "men": 2,
+            "women": 3,
+            "nonbinary": 0,
+            "other": 0
+          }
         },
         {
           "id": 20,
@@ -498,13 +593,18 @@
           "lat": 55.676,
           "lng": 12.568,
           "genre": "Akustisk techno og Jazz",
-          "gender": "3 mænd",
           "status": "I live, medlemmerne er født i 1996 og 1997",
           "pickedByName": null,
           "pickedByWorkplace": null,
           "story": null,
           "cardColor": "#8f8385",
-          "coverUrl": "/uploads/covers/20.jpg"
+          "coverUrl": "/uploads/covers/20.jpg",
+          "lineup": {
+            "men": 3,
+            "women": 0,
+            "nonbinary": 0,
+            "other": 0
+          }
         }
       ],
       "posters": []
@@ -528,13 +628,18 @@
           "lat": 52.519,
           "lng": -1.995,
           "genre": "Klassisk rock",
-          "gender": "Mand",
           "status": "I live, født d. 20. aug 1948",
           "pickedByName": null,
           "pickedByWorkplace": null,
           "story": null,
           "cardColor": "#5762a7",
-          "coverUrl": "/uploads/covers/21.jpg"
+          "coverUrl": "/uploads/covers/21.jpg",
+          "lineup": {
+            "men": 1,
+            "women": 0,
+            "nonbinary": 0,
+            "other": 0
+          }
         },
         {
           "id": 22,
@@ -548,13 +653,18 @@
           "lat": 19.076,
           "lng": 72.878,
           "genre": "Bollywood og EDM",
-          "gender": "2 mænd",
           "status": "I live, født d. 28. jun 1973 og 29. nov 1978",
           "pickedByName": null,
           "pickedByWorkplace": null,
           "story": null,
           "cardColor": "#7e4880",
-          "coverUrl": "/uploads/covers/22.jpg"
+          "coverUrl": "/uploads/covers/22.jpg",
+          "lineup": {
+            "men": 2,
+            "women": 0,
+            "nonbinary": 0,
+            "other": 0
+          }
         }
       ],
       "posters": [
@@ -595,13 +705,18 @@
           "lat": 43.653,
           "lng": -79.383,
           "genre": "Hip Hop og rap",
-          "gender": "Mand",
           "status": "I live, født d. 24. okt 1986",
           "pickedByName": null,
           "pickedByWorkplace": null,
           "story": null,
           "cardColor": "#4c5b63",
-          "coverUrl": "/uploads/covers/23.jpg"
+          "coverUrl": "/uploads/covers/23.jpg",
+          "lineup": {
+            "men": 1,
+            "women": 0,
+            "nonbinary": 0,
+            "other": 0
+          }
         },
         {
           "id": 24,
@@ -615,13 +730,18 @@
           "lat": 33.896,
           "lng": -118.22,
           "genre": "Hip Hop og rap",
-          "gender": "Mand",
           "status": "I live, født d. 17. jun 1987",
           "pickedByName": null,
           "pickedByWorkplace": null,
           "story": null,
           "cardColor": "#ad9fa0",
-          "coverUrl": "/uploads/covers/24.png"
+          "coverUrl": "/uploads/covers/24.png",
+          "lineup": {
+            "men": 1,
+            "women": 0,
+            "nonbinary": 0,
+            "other": 0
+          }
         }
       ],
       "posters": [
@@ -662,13 +782,18 @@
           "lat": 51.507,
           "lng": -0.128,
           "genre": "Progressiv rock og progressiv pop",
-          "gender": "Kvinde",
           "status": "I live, født d. 30. jul 1958",
           "pickedByName": null,
           "pickedByWorkplace": null,
           "story": null,
           "cardColor": "#efa04a",
-          "coverUrl": "/uploads/covers/25.png"
+          "coverUrl": "/uploads/covers/25.png",
+          "lineup": {
+            "men": 0,
+            "women": 1,
+            "nonbinary": 0,
+            "other": 0
+          }
         },
         {
           "id": 26,
@@ -682,13 +807,18 @@
           "lat": 52.205,
           "lng": 0.122,
           "genre": "Symfonisk pop og soundtrack",
-          "gender": "Kvinde",
           "status": "I live, født d. 2. aug 1992",
           "pickedByName": null,
           "pickedByWorkplace": null,
           "story": null,
           "cardColor": "#5e4a3f",
-          "coverUrl": "/uploads/covers/26.png"
+          "coverUrl": "/uploads/covers/26.png",
+          "lineup": {
+            "men": 0,
+            "women": 1,
+            "nonbinary": 0,
+            "other": 0
+          }
         }
       ],
       "posters": [
@@ -721,13 +851,18 @@
           "lat": 32.963,
           "lng": -117.036,
           "genre": "Pop-punk og Skatepunk",
-          "gender": "3 mænd",
           "status": "I live, medlemmerne er født i 1972 og 1975",
           "pickedByName": "Medlem 11",
           "pickedByWorkplace": "Arbejdsplads F",
           "story": "Jeg hedder Medlem 11, og det her album har fulgt mig længe.",
           "cardColor": "#254158",
-          "coverUrl": "/uploads/covers/27.jpg"
+          "coverUrl": "/uploads/covers/27.jpg",
+          "lineup": {
+            "men": 3,
+            "women": 0,
+            "nonbinary": 0,
+            "other": 0
+          }
         },
         {
           "id": 28,
@@ -741,13 +876,18 @@
           "lat": 51.507,
           "lng": -0.128,
           "genre": "Indie rock og Pop",
-          "gender": "3 mænd eller 2 mænd, 1 kvinde og 1 nonbinær (det virtuelle band)",
           "status": "I live, medlemmerne er født i 1968 og 1970",
           "pickedByName": "Medlem 5",
           "pickedByWorkplace": "Arbejdsplads A",
           "story": "Jeg hedder Medlem 5, og det her album har fulgt mig længe.",
           "cardColor": "#001721",
-          "coverUrl": "/uploads/covers/28.png"
+          "coverUrl": "/uploads/covers/28.png",
+          "lineup": {
+            "men": 2,
+            "women": 1,
+            "nonbinary": 1,
+            "other": 0
+          }
         }
       ],
       "posters": [
@@ -788,13 +928,18 @@
           "lat": 56.17,
           "lng": 9.545,
           "genre": "Pop",
-          "gender": "5 mænd og 1 kvinde",
           "status": "I live, medlemmerne er født i midten af 1980'erne (Ikke aktiv som gruppe længere)",
           "pickedByName": "Medlem 1",
           "pickedByWorkplace": "Arbejdsplads C",
           "story": "Jeg hedder Medlem 1, og det her album har fulgt mig længe.",
           "cardColor": "#f53487",
-          "coverUrl": "/uploads/covers/29.png"
+          "coverUrl": "/uploads/covers/29.png",
+          "lineup": {
+            "men": 5,
+            "women": 1,
+            "nonbinary": 0,
+            "other": 0
+          }
         },
         {
           "id": 30,
@@ -808,13 +953,18 @@
           "lat": 33.894,
           "lng": 35.502,
           "genre": "Pop",
-          "gender": "Mand",
           "status": "I live, født d. 18. aug 1983",
           "pickedByName": "Medlem 8",
           "pickedByWorkplace": "Arbejdsplads G",
           "story": "Jeg hedder Medlem 8, og det her album har fulgt mig længe.",
           "cardColor": "#c9a172",
-          "coverUrl": "/uploads/covers/30.jpg"
+          "coverUrl": "/uploads/covers/30.jpg",
+          "lineup": {
+            "men": 1,
+            "women": 0,
+            "nonbinary": 0,
+            "other": 0
+          }
         }
       ],
       "posters": [
@@ -847,13 +997,18 @@
           "lat": 55.731,
           "lng": 12.57,
           "genre": "Indierock",
-          "gender": "4 mænd",
           "status": "I live, medlemmerne er født i 1976 og 1979 (Ikke aktiv som gruppe længere)",
           "pickedByName": "Medlem 7",
           "pickedByWorkplace": "Arbejdsplads C",
           "story": "Jeg hedder Medlem 7, og det her album har fulgt mig længe.",
           "cardColor": "#ccc1b4",
-          "coverUrl": "/uploads/covers/31.jpg"
+          "coverUrl": "/uploads/covers/31.jpg",
+          "lineup": {
+            "men": 4,
+            "women": 0,
+            "nonbinary": 0,
+            "other": 0
+          }
         },
         {
           "id": 32,
@@ -867,13 +1022,18 @@
           "lat": 42.331,
           "lng": -83.046,
           "genre": "Hip Hop & Rap",
-          "gender": "Mand",
           "status": "I live, født d. 17. okt 1972",
           "pickedByName": "Medlem 4",
           "pickedByWorkplace": "Arbejdsplads C",
           "story": "Jeg hedder Medlem 4, og det her album har fulgt mig længe.",
           "cardColor": "#6d6c6a",
-          "coverUrl": "/uploads/covers/32.jpg"
+          "coverUrl": "/uploads/covers/32.jpg",
+          "lineup": {
+            "men": 1,
+            "women": 0,
+            "nonbinary": 0,
+            "other": 0
+          }
         }
       ],
       "posters": [
@@ -906,13 +1066,18 @@
           "lat": 52.205,
           "lng": 0.122,
           "genre": "Indierock",
-          "gender": "Kvinde",
           "status": "I live, født d. 2. aug 1992",
           "pickedByName": null,
           "pickedByWorkplace": null,
           "story": null,
           "cardColor": "#8f8f8f",
-          "coverUrl": "/uploads/covers/33.jpg"
+          "coverUrl": "/uploads/covers/33.jpg",
+          "lineup": {
+            "men": 0,
+            "women": 1,
+            "nonbinary": 0,
+            "other": 0
+          }
         },
         {
           "id": 34,
@@ -926,13 +1091,18 @@
           "lat": 59.329,
           "lng": 18.069,
           "genre": "Pop",
-          "gender": "Kvinde",
           "status": "I live, født d. 16. dec 1997",
           "pickedByName": null,
           "pickedByWorkplace": null,
           "story": null,
           "cardColor": "#0493ca",
-          "coverUrl": "/uploads/covers/34.jpg"
+          "coverUrl": "/uploads/covers/34.jpg",
+          "lineup": {
+            "men": 0,
+            "women": 1,
+            "nonbinary": 0,
+            "other": 0
+          }
         }
       ],
       "posters": [
@@ -981,13 +1151,18 @@
           "lat": -26.204,
           "lng": 28.047,
           "genre": "Pop og synth-pop",
-          "gender": "Mand",
           "status": "I live, født d. 5. jun 1995",
           "pickedByName": null,
           "pickedByWorkplace": null,
           "story": null,
           "cardColor": "#402a23",
-          "coverUrl": "/uploads/covers/35.png"
+          "coverUrl": "/uploads/covers/35.png",
+          "lineup": {
+            "men": 1,
+            "women": 0,
+            "nonbinary": 0,
+            "other": 0
+          }
         },
         {
           "id": 36,
@@ -1001,13 +1176,18 @@
           "lat": 39.29,
           "lng": -76.612,
           "genre": "Eksperimenterende rock",
-          "gender": "4 mænd",
           "status": "I live, medlemmerne er født i starten af 1990'erne",
           "pickedByName": null,
           "pickedByWorkplace": null,
           "story": null,
           "cardColor": "#01729b",
-          "coverUrl": "/uploads/covers/36.jpg"
+          "coverUrl": "/uploads/covers/36.jpg",
+          "lineup": {
+            "men": 4,
+            "women": 0,
+            "nonbinary": 0,
+            "other": 0
+          }
         }
       ],
       "posters": [
@@ -1048,13 +1228,18 @@
           "lat": 34.052,
           "lng": -118.244,
           "genre": "Funk rock og alternativ rock",
-          "gender": "Mand",
           "status": "I live, født d. 8. jul 1970",
           "pickedByName": "Medlem 2",
           "pickedByWorkplace": "Arbejdsplads D",
           "story": "Jeg hedder Medlem 2, og det her album har fulgt mig længe.",
           "cardColor": "#58b945",
-          "coverUrl": "/uploads/covers/37.jpg"
+          "coverUrl": "/uploads/covers/37.jpg",
+          "lineup": {
+            "men": 1,
+            "women": 0,
+            "nonbinary": 0,
+            "other": 0
+          }
         },
         {
           "id": 38,
@@ -1068,13 +1253,18 @@
           "lat": 54.909,
           "lng": 9.792,
           "genre": "Punk rock og Shoegaze",
-          "gender": "4 mænd",
           "status": "I live, forsangeren er født d. 24. jul 1973 (Ikke aktiv som gruppe længere)",
           "pickedByName": "Medlem 3",
           "pickedByWorkplace": "Arbejdsplads B",
           "story": "Jeg hedder Medlem 3, og det her album har fulgt mig længe.",
           "cardColor": "#8f827b",
-          "coverUrl": "/uploads/covers/38.jpg"
+          "coverUrl": "/uploads/covers/38.jpg",
+          "lineup": {
+            "men": 4,
+            "women": 0,
+            "nonbinary": 0,
+            "other": 0
+          }
         }
       ],
       "posters": [
@@ -1107,13 +1297,18 @@
           "lat": 42.331,
           "lng": -83.046,
           "genre": "Folk, Indie og Indie rock",
-          "gender": "Mand",
           "status": "I live, født d. 1. jul 1975",
           "pickedByName": null,
           "pickedByWorkplace": null,
           "story": null,
           "cardColor": "#2a536b",
-          "coverUrl": "/uploads/covers/39.jpg"
+          "coverUrl": "/uploads/covers/39.jpg",
+          "lineup": {
+            "men": 1,
+            "women": 0,
+            "nonbinary": 0,
+            "other": 0
+          }
         },
         {
           "id": 40,
@@ -1127,13 +1322,18 @@
           "lat": 64.147,
           "lng": -21.942,
           "genre": "Art pop og Electronica",
-          "gender": "Kvinde",
           "status": "I live, født d. 21. nov 1965",
           "pickedByName": null,
           "pickedByWorkplace": null,
           "story": null,
           "cardColor": "#a9a9a9",
-          "coverUrl": "/uploads/covers/40.jpg"
+          "coverUrl": "/uploads/covers/40.jpg",
+          "lineup": {
+            "men": 0,
+            "women": 1,
+            "nonbinary": 0,
+            "other": 0
+          }
         }
       ],
       "posters": [
@@ -1166,13 +1366,18 @@
           "lat": 33.836,
           "lng": -117.914,
           "genre": "Alternativ rock",
-          "gender": "Mand",
           "status": "Døde d. 29. maj 1997 (30 år)",
           "pickedByName": "Medlem 9",
           "pickedByWorkplace": "Arbejdsplads B",
           "story": "Jeg hedder Medlem 9, og det her album har fulgt mig længe.",
           "cardColor": "#262d66",
-          "coverUrl": "/uploads/covers/41.jpg"
+          "coverUrl": "/uploads/covers/41.jpg",
+          "lineup": {
+            "men": 1,
+            "women": 0,
+            "nonbinary": 0,
+            "other": 0
+          }
         },
         {
           "id": 42,
@@ -1186,13 +1391,18 @@
           "lat": 51.507,
           "lng": -0.128,
           "genre": "Pop og pop rock",
-          "gender": "5 mænd",
           "status": "Medlemmerne er født i 1991, 1993 og 1994. Liam Payne døde d. 16. oktober 2024. (Ikke aktiv som gruppe længere)",
           "pickedByName": "Medlem 10",
           "pickedByWorkplace": "Arbejdsplads E",
           "story": "Jeg hedder Medlem 10, og det her album har fulgt mig længe.",
           "cardColor": "#8d5537",
-          "coverUrl": "/uploads/covers/42.png"
+          "coverUrl": "/uploads/covers/42.png",
+          "lineup": {
+            "men": 5,
+            "women": 0,
+            "nonbinary": 0,
+            "other": 0
+          }
         }
       ],
       "posters": [
@@ -1225,13 +1435,18 @@
           "lat": 55.756,
           "lng": 9.42,
           "genre": "Elektronisk rock og elektropop",
-          "gender": "5 mænd",
           "status": "I live, medlemmerne er født i 1982",
           "pickedByName": "Medlem 6",
           "pickedByWorkplace": "Arbejdsplads B",
           "story": null,
           "cardColor": "#ee2a30",
-          "coverUrl": "/uploads/covers/43.jpg"
+          "coverUrl": "/uploads/covers/43.jpg",
+          "lineup": {
+            "men": 5,
+            "women": 0,
+            "nonbinary": 0,
+            "other": 0
+          }
         },
         {
           "id": 44,
@@ -1245,13 +1460,18 @@
           "lat": 55.733,
           "lng": 12.512,
           "genre": "Rock, Soul og Blues",
-          "gender": "Kvinde",
           "status": "I live, forsangeren er født d. 29. august 1948",
           "pickedByName": null,
           "pickedByWorkplace": null,
           "story": null,
           "cardColor": "#669bc1",
-          "coverUrl": "/uploads/covers/44.jpg"
+          "coverUrl": "/uploads/covers/44.jpg",
+          "lineup": {
+            "men": 0,
+            "women": 1,
+            "nonbinary": 0,
+            "other": 0
+          }
         }
       ],
       "posters": []

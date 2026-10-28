@@ -1,4 +1,5 @@
 import type { Album, Meeting, Poster } from '../../shared/types.ts'
+import { LINEUP_KEYS, LINEUP_LABEL } from '../../shared/gender.ts'
 
 type Fields = Record<string, string>
 type Errors = Record<string, string>
@@ -101,7 +102,9 @@ ${t('Længdegrad', 'lng', 'inputmode="decimal"')}
 <details><summary>Hvordan finder jeg breddegrad og længdegrad?</summary>
 <p>Søg stedet op i Google Maps, højreklik på det og klik på tallene øverst i menuen. Det første tal er breddegrad, det andet længdegrad. Udfyld begge eller ingen af dem.</p></details>
 ${t('Genre', 'genre')}
-${t('Køn', 'gender')}
+<fieldset class="lineup"><legend>Køn i bandet</legend>
+${LINEUP_KEYS.map((k) => t(LINEUP_LABEL[k], `lineup_${k}`, 'inputmode="numeric" maxlength="3" size="3"')).join('\n')}
+<span class="hint">Hvor mange af hver. Et album tæller med i hver søjle, der er nogen i.</span></fieldset>
 ${t('Status', 'status')}
 ${t('Valgt af', 'picked_by_name')}
 ${t('Arbejdsplads', 'picked_by_workplace')}
