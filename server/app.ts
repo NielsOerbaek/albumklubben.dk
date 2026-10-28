@@ -7,7 +7,7 @@ import { resolve } from 'node:path'
 import { registerApi } from './api.ts'
 import { registerAdmin } from './admin/routes.ts'
 import { registerBoard } from './board.ts'
-import { rememberMember } from './members.ts'
+import { registerMe, rememberMember } from './members.ts'
 import { registerLyttefest } from './lyttefest.ts'
 import { createThetaApi, type ThetaApi } from './theta-api.ts'
 import { registerThetaAuth, type ThetaAuthOptions } from './theta-auth.ts'
@@ -47,6 +47,7 @@ export function buildApp(opts: AppOptions): FastifyInstance {
   if (opts.theta) {
     // Every login tells us what a member looks like now; it is the only time Theta says.
     registerThetaAuth(app, { ...opts.theta, onLogin: who => rememberMember(opts.db, who) })
+    registerMe(app, opts.db)
     const api = opts.thetaApi ?? createThetaApi(opts.theta)
     const board = registerBoard(app, api, opts.db, opts.theta)
     const fest = registerLyttefest(app, {

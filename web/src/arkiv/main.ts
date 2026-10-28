@@ -13,6 +13,7 @@ import { albumDialog } from '../album.ts'
 import { posterDialog } from '../poster.ts'
 import { nextMeeting, nextView, today, type NextPick } from './next.ts'
 import { createBoard } from '../board/board.ts'
+import { loadMe } from '../me.ts'
 import { createLyttefestPanel } from '../lyttefest/start.ts'
 
 /** An album together with the number of the meeting it belongs to. */
@@ -145,6 +146,7 @@ window.addEventListener('hashchange', () => {
   scrollToSection('smooth')
 })
 draw()
+void loadMe(draw)
 fetchArchive().then(
   (archive) => {
     state.entries = archive.meetings.flatMap((m) => m.albums.map((album) => ({ album, n: m.number })))

@@ -15,6 +15,7 @@ import { buildClub, type CrateView } from './scene.ts'
 import { BOARD_REACH } from './corkboard.ts'
 import { BOARD, boardLines, festLines, type SignFest } from './flipsign.ts'
 import { createBoard } from '../board/board.ts'
+import { loadMe } from '../me.ts'
 import { createLyttefestPanel } from '../lyttefest/start.ts'
 import type { Album, Meeting, Poster } from '../../../shared/types.ts'
 
@@ -38,7 +39,9 @@ const CENTRE = new THREE.Vector2(0, 0) // the view's centre, for the aim ray
 /** Set by `start()`: the prompt goes back up when the board is closed, however it was closed. */
 let afterBoard = () => {}
 const board = createBoard({ show: (content) => showOverlay(content), onClose: () => afterBoard() })
-render(topBarTemplate('klubhus', undefined, () => openBoard()), document.getElementById('app')!)
+const drawBar = () => render(topBarTemplate('klubhus', undefined, () => openBoard()), document.getElementById('app')!)
+drawBar()
+void loadMe(drawBar)
 /** Replaced by `start()` once the room is up; from the top bar the dialog opens on its own. */
 let openBoard = () => { board.open() }
 const canvas = document.querySelector<HTMLCanvasElement>('canvas.ps1-canvas')!

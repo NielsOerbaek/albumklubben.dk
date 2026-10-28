@@ -34,7 +34,11 @@ button { font: inherit; color: inherit; }
 .topbar nav a:hover, .topbar nav a[aria-current='page'] { text-decoration: underline; text-underline-offset: 4px; }
 .topbar-link { padding: 0; border: 0; background: none; font: inherit; cursor: pointer; }
 .topbar-link:hover { text-decoration: underline; text-underline-offset: 4px; }
-.topbar-right { margin-left: auto; display: flex; gap: 6px; }
+.topbar-right { margin-left: auto; display: flex; align-items: center; gap: 6px; }
+
+/* Who you are logged in as, beside the way out. */
+.topbar-me { display: flex; align-items: center; gap: 7px; min-width: 0; margin-right: 4px; }
+.topbar-name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 16ch; }
 
 /* A member's face: the avatar Theta has for them, with their initials underneath it, which is
    what shows when there is no picture and when the one there is will not load. */
@@ -68,5 +72,7 @@ button { font: inherit; color: inherit; }
   :root { --pad: 16px; }
   .topbar { height: auto; min-height: var(--bar); flex-wrap: wrap; gap: 8px 16px; padding-top: 8px; padding-bottom: 8px; }
   .topbar-right { margin-left: 0; }
+  /* Room is short: the face alone says who you are, and the title still carries the name. */
+  .topbar-name { display: none; }
   .topbar nav { gap: 14px; }
 }

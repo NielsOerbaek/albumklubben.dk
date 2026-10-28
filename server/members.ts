@@ -1,3 +1,4 @@
+import type { FastifyInstance } from 'fastify'
 import type { Database } from './db.ts'
 import type { FestFace, FestPerson } from '../shared/lyttefest.ts'
 
@@ -59,4 +60,17 @@ export function faces(db: Database, subs: string[]) {
   return {
     of: <T extends FestPerson>(who: T): T & FestFace => ({ ...who, picture: pictures.get(who.sub) ?? null }),
   }
+}
+
+/**
+ * Who you are, for the top bar: the name and the face of the session reading the page. It is on
+ * every page of the site, so it answers from the session cookie and one row, and never caches —
+ * the whole point of it is to be right about who is logged in.
+ */
+export function registerMe(app: FastifyInstance, db: Database): void {
+  app.get('/api/me', async (req, reply) => {
+    const who = req.member!
+    reply.header('Cache-Control', 'no-store')
+    return { sub: who.sub, name: who.name, picture: picturesOf(db, [who.sub]).get(who.sub) ?? null }
+  })
 }
