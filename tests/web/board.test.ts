@@ -1,7 +1,5 @@
-// @vitest-environment jsdom
-import { render } from 'lit-html'
 import { afterEach, describe, expect, it, vi } from 'vitest'
-import { createBoard } from '../../web/src/board/board.ts'
+import { BoardError, createBoard } from '../../web/src/board/board.ts'
 import type { BoardPost } from '../../shared/board.ts'
 
 const post = (over: Partial<BoardPost> = {}): BoardPost => ({
@@ -12,113 +10,108 @@ const post = (over: Partial<BoardPost> = {}): BoardPost => ({
   ...over,
 })
 
-/** The dialog, drawn into a div, with `fetch` answering whatever the test says. */
-function mount(route: { status?: number; body: unknown }) {
-  const el = document.createElement('div')
-  document.body.append(el)
-  const asked: { url: string; method: string }[] = []
-  vi.stubGlobal('fetch', vi.fn(async (url: string, init?: RequestInit) => {
-    asked.push({ url, method: init?.method ?? 'GET' })
-    return new Response(JSON.stringify(route.body), { status: route.status ?? 200 })
+/** `fetch` answering whatever the test says, one answer per call, and keeping what was asked. */
+function serve(...answers: ({ status?: number; body: unknown })[]) {
+  const asked: string[] = []
+  let i = 0
+  vi.stubGlobal('fetch', vi.fn(async (url: string) => {
+    asked.push(url)
+    const a = answers[Math.min(i++, answers.length - 1)]
+    return new Response(JSON.stringify(a.body), { status: a.status ?? 200 })
   }))
-  const board = createBoard({ show: (content) => render(content ?? null, el) })
-  return { board, el, asked }
+  return asked
 }
 
-const page = (items: BoardPost[], groupUrl: string | null = 'https://theta.test/grupper/1') =>
-  ({ body: { items, nextCursor: null, groupUrl } })
+const page = (items: BoardPost[], nextCursor: string | null = null) =>
+  ({ body: { items, nextCursor, groupUrl: 'https://theta.test/grupper/1' } })
 
-const settle = () => new Promise(r => setTimeout(r, 0))
-const text = (el: HTMLElement) => el.textContent ?? ''
+afterEach(() => { vi.unstubAllGlobals() })
 
-afterEach(() => { vi.unstubAllGlobals(); document.body.innerHTML = '' })
-
-describe('Opslagstavlen', () => {
-  it('shows the group\'s posts with who wrote them and how many answers there are', async () => {
-    const { board, el } = mount(page([post({ title: 'Nyt møde', body: 'På tirsdag', commentCount: 3 })]))
-    board.open()
-    await settle()
-    expect(text(el)).toContain('Medlem 1')
-    expect(text(el)).toContain('Nyt møde')
-    expect(text(el)).toContain('På tirsdag')
-    expect(text(el)).toContain('3 kommentarer')
+describe('at læse opslagstavlen', () => {
+  it('reads the group and keeps what came back', async () => {
+    serve(page([post({ title: 'Nyt møde', commentCount: 3 })]))
+    const board = createBoard()
+    await board.load()
+    const state = board.state()
+    expect(state.posts.map(p => p.title)).toEqual(['Nyt møde'])
+    expect(state.groupUrl).toBe('https://theta.test/grupper/1')
+    expect(state.busy).toBe(false)
+    expect(state.error).toBeNull()
   })
 
-  it('opens a post on Theta, and renders no thread of its own', async () => {
-    const { board, el, asked } = mount(page([post({ commentCount: 3 })]))
-    board.open()
-    await settle()
-    const link = el.querySelector<HTMLAnchorElement>('a.board-post')!
-    expect(link.getAttribute('href')).toBe('https://theta.test/grupper/1/opslag/1')
-    expect(link.getAttribute('target')).toBe('_blank')
-    link.click()
-    await settle()
-    // Clicking a post fetches nothing: there is no thread to fetch, and no form to fill in.
-    expect(asked.filter(a => a.url.includes('/comments'))).toHaveLength(0)
-    expect(el.querySelector('textarea')).toBeNull()
-    expect(el.querySelector('form')).toBeNull()
+  it('says when it is busy, before and after', async () => {
+    serve(page([post()]))
+    const seen: boolean[] = []
+    const board = createBoard(() => seen.push(board.state().busy))
+    await board.load()
+    expect(seen).toEqual([true, false])
   })
 
-  it('points at the group, for writing something', async () => {
-    const { board, el } = mount(page([post()]))
-    board.open()
-    await settle()
-    const write = [...el.querySelectorAll('a.pill')].find(a => a.textContent?.includes('Skriv på Theta'))
-    expect(write?.getAttribute('href')).toBe('https://theta.test/grupper/1')
-    expect(text(el)).toContain('Opslag skrives, besvares og læses på Theta')
+  it('adds the next page to the one in hand, and reads the newest from the top again', async () => {
+    const asked = serve(page([post({ id: '1' })], 'c2'), page([post({ id: '2' })]), page([post({ id: '3' })]))
+    const board = createBoard()
+    await board.load()
+    await board.more()
+    expect(board.state().posts.map(p => p.id)).toEqual(['1', '2'])
+    expect(asked[1]).toBe('/api/board?cursor=c2')
+
+    await board.load()
+    expect(board.state().posts.map(p => p.id)).toEqual(['3'])
+    expect(asked[2]).toBe('/api/board')
   })
 
-  it('marks a lyttefest as one', async () => {
-    const { board, el } = mount(page([post({
-      lyttefest: { id: 2, artist: 'Kate Bush', title: 'The Kick Inside', coverUrl: null },
-    })]))
-    board.open()
-    await settle()
-    expect(el.querySelector('.board-tag')?.textContent).toBe('Lyttefest')
+  it('does not ask for more when there is no more to be had', async () => {
+    const asked = serve(page([post()]))
+    const board = createBoard()
+    await board.load()
+    await board.more()
+    expect(asked).toHaveLength(1)
   })
 
-  it('puts a post on the page as text, never as HTML', async () => {
-    const nasty = '<img src=x onerror="window.hacked=1">'
-    const { board, el } = mount(page([post({ body: nasty })]))
-    board.open()
-    await settle()
-    expect(el.querySelector('img')).toBeNull()
-    expect((window as any).hacked).toBeUndefined()
-    expect(text(el)).toContain(nasty)
+  it('escapes a cursor on its way into the address', async () => {
+    const asked = serve(page([post()], 'a b&c'), page([]))
+    const board = createBoard()
+    await board.load()
+    await board.more()
+    expect(asked[1]).toBe('/api/board?cursor=a%20b%26c')
   })
 
-  it('keeps the line breaks a member wrote', async () => {
-    const { board, el } = mount(page([post({ body: 'Linje 1\nLinje 2' })]))
-    board.open()
-    await settle()
-    expect(el.querySelectorAll('.board-body br').length).toBe(1)
+  it('says in Danish when Theta will not answer, and keeps what it had', async () => {
+    serve(page([post({ title: 'Nyt møde' })], 'c2'), { status: 502, body: { error: 'Opslagstavlen kan ikke hentes lige nu' } })
+    const board = createBoard()
+    await board.load()
+    await board.more()
+    expect(board.state().error?.message).toBe('Opslagstavlen kan ikke hentes lige nu')
+    expect(board.state().posts.map(p => p.title)).toEqual(['Nyt møde'])
   })
 
-  it('offers the way back in when the session is no good any more', async () => {
-    const { board, el } = mount({ status: 401, body: {} })
-    board.open()
-    await settle()
-    expect(text(el)).toContain('Log ind igen')
-    expect(el.querySelector('.board-note a.pill')?.getAttribute('href')).toBe('/auth/logout')
+  it('asks for a new login when the session has gone', async () => {
+    serve({ status: 401, body: { error: 'Log ind igen' } })
+    const board = createBoard()
+    await board.load()
+    expect(board.state().error).toBeInstanceOf(BoardError)
+    expect(board.state().error?.needsLogin).toBe(true)
   })
 
-  it('tells the room it could not be fetched, rather than throwing at it', async () => {
-    const { board } = mount({ status: 502, body: { error: 'Opslagstavlen kan ikke hentes lige nu' } })
-    await expect(board.peek()).resolves.toBe('error')
+  it('does not throw when the network is down', async () => {
+    vi.stubGlobal('fetch', vi.fn(async () => { throw new Error('offline') }))
+    const board = createBoard()
+    await board.load()
+    expect(board.state().error?.message).toBe('Opslagstavlen kan ikke hentes lige nu')
+    expect(board.state().error?.needsLogin).toBe(false)
+  })
+})
+
+describe('det kig tavlen på væggen tager', () => {
+  it('gives the posts back for the board in the room', async () => {
+    serve(page([post({ id: '7' })]))
+    const board = createBoard()
+    expect(await board.peek()).toEqual([expect.objectContaining({ id: '7' })])
+    expect(board.state().posts).toHaveLength(1)
   })
 
-  it('closes, and says so', async () => {
-    const closed = vi.fn()
-    const el = document.createElement('div')
-    document.body.append(el)
-    vi.stubGlobal('fetch', vi.fn(async () => new Response(JSON.stringify({ items: [], nextCursor: null, groupUrl: null }))))
-    const board = createBoard({ show: (c) => render(c ?? null, el), onClose: closed })
-    board.open()
-    await settle()
-    expect(board.isOpen()).toBe(true)
-    el.querySelector<HTMLElement>('.board-close')!.click()
-    expect(board.isOpen()).toBe(false)
-    expect(closed).toHaveBeenCalled()
-    expect(text(el)).toBe('')
+  it('says "error" rather than throwing, so a dead Theta never holds the room back', async () => {
+    vi.stubGlobal('fetch', vi.fn(async () => { throw new Error('offline') }))
+    expect(await createBoard().peek()).toBe('error')
   })
 })

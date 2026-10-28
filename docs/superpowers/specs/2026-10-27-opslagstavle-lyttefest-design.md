@@ -425,6 +425,30 @@ right corner, so i can see who i am logged in as."*
   from the session and the `members` row, `web/src/me.ts` asks once per page and the bar draws
   again when the answer comes. On a narrow bar the name is dropped and the face is left.
 
+### The opslagstavle is a thing in the room (Niels)
+
+*"Remove opslagstavlen from header, and make the view when opening the opslagstavle from inside
+the clubhouse a more ps1 menu type experience with similar graphics."*
+
+- **Gone from the top bar.** It is the cork board on the wall by the door, opened by walking up to
+  it and clicking, and nowhere else. The dialog that used to open over the archive and the
+  lyttefest page is gone with it, along with `board.css`.
+
+  The cost, which follows from the ask: Klubhuset is not shown below 900 px, so the board is now
+  a computer's only. The group itself is still on Theta for everyone. The README says so.
+- **Close up it is drawn, not laid out.** `klubhus/boardmenu.ts` paints one 240-texel-high canvas
+  — the board's own 5×7 type, the cork, the paper, the pin — and blows it up over the screen with
+  `image-rendering: pixelated`. Stepping up to the board goes further into the same game instead
+  of out of it into a web page.
+- **It is a menu**: the posts as notes, then "hent flere", "skriv i gruppen" and "tilbage til
+  rummet" as rows like any other, so it can be worked with the mouse alone. Arrows or W/S move,
+  Enter opens the note on Theta, Esc comes back out. The note under the cursor is in the light
+  with a pin in it; the rest are in the board's shade. A panel at the foot reads out the one you
+  are on.
+- **`board/board.ts` is now only the reading of it** — posts, paging, errors — with the look
+  entirely in the room. That is what made the menu a small file rather than a second copy of the
+  dialog.
+
 ### The App API had less in it than the design assumed
 
 The contract was read off stage by asking the API and reading its own validation errors, and

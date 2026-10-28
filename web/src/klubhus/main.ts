@@ -15,6 +15,7 @@ import { buildClub, type CrateView } from './scene.ts'
 import { BOARD_REACH } from './corkboard.ts'
 import { BOARD, boardLines, festLines, type SignFest } from './flipsign.ts'
 import { createBoard } from '../board/board.ts'
+import { createBoardMenu } from './boardmenu.ts'
 import { loadMe } from '../me.ts'
 import { createLyttefestPanel } from '../lyttefest/start.ts'
 import type { Album, Meeting, Poster } from '../../../shared/types.ts'
@@ -38,12 +39,14 @@ const CENTRE = new THREE.Vector2(0, 0) // the view's centre, for the aim ray
 
 /** Set by `start()`: the prompt goes back up when the board is closed, however it was closed. */
 let afterBoard = () => {}
-const board = createBoard({ show: (content) => showOverlay(content), onClose: () => afterBoard() })
-const drawBar = () => render(topBarTemplate('klubhus', undefined, () => openBoard()), document.getElementById('app')!)
+const board = createBoard(() => menu.draw())
+/** The board close up, drawn like the room rather than over it. See `boardmenu.ts`. */
+const menu = createBoardMenu({ board, onClose: () => afterBoard() })
+const drawBar = () => render(topBarTemplate('klubhus'), document.getElementById('app')!)
 drawBar()
 void loadMe(drawBar)
-/** Replaced by `start()` once the room is up; from the top bar the dialog opens on its own. */
-let openBoard = () => { board.open() }
+/** Replaced by `start()` once the room is up, which is the only place it is opened from. */
+let openBoard = () => { menu.open() }
 const canvas = document.querySelector<HTMLCanvasElement>('canvas.ps1-canvas')!
 if (smallScreenGuard()) canvas.remove()
 else start().catch((err) => { console.error(err); showHint('Klubhuset kunne ikke åbne. Prøv at genindlæse siden.') })
@@ -97,7 +100,7 @@ async function start() {
   let pulled: { album: Album; showTracks: boolean } | null = null
   const fest = createLyttefestPanel(() => drawOverlay())
   let entered = false
-  const open = () => !!(poster || pulled) || board.isOpen()
+  const open = () => !!(poster || pulled) || menu.isOpen()
   // Where you stood before opening the book, and the camera's ease to the book or back to it.
   let standing: Pose | null = null
   let ease: { from: Pose; to: Pose; t: number; done: () => void } | null = null
@@ -129,14 +132,14 @@ async function start() {
   openBoard = () => {
     prompt(null)
     controls.unlock()
-    board.open()
+    menu.open()
   }
   afterBoard = () => prompt(AGAIN)
 
   // Filled in after the room is up, so a slow Theta never holds the room back.
   const fillCork = () => board.peek().then((posts) => club.cork.setPosts(posts))
   void fillCork()
-  setInterval(() => { if (!document.hidden && !board.isOpen()) void fillCork() }, CORK_EVERY)
+  setInterval(() => { if (!document.hidden && !menu.isOpen()) void fillCork() }, CORK_EVERY)
 
   // The screen: a lyttefest while there is one, otherwise the latest meeting, as before.
   const meetingLines = layout.latest ? boardLines(layout.latest, BOARD.cols, BOARD.rows)
@@ -318,7 +321,8 @@ async function start() {
     const locked = controls.isLocked()
     if (e.code === 'Escape') {
       // One Esc does one thing: it closes a dialog, or else the book (when the browser let us see it).
-      if (board.isOpen()) board.close()
+      // The menu has its own Esc; this is for everything else.
+      if (menu.isOpen()) return
       else if (open()) closeTop()
       else if (book.isOpen() && !locked) closeBook()
     } else if (poster && !pulled) {

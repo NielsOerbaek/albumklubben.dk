@@ -1,0 +1,14 @@
+/* Opslagstavlen close up: one small canvas blown up over the whole screen, hard pixels and all,
+   so it is the same picture as the board on the wall rather than a web page in front of it. */
+.board-menu {
+  position: fixed;
+  inset: 0;
+  z-index: 60;
+  display: block;
+  width: 100vw;
+  height: 100vh;
+  image-rendering: pixelated;
+  background: #000;
+  cursor: pointer;
+}
+.board-menu[hidden] { display: none; }

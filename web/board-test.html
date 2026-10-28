@@ -9,31 +9,36 @@
 <body>
 <!-- Dev only (not in the Vite build inputs): the opslagstavle on made-up posts, so the look can
      be worked on without Theta. The people here are invented, like the seed data. -->
-<!-- /board-test.html shows the dialog; /board-test.html?kork shows the cork board's own drawing. -->
-<div id="bar"></div>
-<div id="board"></div>
+<!-- /board-test.html opens the menu as it is in the room; ?kork shows the wall board's drawing. -->
 <div id="kork" style="padding:40px;display:none"></div>
 <script type="module">
-import { html, render, nothing } from 'lit-html'
 import { createBoard } from '/src/board/board.ts'
-import { topBarTemplate } from '/src/topbar.ts'
+import { createBoardMenu } from '/src/klubhus/boardmenu.ts'
 
 const now = Date.now()
 const iso = (minutesAgo) => new Date(now - minutesAgo * 60_000).toISOString()
 const POSTS = [
   { id: '1', author: { sub: 's1', name: 'Medlem 1' }, title: 'Mødet på tirsdag', pinned: true,
     body: 'Vi starter 11.30 som altid. Husk at vælge et album, hvis det er din tur.',
-    createdAt: iso(40), commentCount: 4, attachmentCount: 0, url: 'https://stage.theta.dk/p/1' },
+    createdAt: iso(40), commentCount: 4, attachmentCount: 0, url: 'https://stage.theta.dk/p/1', lyttefest: null },
   { id: '2', author: { sub: 's2', name: 'Medlem 2' }, title: null, pinned: false,
     body: 'Jeg fandt den her i en kasse på loftet.\nNogen der kender den?',
-    createdAt: iso(180), commentCount: 2, attachmentCount: 3, url: 'https://stage.theta.dk/p/2' },
+    createdAt: iso(180), commentCount: 2, attachmentCount: 3, url: 'https://stage.theta.dk/p/2', lyttefest: null },
   { id: '3', author: { sub: 's3', name: 'Medlem 3' }, title: 'Pladebørs på lørdag', pinned: false,
     body: 'Der er pladebørs i Valby. Nogen der tager afsted?',
-    createdAt: iso(60 * 26), commentCount: 0, attachmentCount: 0, url: 'https://stage.theta.dk/p/3' },
+    createdAt: iso(60 * 26), commentCount: 0, attachmentCount: 0, url: 'https://stage.theta.dk/p/3', lyttefest: null },
   { id: '4', author: { sub: 's1', name: 'Medlem 1' }, title: null, pinned: false,
     body: 'Lyttefest: Kate Bush – The Kick Inside, tirsdag 3. november kl. 11.30',
     createdAt: iso(60 * 30), commentCount: 1, attachmentCount: 0, url: 'https://stage.theta.dk/p/4',
     lyttefest: { id: 1, artist: 'Kate Bush', title: 'The Kick Inside', coverUrl: null } },
+]
+const OLDER = [
+  { id: '5', author: { sub: 's2', name: 'Medlem 2' }, title: 'Referat fra møde 21', pinned: false,
+    body: 'Ligger i mappen nu.', createdAt: iso(60 * 24 * 9), commentCount: 0, attachmentCount: 1,
+    url: 'https://stage.theta.dk/p/5', lyttefest: null },
+  { id: '6', author: { sub: 's3', name: 'Medlem 3' }, title: null, pinned: false,
+    body: 'Er der nogen der har en pladespiller til overs? Min er gået i stykker igen, og det er tredje gang i år.',
+    createdAt: iso(60 * 24 * 12), commentCount: 7, attachmentCount: 0, url: 'https://stage.theta.dk/p/6', lyttefest: null },
 ]
 const GROUP_URL = 'https://stage.theta.dk/grupper/122304557724776'
 
@@ -44,13 +49,19 @@ window.fetch = async (url, init) => {
   await new Promise((r) => setTimeout(r, 120))
   const json = (b) => new Response(JSON.stringify(b), { status: 200, headers: { 'content-type': 'application/json' } })
   if (path === '/api/me') return json({ sub: 'me', name: 'Dig', picture: null })
-  if (path.startsWith('/api/board')) return json({ items: POSTS, nextCursor: null, groupUrl: GROUP_URL })
+  // A second page, so "Hent flere" has something to fetch.
+  if (path.startsWith('/api/board?cursor=')) return json({ items: OLDER, nextCursor: null, groupUrl: GROUP_URL })
+  if (path.startsWith('/api/board')) return json({ items: POSTS, nextCursor: 'c2', groupUrl: GROUP_URL })
   return real(url, init)
 }
 
-const layer = document.getElementById('board')
-const board = createBoard({ show: (content) => render(content ?? nothing, layer) })
-render(topBarTemplate(null, undefined, () => board.open()), document.getElementById('bar'))
+const board = createBoard(() => menu.draw())
+const menu = createBoardMenu({
+  board,
+  onClose: () => { document.body.innerHTML = '<p style="padding:40px">Lukket. Genindlæs for at åbne igen.</p>' },
+  // A dev page should not open Theta in a new tab every time a row is pressed.
+  openUrl: (url) => console.log('åbner', url),
+})
 
 if (location.search.includes('kork')) {
   // The wall board's own texture, blown up, so the notes can be read while they are drawn.
@@ -73,7 +84,7 @@ if (location.search.includes('kork')) {
     kork.append(h, big)
   }
 } else {
-  board.open()
+  menu.open()
 }
 </script>
 </body>

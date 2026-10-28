@@ -1,12 +1,10 @@
-import { mkdtempSync } from 'node:fs'
-import { tmpdir } from 'node:os'
-import { join } from 'node:path'
 import { createHmac } from 'node:crypto'
 import { beforeEach, describe, expect, it } from 'vitest'
 import { buildApp } from '../../server/app.ts'
 import { openDb, type Database } from '../../server/db.ts'
 import { ThetaError, type Card, type ThetaApi } from '../../server/theta-api.ts'
 import { formatWhen } from '../../server/lyttefest.ts'
+import { tmp } from '../tmp.ts'
 
 const ISSUER = 'https://theta.test/oidc'
 const GROUP = '122304557724776'
@@ -61,7 +59,7 @@ function setup(over: Partial<ThetaApi> = {}, sub = 'sub-1') {
   const db = openDb(':memory:')
   const app = buildApp({
     db,
-    uploadDir: mkdtempSync(join(tmpdir(), 'fest-')),
+    uploadDir: tmp('fest-'),
     adminPassword: 'hemmelig',
     sessionSecret: 'secret',
     theta: { issuer: ISSUER, clientId: 'albumklubben', clientSecret: 's3cret', groupId: GROUP, publicUrl: 'https://ak.test', fetch: oidc(sub) },
@@ -218,7 +216,7 @@ describe('mens den kører', () => {
     const made = (await app.inject({ method: 'POST', url: '/api/lyttefest/1/comments', headers: { cookie }, payload: { text: 'Hov' } })).json()
     // The same lyttefest, read by somebody else's session.
     const guest = buildApp({
-      db, uploadDir: mkdtempSync(join(tmpdir(), 'fest3-')), adminPassword: 'x', sessionSecret: 'secret',
+      db, uploadDir: tmp('fest3-'), adminPassword: 'x', sessionSecret: 'secret',
       theta: { issuer: ISSUER, clientId: 'albumklubben', clientSecret: 's', groupId: GROUP, publicUrl: 'https://ak.test', fetch: oidc('sub-2') },
       thetaApi: fakeApi().api, now: () => clock,
     })
@@ -377,7 +375,7 @@ describe('værtens to håndtag', () => {
     await make(app, await signIn(app), { albumId })
     // The same database, read by someone else's session.
     const guest = buildApp({
-      db, uploadDir: mkdtempSync(join(tmpdir(), 'fest2-')), adminPassword: 'x', sessionSecret: 'secret',
+      db, uploadDir: tmp('fest2-'), adminPassword: 'x', sessionSecret: 'secret',
       theta: { issuer: ISSUER, clientId: 'albumklubben', clientSecret: 's', groupId: GROUP, publicUrl: 'https://ak.test', fetch: oidc('sub-2') },
       thetaApi: fakeApi().api, now: () => clock,
     })

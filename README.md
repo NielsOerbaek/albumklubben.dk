@@ -8,9 +8,13 @@ https://albumklubben.dk og er kun for medlemmer af klubbens gruppe på
 - **Forsiden** er arkivet: møderne i rækkefølge med covers, kort og plakater.
 - **/klubhuset** er et lille 3D-klubhus (three.js) med albummene på hylder efter genre, en bog med
   plakaterne og opslagstavlen på væggen ved døren.
-- **Opslagstavlen** viser, hvad der sker i klubbens gruppe på Theta, læst som en selv. Den åbner
-  fra korktavlen i Klubhuset og fra den øverste bjælke, for rummet er ikke til enhver skærm.
-  Et opslag åbner på Theta: det er dér, der skrives og svares, ikke her.
+- **Opslagstavlen** viser, hvad der sker i klubbens gruppe på Theta, læst som en selv. Den hænger
+  på væggen i Klubhuset og åbnes kun derfra: gå hen til korktavlen og klik. Tæt på er den en menu
+  tegnet som resten af rummet — samme skrift, samme hårde pixels. Et opslag åbner på Theta: det er
+  dér, der skrives og svares, ikke her.
+
+  Den er altså kun på en computer, ligesom rummet selv (under 900 px vises Klubhuset ikke).
+  Gruppen kan læses på Theta derudover.
 - **/lyttefest/:id** er en lyttefest: et album, et tidspunkt, og så trykker alle play på deres
   egne højttalere. Siden tæller gennem tracklisten, så alle er samme sted, og samler
   kommentarerne undervejs.

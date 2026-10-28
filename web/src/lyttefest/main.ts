@@ -3,7 +3,6 @@ import { live } from 'lit-html/directives/live.js'
 import '../base.css'
 import './lyttefest.css'
 import { topBarTemplate } from '../topbar.ts'
-import { createBoard } from '../board/board.ts'
 import { thumbUrl } from '../api.ts'
 import { faceTemplate } from '../face.ts'
 import { loadMe } from '../me.ts'
@@ -31,10 +30,6 @@ let offset = 0
 let draft = ''
 let sending = false
 let busy = false
-
-const boardLayer = document.createElement('div')
-document.body.append(boardLayer)
-const board = createBoard({ show: (content) => render(content ?? nothing, boardLayer) })
 
 const serverNow = () => Date.now() + offset
 
@@ -344,10 +339,9 @@ function body(): TemplateResult {
 }
 
 function draw() {
-  render(html`${topBarTemplate(null, undefined, () => board.open())}${body()}`, app)
+  render(html`${topBarTemplate(null)}${body()}`, app)
 }
 
-window.addEventListener('keydown', (e) => { if (e.key === 'Escape' && board.isOpen()) board.close() })
 // Coming back to the tab may be hours later: the clock is measured again and the state refetched.
 document.addEventListener('visibilitychange', () => { if (!document.hidden) void load() })
 

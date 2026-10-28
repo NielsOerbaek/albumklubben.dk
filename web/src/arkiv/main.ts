@@ -12,7 +12,6 @@ import { statsView } from './stats.ts'
 import { albumDialog } from '../album.ts'
 import { posterDialog } from '../poster.ts'
 import { nextMeeting, nextView, today, type NextPick } from './next.ts'
-import { createBoard } from '../board/board.ts'
 import { loadMe } from '../me.ts'
 import { createLyttefestPanel } from '../lyttefest/start.ts'
 
@@ -119,13 +118,8 @@ function sections(): TemplateResult {
   </nav>`
 }
 
-/** Opslagstavlen opens over the archive, in its own layer so the page below is left alone. */
-const boardLayer = document.createElement('div')
-document.body.append(boardLayer)
-const board = createBoard({ show: (content) => render(content ?? nothing, boardLayer) })
-
 function draw() {
-  render(html`${topBarTemplate(null, undefined, () => board.open())}${body()}`, app)
+  render(html`${topBarTemplate(null)}${body()}`, app)
 }
 
 /** Brings the hash's section into view; without one, the intro at the top. */
@@ -137,8 +131,7 @@ function scrollToSection(behavior: ScrollBehavior) {
 
 window.addEventListener('keydown', (e) => {
   if (e.key !== 'Escape') return
-  if (board.isOpen()) board.close()
-  else if (state.dialogId != null) actions.set({ dialogId: null })
+  if (state.dialogId != null) actions.set({ dialogId: null })
   else if (posterId != null) { posterId = null; draw() }
 })
 window.addEventListener('hashchange', () => {
