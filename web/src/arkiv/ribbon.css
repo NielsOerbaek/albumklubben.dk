@@ -1,6 +1,10 @@
 /* The lyttefest ribbon: a fat band under the header and over the section pills. It is only there
    when there is a lyttefest to be at, so it can afford to be loud. */
-.ribbons { display: flex; flex-direction: column; border-bottom: 1px solid var(--line); }
+.ribbons {
+  display: flex; flex-direction: column;
+  border-bottom: 1px solid var(--line);
+  margin-bottom: 24px; /* the section pills sit right under it, and were touching it */
+}
 .ribbon {
   display: flex;
   align-items: center;

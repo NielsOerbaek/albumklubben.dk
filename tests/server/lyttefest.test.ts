@@ -291,7 +291,7 @@ describe('båndet på forsiden', () => {
     const list = (await ribbon(app, cookie)).json().lyttefester
     expect(list.map((f: any) => f.state)).toEqual(['nu', 'kommende'])
     expect(list[0]).toMatchObject({
-      id: 1, artist: 'Kate Bush', title: 'The Kick Inside', state: 'nu', trackNumber: 1, coming: 1,
+      id: 1, artist: 'Kate Bush', title: 'The Kick Inside', state: 'nu', trackNumber: 1,
     })
     expect(list[1]).toMatchObject({ id: 2, state: 'kommende', track: null, trackNumber: null })
   })

@@ -25,8 +25,6 @@ function whenText(f: FestBrief, now: number): string {
   return `Starter ${formatCountdown(seconds)} · ${formatWhen(f.startsAt)}`
 }
 
-const comingText = (n: number) => (n === 0 ? 'Ingen har sagt ja endnu' : `${n} kommer`)
-
 function oneTemplate(f: FestBrief, now: number): TemplateResult {
   const cover = f.coverUrl ? thumbUrl(f.coverUrl, 256) : null
   return html`<a class="ribbon ${f.state === 'nu' ? 'is-now' : ''}" href=${`/lyttefest/${f.id}`}>
@@ -34,7 +32,7 @@ function oneTemplate(f: FestBrief, now: number): TemplateResult {
     <span class="ribbon-text">
       <span class="ribbon-kicker">${f.state === 'nu' ? 'Lyttefest nu' : 'Lyttefest'}</span>
       <span class="ribbon-album">${f.artist} – ${f.title}</span>
-      <span class="ribbon-when">${whenText(f, now)} · ${comingText(f.coming)}</span>
+      <span class="ribbon-when">${whenText(f, now)}</span>
     </span>
     <span class="ribbon-go" aria-hidden="true">→</span>
   </a>`

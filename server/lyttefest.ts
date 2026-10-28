@@ -261,7 +261,6 @@ export function registerLyttefest(app: FastifyInstance, opts: LyttefestOptions) 
           state: p.state,
           track: p.track?.title ?? null,
           trackNumber: p.track?.number ?? null,
-          coming: listRsvps(db, f.id).length,
         }
       })
     // The one playing now first, then the next one up.

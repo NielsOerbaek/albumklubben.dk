@@ -9,7 +9,7 @@ const NOW = Date.UTC(2026, 10, 3, 10, 30)
 const fest = (over: Partial<FestBrief> = {}): FestBrief => ({
   id: 1, artist: 'Kate Bush', title: 'The Kick Inside', coverUrl: '/uploads/covers/1.jpg',
   startsAt: new Date(NOW + 60 * 60_000).toISOString(), state: 'kommende',
-  track: null, trackNumber: null, coming: 0, ...over,
+  track: null, trackNumber: null, ...over,
 })
 
 function draw(fests: FestBrief[]) {
@@ -29,11 +29,10 @@ describe('lyttefest-båndet', () => {
   })
 
   it('says what is playing, and which track, while one plays', () => {
-    const d = draw([fest({ state: 'nu', track: 'Wuthering Heights', trackNumber: 4, coming: 5 })])
+    const d = draw([fest({ state: 'nu', track: 'Wuthering Heights', trackNumber: 4 })])
     expect(d.querySelector('.ribbon-kicker')?.textContent).toBe('Lyttefest nu')
     expect(d.querySelector('.ribbon-album')?.textContent).toBe('Kate Bush – The Kick Inside')
     expect(text(d)).toContain('Spiller nu · 4. Wuthering Heights')
-    expect(text(d)).toContain('5 kommer')
     expect(d.querySelector('.ribbon')?.classList.contains('is-now')).toBe(true)
   })
 
@@ -44,8 +43,8 @@ describe('lyttefest-båndet', () => {
     expect(d.querySelector('.ribbon')?.classList.contains('is-now')).toBe(false)
   })
 
-  it('says plainly when nobody has said yes yet', () => {
-    expect(text(draw([fest()]))).toContain('Ingen har sagt ja endnu')
+  it('says nothing about who is coming: that is the lyttefest\'s own page', () => {
+    expect(text(draw([fest()]))).not.toMatch(/kommer|sagt ja/)
   })
 
   it('is the way in to the lyttefest, cover and all', () => {

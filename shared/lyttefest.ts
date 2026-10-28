@@ -216,8 +216,6 @@ export interface FestBrief {
   /** The track playing now, while one is. */
   track: string | null
   trackNumber: number | null
-  /** How many have said they are coming. */
-  coming: number
 }
 
 /** A lyttefest as it is listed beside its album. */
