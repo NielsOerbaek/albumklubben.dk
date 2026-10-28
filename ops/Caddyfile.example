@@ -9,9 +9,28 @@ albumklubben.dk {
 		Strict-Transport-Security "max-age=31536000"
 	}
 	header ?X-Frame-Options SAMEORIGIN
+	# robots.txt is not what keeps anyone out — the Theta login is, and the only thing any
+	# crawler can reach without a session is the login page and the icons. "Disallow: /" bought
+	# nothing and cost the link previews: Slack, Facebook, Twitter and the rest read this file
+	# before unfurling, and will not draw a card for a page they were told not to fetch.
+	# So: anyone may fetch the door, the training crawlers may not, and X-Robots-Tag above still
+	# keeps the whole site out of every search index.
 	@robots path /robots.txt
-	respond @robots "User-agent: *
+	respond @robots "User-agent: GPTBot
+User-agent: ClaudeBot
+User-agent: Claude-User
+User-agent: anthropic-ai
+User-agent: CCBot
+User-agent: Google-Extended
+User-agent: Applebot-Extended
+User-agent: Bytespider
+User-agent: meta-externalagent
+User-agent: PerplexityBot
 Disallow: /
+
+User-agent: *
+Disallow: /api/
+Allow: /
 " 200
 	request_body {
 		max_size 600MB

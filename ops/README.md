@@ -37,7 +37,11 @@ Efter en aendring:
 Hele siden er kun for medlemmer af Albumklubben-gruppen paa Theta (`server/theta-auth.ts`). Serveren starter ikke uden `THETA_*` og `PUBLIC_URL` i `.env`.
 Theta er OIDC-udbyder; appen beder om `openid profile groups feed posts` og lukker ind, naar `groups`-claimet indeholder `THETA_GROUP_ID`. `feed` og `posts` er til opslagstavlen og lyttefesterne: Theta viser sin samtykkeside én gang mere, foerste gang et medlem logger ind efter denne aendring.
 En session varer et doegn, saa tjekkes medlemskabet igen (stille, mens man er logget ind paa Theta).
-Et medlem, der ikke er logget ind, faar login-siden paa den adresse, det bad om (status 401), ikke et spring til Theta.
+Et medlem, der ikke er logget ind, faar login-siden paa den adresse, det bad om (status 200), ikke et spring til Theta.
+Siden er 200 og ikke 401, fordi den ogsaa er det eneste, et link til sitet kan folde sig ud til: Slack, Theta, Facebook
+og resten tegner kun et kort for et 2xx-svar. Kald efter data (`/api/*`, `Accept: application/json`) og efter filer
+svarer stadig 401 med en linje tekst. `robots.txt` lukker trænings-crawlere ude og lader alle andre hente doeren;
+`X-Robots-Tag: noindex, nofollow` holder hele sitet ude af soegemaskinerne.
 
 Kun `/auth/*`, `/healthz`, `/robots.txt`, ikonfilerne, `/manifest.webmanifest` og `/theta/webhook` er aabne. Webhooken er bag Thetas underskrift i stedet for login'et. `/admin` kraever derudover sit eget `ADMIN_PASSWORD`.
 

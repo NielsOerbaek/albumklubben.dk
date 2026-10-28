@@ -55,15 +55,20 @@ describe('Log ind med Theta', () => {
   it('lets nobody in without a session: pages show the login page, everything else is 401', async () => {
     const { app } = setup()
     const page = await app.inject({ url: '/klubhuset', headers: { accept: 'text/html' } })
-    expect(page.statusCode).toBe(401)
+    // 200: the login page is a page, and it was served. See the unfurler test below for why.
+    expect(page.statusCode).toBe(200)
     expect(page.headers['content-type']).toContain('text/html')
     // The login page at the address that was asked for, with the way back in the button.
     expect(page.body).toContain('Log ind med Theta')
     expect(page.body).toContain('href="/auth/login?next=%2Fklubhuset"')
     expect(page.body).toContain('Kun for medlemmer af klubbens gruppe på Theta')
-    for (const url of ['/api/archive', '/uploads/posters/x.jpg', '/tex/x.png', '/admin']) {
+    for (const url of ['/api/archive', '/uploads/posters/x.jpg', '/tex/x.png']) {
       expect((await app.inject({ url })).statusCode, url).toBe(401)
     }
+    // /admin is a page too: a logged-out visitor is sent to Theta first, not to its own password.
+    const admin = await app.inject({ url: '/admin' })
+    expect(admin.statusCode).toBe(200)
+    expect(admin.body).toContain('Log ind med Theta')
     expect((await app.inject({ method: 'POST', url: '/admin/login', payload: {} })).statusCode).toBe(401)
     expect((await app.inject({ url: '/healthz' })).body).toBe('ok')
   })
@@ -73,7 +78,9 @@ describe('Log ind med Theta', () => {
     // Slack, Theta and the rest ask with `Accept: */*` and no Sec-Fetch-Mode. Asking for HTML
     // was the old test, and it meant a pasted link unfolded into twenty-four bytes of plain text.
     const res = await app.inject({ url: '/', headers: { accept: '*/*', 'user-agent': 'Slackbot-LinkExpanding 1.0' } })
-    expect(res.statusCode).toBe(401)
+    // A card is drawn for a 2xx and for nothing else. A 401 here meant no preview anywhere,
+    // however good the tags were — which is how it shipped the first time.
+    expect(res.statusCode).toBe(200)
     expect(res.headers['content-type']).toContain('text/html')
     expect(res.body).toContain('<meta property="og:title" content="Albumklubben">')
     expect(res.body).toContain('<meta property="og:image" content="https://ak.test/icon-512.png">')
@@ -202,9 +209,13 @@ describe('Log ind med Theta', () => {
     for (const path of ICON_FILES) {
       expect((await app.inject({ url: path })).statusCode, path).toBe(404)
     }
-    for (const path of ['/icon-256.png', '/manifest.json', '/web/public/icon.svg', '/']) {
+    // A file the gate does not know is refused outright; a page gets the login page instead.
+    for (const path of ['/icon-256.png', '/manifest.json', '/web/public/icon.svg']) {
       expect((await app.inject({ url: path })).statusCode, path).toBe(401)
     }
+    const front = await app.inject({ url: '/' })
+    expect(front.statusCode).toBe(200)
+    expect(front.body).toContain('Log ind med Theta')
   })
 
   it('shows the icon on the pages outside the gate', async () => {

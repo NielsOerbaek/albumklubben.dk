@@ -171,7 +171,11 @@ export function registerThetaAuth(app: FastifyInstance, opts: ThetaAuthOptions) 
     const wantsData = path.startsWith('/api/') || (req.headers.accept ?? '').includes('application/json')
     const isFile = /\.[a-z0-9]+$/i.test(path)
     if (req.method === 'GET' && !wantsData && !isFile) {
-      return reply.code(401).type('text/html').send(loginPage(req.url, opts.publicUrl.replace(/\/$/, '')))
+      // 200, not 401: the login page is a page, and we served it. The code used to be 401, which
+      // is honest about the session but means no link preview anywhere — Slack, Theta, Facebook
+      // and the rest draw a card only for a 2xx. Nothing is given away by saying so: this page
+      // is all there is to see without a session. A call for data still gets the 401 below.
+      return reply.type('text/html').send(loginPage(req.url, opts.publicUrl.replace(/\/$/, '')))
     }
     reply.code(401).send('Log ind med Theta først')
   })
