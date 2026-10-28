@@ -54,3 +54,17 @@ body.arkiv { min-height: 100vh; }
 .mini-grid { display: grid; grid-template-columns: repeat(3, 52px); gap: 3px; align-content: end; }
 .tile.mini { width: 52px; height: 52px; }
 .clabel { font-size: 16px; margin-top: 4px; display: flex; flex-direction: column; align-items: center; }
+
+/* A dimension lying down: one row of covers a bar, as long as there are people in it. All the
+   bars scroll together in `.columns`, so their lengths can be held against each other. */
+.bars { display: flex; flex-direction: column; gap: 16px; width: max-content; }
+.bar-tiles { display: flex; gap: 3px; }
+.blabel {
+  position: sticky; left: var(--pad);
+  width: max-content; max-width: 100vw;
+  margin: 0 0 5px;
+  display: flex; gap: 12px; align-items: baseline;
+  font-size: 16px;
+}
+/* The heading stays put too, so it is still clear what is being scrolled through. */
+.columns.lying .dim { position: sticky; left: var(--pad); width: max-content; }

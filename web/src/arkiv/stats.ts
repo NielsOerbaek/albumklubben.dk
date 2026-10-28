@@ -91,6 +91,16 @@ export function headline(entries: Entry[], meetings: number): { label: string; v
   ]
 }
 
+/**
+ * Køn lies down. Standing up it counted 100 people three covers to a row and ran to some 1600 px,
+ * taller than the screen and three times the other three. On its side a bar is one row of covers,
+ * as long as there are people in it, and the whole thing is a few hundred px tall.
+ *
+ * The three bars share one scroller, so their lengths can still be held against each other; a
+ * bar with its own would say nothing. The names stick to the left edge while it scrolls.
+ */
+const LYING_DOWN: Dimension[] = ['gender']
+
 export function statsView(s: State, act: Actions): TemplateResult {
   const meetings = new Set(s.entries.map((e) => e.n)).size
   // On Køn the same cover stands once per member, so it says which of them it is.
@@ -103,11 +113,23 @@ export function statsView(s: State, act: Actions): TemplateResult {
   }
   return html`<div class="headline">${headline(s.entries, meetings).map((h) =>
       html`<div class="figure"><span class="num">${h.value}</span><span class="muted">${h.label}</span></div>`)}</div>
-    ${DIMENSIONS.map(([dim, text]) => html`<section class="columns">
-      <h3 class="dim">${text}</h3>
-      <div class="colrow">${columns(dim, s.entries).map((c) => html`<div class="column">
-        <div class="mini-grid">${c.items.map(tile)}</div>
-        <div class="clabel">${c.label}<span class="muted small">${c.sub ?? shareLabel(c.items.length, s.entries.length)}</span></div>
-      </div>`)}</div>
-    </section>`)}`
+    ${DIMENSIONS.map(([dim, text]) => {
+      const cols = columns(dim, s.entries)
+      const note = (c: Column) => c.sub ?? shareLabel(c.items.length, s.entries.length)
+      return LYING_DOWN.includes(dim)
+        ? html`<section class="columns lying">
+            <h3 class="dim">${text}</h3>
+            <div class="bars">${cols.map((c) => html`<div class="bar">
+              <p class="blabel">${c.label}<span class="muted small">${note(c)}</span></p>
+              <div class="bar-tiles">${c.items.map(tile)}</div>
+            </div>`)}</div>
+          </section>`
+        : html`<section class="columns">
+            <h3 class="dim">${text}</h3>
+            <div class="colrow">${cols.map((c) => html`<div class="column">
+              <div class="mini-grid">${c.items.map(tile)}</div>
+              <div class="clabel">${c.label}<span class="muted small">${note(c)}</span></div>
+            </div>`)}</div>
+          </section>`
+    })}`
 }

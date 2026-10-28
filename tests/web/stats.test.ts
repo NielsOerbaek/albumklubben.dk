@@ -75,12 +75,17 @@ test('four rows with shares; a tile opens the dialog', () => {
   const draw = () => render(statsView(s, act), d)
   const act: Actions = { select() {}, surprise() {}, set(p) { Object.assign(s, p); draw() } }
   draw()
-  expect(d.querySelectorAll('.colrow').length).toBe(4)
+  // Four dimensions: three standing up, and Køn on its side because it counts people.
+  expect(d.querySelectorAll('.columns').length).toBe(4)
+  expect(d.querySelectorAll('.colrow').length).toBe(3)
+  expect(d.querySelectorAll('.columns.lying .bars').length).toBe(1)
   for (const section of d.querySelectorAll('.columns')) {
-    // Every column says how big it is: a share of the whole, except Køn, where an album can be
-    // in two columns at once and the shares would add up past it.
-    const want = section.querySelector('.dim')!.textContent === 'Køn' ? 'personer' : '%'
-    for (const l of section.querySelectorAll('.clabel')) expect(l.textContent).toContain(want)
+    // Every bar says how big it is: a share of the whole, except Køn, where an album can be in
+    // two bars at once and the shares would add up past it.
+    const lying = section.querySelector('.dim')!.textContent === 'Køn'
+    for (const l of section.querySelectorAll(lying ? '.blabel' : '.clabel')) {
+      expect(l.textContent).toContain(lying ? 'personer' : '%')
+    }
   }
   d.querySelector<HTMLButtonElement>('.tile')!.click()
   expect(s.dialogId).not.toBeNull()
@@ -92,17 +97,19 @@ const drawOne = (lineup: ReturnType<typeof toLineup>) => {
     filter: 'alle', mapView: 'world', dialogId: null, dialogTracks: false }
   const d = document.createElement('div')
   render(statsView(s, { select() {}, surprise() {}, set() {} }), d)
-  return [...d.querySelectorAll('.columns')].at(-1)! // Køn is the last of the four
+  return d.querySelector('.columns.lying')! // Køn, the one lying down
 }
 
-test('a band of four is drawn four covers high, each saying which member it is', () => {
+test('a band of four makes a bar four covers long, each saying which member it is', () => {
   const koen = drawOne(toLineup({ men: 4 }))
   const tiles = [...koen.querySelectorAll('.tile')]
   expect(tiles).toHaveLength(4)
   expect(tiles.map((t) => t.getAttribute('aria-label'))).toEqual([
     'Kunstner 1, Album 1 (1 af 4)', 'Kunstner 1, Album 1 (2 af 4)',
     'Kunstner 1, Album 1 (3 af 4)', 'Kunstner 1, Album 1 (4 af 4)'])
-  expect(koen.querySelector('.clabel')!.textContent).toContain('4 personer · 1 album')
+  expect(koen.querySelector('.blabel')!.textContent).toContain('4 personer · 1 album')
+  // All the bars in one scroller, so their lengths can be held against each other.
+  expect(koen.querySelectorAll('.bars')).toHaveLength(1)
 })
 
 test('a soloist is drawn once, and named without a number', () => {
