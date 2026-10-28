@@ -10,7 +10,6 @@ import {
   festTracks, formatLength, positionAt, totalSeconds, trackIndexAt,
   type FestPerson, type FestView,
 } from '../shared/lyttefest.ts'
-import { firstName } from '../shared/board.ts'
 import { faces } from './members.ts'
 
 /**
@@ -27,7 +26,6 @@ const MAX_COMMENT = 500
 export const TICK_MS = 10_000
 /** The bell rings this far ahead of the first track, so there is time to find the album. */
 export const REMIND_BEFORE_MS = 2 * 60 * 1000
-const SUMMARY_LIMIT = 3500 // Theta takes more, but a wall of text helps nobody
 
 declare module 'fastify' {
   interface FastifyInstance {
@@ -368,24 +366,28 @@ export function registerLyttefest(app: FastifyInstance, opts: LyttefestOptions) 
   // --- The clock: one reminder, and one summary ----------------------------------------------------
 
   /** The comments gathered under their tracks, as one comment for the group. */
+  /**
+   * What the bot says in the group when a lyttefest is over: how many were there and how much was
+   * said, and a link to the rest.
+   *
+   * It used to carry every comment. It does not any more: what is written during a lyttefest is
+   * written to the people who are listening along, at the moment of a particular bar of music,
+   * and it reads as something else entirely pasted into the group hours later. The numbers are
+   * the news; the lyttefest's own page is where the talk stays.
+   *
+   * "Med" is counted as anyone who either said they were coming or wrote something, so nobody who
+   * turned up only in the chat is left out of the count.
+   */
   function summaryText(f: FestRow): string {
     const album = festAlbum(db, f.albumId)
     const comments = listComments(db, f.id)
-    const head = `Lyttefesten for ${album?.artist} – ${album?.title} er slut.`
-    if (comments.length === 0) return `${head}\n\n${url(f.id)}`
-    const byTrack = new Map<number | null, typeof comments>()
-    for (const c of comments) byTrack.set(c.trackIndex, [...(byTrack.get(c.trackIndex) ?? []), c])
-    const parts: string[] = [head, '']
-    for (const track of f.tracks) {
-      const said = byTrack.get(track.number - 1)
-      if (!said?.length) continue
-      parts.push(`${track.number}. ${track.title}`)
-      for (const c of said) parts.push(`${firstName(c.name)}: ${c.text}`)
-      parts.push('')
-    }
-    let body = parts.join('\n').trimEnd()
-    if (body.length > SUMMARY_LIMIT) body = `${body.slice(0, SUMMARY_LIMIT).trimEnd()} …`
-    return `${body}\n\n${url(f.id)}`
+    const people = new Set([...listRsvps(db, f.id).map(p => p.sub), ...comments.map(c => c.sub)])
+    const were = people.size === 1 ? 'Én var med' : `${people.size} var med`
+    const said = comments.length === 0
+      ? 'der blev ikke skrevet noget undervejs'
+      : `der blev skrevet ${comments.length} ${comments.length === 1 ? 'kommentar' : 'kommentarer'} undervejs`
+    return `Lyttefesten for ${album?.artist} – ${album?.title} er slut. ${were}, og ${said}.`
+      + `\n\n${url(f.id)}`
   }
 
   /**

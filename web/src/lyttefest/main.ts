@@ -6,6 +6,7 @@ import { topBarTemplate } from '../topbar.ts'
 import { createBoard } from '../board/board.ts'
 import { thumbUrl } from '../api.ts'
 import { faceTemplate } from '../face.ts'
+import { loadMe } from '../me.ts'
 import { formatPostTime } from '../../../shared/board.ts'
 import {
   catchUpText, formatClock, formatCountdown, formatLength, positionAt, searchLinks, totalSeconds,
@@ -250,7 +251,8 @@ const writeTemplate = () => html`
       }}></textarea>
     <button class="pill" type="submit" ?disabled=${sending}>${sending ? 'Sender …' : 'Send'}</button>
   </form>
-  <p class="fest-note">Kommentarerne samles i ét opslag i gruppen på Theta, når lyttefesten er slut.</p>`
+  <p class="fest-note">Det, du skriver, bliver her på siden. Når lyttefesten er slut, siger botten
+    kun i gruppen, hvor mange der var med, og hvor meget der blev skrevet.</p>`
 
 /** Who is coming, or — once it is over — who came. There is nothing to answer by then. */
 const comingTemplate = (f: FestView, p: FestPosition) => {
@@ -354,6 +356,7 @@ if (!Number.isFinite(id)) {
   draw()
 } else {
   draw()
+  void loadMe(draw)
   void load().then(listen)
   // A second is as fine as the counting needs to be.
   setInterval(() => { if (fest && !document.hidden) draw() }, 1000)

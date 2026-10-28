@@ -304,6 +304,19 @@ describe('ansigterne', () => {
     expect(rsvp.json().coming[0].picture).toBe('https://theta.test/avatars/1.jpg')
   })
 
+  it('says who you are logged in as, for the top bar', async () => {
+    const { app } = setup()
+    const cookie = await signIn(app)
+    const me = await app.inject({ url: '/api/me', headers: { cookie } })
+    expect(me.json()).toEqual({ sub: 'sub-1', name: 'Medlem Een', picture: 'https://theta.test/avatars/1.jpg' })
+    expect(me.headers['cache-control']).toBe('no-store')
+  })
+
+  it('does not say who anyone is to someone who is not logged in', async () => {
+    const { app } = setup()
+    expect((await app.inject({ url: '/api/me' })).statusCode).toBe(401)
+  })
+
   it('has no face for a member Theta has no picture for, and shows the page all the same', async () => {
     const { app, albumId } = setup({}, 'sub-2')
     const cookie = await signIn(app)
@@ -419,7 +432,7 @@ describe('uret: én påmindelse og ét referat', () => {
     expect(notes[0].text).toContain('er begyndt')
   })
 
-  it('puts the comments in the group as one comment when it is over, and only once', async () => {
+  it('says in the group how many were there and how much was said, and only once', async () => {
     const { app, albumId, comments } = setup()
     const cookie = await signIn(app)
     await make(app, cookie, { albumId })
@@ -437,11 +450,35 @@ describe('uret: én påmindelse og ét referat', () => {
     const summaries = comments.filter(c => c.externalId === 'lyttefest-1-summary')
     expect(summaries).toHaveLength(1)
     expect(summaries[0].author).toEqual({ type: 'app' })
-    expect(summaries[0].body).toContain('1. En')
-    expect(summaries[0].body).toContain('Medlem: God start')
-    expect(summaries[0].body).toContain('2. To')
-    expect(summaries[0].body).toContain('Medlem: Og nu den her')
-    expect(summaries[0].body).toContain('https://ak.test/lyttefest/1')
+    expect(summaries[0].body).toBe('Lyttefesten for Kate Bush – The Kick Inside er slut.'
+      + ' Én var med, og der blev skrevet 2 kommentarer undervejs.\n\nhttps://ak.test/lyttefest/1')
+    // What was said stays on the lyttefest's own page: it was written to the people listening
+    // along, at a particular bar of music, and reads as something else in the group hours later.
+    expect(summaries[0].body).not.toContain('God start')
+    expect(summaries[0].body).not.toContain('Og nu den her')
+  })
+
+  it('counts someone who only wrote, and says plainly when nothing was written', async () => {
+    const { app, albumId, comments } = setup()
+    const cookie = await signIn(app)
+    await make(app, cookie, { albumId })
+    // The host said no to their own lyttefest but turned up in the chat anyway.
+    await app.inject({ method: 'POST', url: '/api/lyttefest/1/rsvp', headers: { cookie }, payload: { coming: false } })
+    clock = START + 10_000
+    await app.inject({ method: 'POST', url: '/api/lyttefest/1/comments', headers: { cookie }, payload: { text: 'Alligevel' } })
+    clock = START + 11 * 60_000
+    await app.lyttefestTick()
+    expect(comments.find(c => c.externalId === 'lyttefest-1-summary')!.body)
+      .toContain('Én var med, og der blev skrevet 1 kommentar undervejs.')
+
+    const quiet = setup()
+    const c2 = await signIn(quiet.app)
+    clock = START - 60 * 60 * 1000
+    await make(quiet.app, c2, { albumId: quiet.albumId })
+    clock = START + 11 * 60_000
+    await quiet.app.lyttefestTick()
+    expect(quiet.comments.find(c => c.externalId === 'lyttefest-1-summary')!.body)
+      .toContain('Én var med, og der blev ikke skrevet noget undervejs.')
   })
 
   it('leaves a cancelled lyttefest alone', async () => {

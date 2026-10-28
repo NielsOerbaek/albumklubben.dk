@@ -285,16 +285,16 @@ the 3D room):
 - They are pushed live with Server-Sent Events (`GET /api/lyttefest/:id/events`), which
   carry new comments, RSVP changes, and state changes (postponed, cancelled, started,
   ended).
-- When the lyttefest ends, the app's bot adds **one** comment on the Theta post: a summary
-  with each track that got comments and its comments as "Navn: tekst" lines, cut to a
-  sensible length with a link to the page. It is idempotent (`externalId`
-  `lyttefest-<id>-summary`).
+- When the lyttefest ends, the app's bot adds **one** comment on the Theta post. It is
+  idempotent (`externalId` `lyttefest-<id>-summary`).
 
-  The point is that the conversation reaches the group once, without notifying anyone per
-  comment.
+  ~~A summary with each track that got comments and its comments as "Navn: tekst" lines, cut
+  to a sensible length with a link to the page.~~ Superseded: it is two numbers and the link.
+  See "The summary is a count" below.
 - A comment can be deleted by its author or the host. There is no editing.
-- A line under the comment field says so: "Kommentarerne samles i ét opslag i gruppen på
-  Theta, når lyttefesten er slut". The summary uses first names.
+- ~~A line under the comment field says "Kommentarerne samles i ét opslag i gruppen på Theta,
+  når lyttefesten er slut". The summary uses first names.~~ Superseded with the summary: the
+  line now says the talk stays on the page.
 
 ## Data (SQLite, additive)
 
@@ -403,6 +403,24 @@ comment should show in a tiny hover thing."*
   track the card hangs from that end rather than from its middle, placed off the percentage the
   mark already has rather than by measuring anything. It is `aria-hidden` and gone on a touch
   screen: every comment is also in the list below, so nothing is reachable only by hovering.
+
+### The summary is a count, and the bar says who you are (Niels)
+
+*"This comment should not list the comment content, but just the number of participants and the
+number of comments. And i would like a little thing with my profile name and avatar in the upper
+right corner, so i can see who i am logged in as."*
+
+- **The bot's closing comment is now two numbers**: how many were with and how many comments were
+  written, and the link. It used to paste the whole chat into the group. What is written during a
+  lyttefest is written to the people listening along, at a particular bar of music; hours later in
+  the group it reads as something else. The talk stays on the lyttefest's own page, and the line
+  under the comment field says so rather than promising the group a transcript.
+  "Med" counts anyone who either said they were coming **or** wrote something, so nobody who
+  turned up only in the chat is left out.
+- **The top bar carries your own face and name**, beside Log ud, so it is plain who the session
+  belongs to. The session is an httpOnly cookie, so the page cannot read it: `/api/me` answers
+  from the session and the `members` row, `web/src/me.ts` asks once per page and the bar draws
+  again when the answer comes. On a narrow bar the name is dropped and the face is left.
 
 ### The App API had less in it than the design assumed
 
