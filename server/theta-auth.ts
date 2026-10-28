@@ -75,12 +75,34 @@ export const iconLinks = `<link rel="icon" href="/favicon.ico" sizes="32x32">
 <link rel="apple-touch-icon" href="/apple-touch-icon.png">
 <link rel="manifest" href="/manifest.webmanifest">`
 
+const SITE = 'Albumklubben'
+/** One line about the club, for the page and for whatever the link is pasted into. It says what
+ *  this is and who it is for, and nothing about the members, the albums or when they meet. */
+const TAGLINE = 'Klubhuset og arkivet for frokostlytteklubben på Thoravej 29. Kun for medlemmer af klubbens gruppe på Theta.'
+
+/**
+ * What a link to the site unfolds into when it is pasted somewhere. Every one of these pages is
+ * behind the login, so this is the only thing an unfurler ever sees — and it is a summary card:
+ * the club's name, the line above, and the record icon. `noindex` still stands, so this is for
+ * links that are shared, not for search.
+ */
+const preview = (origin: string) => `<meta name="description" content="${TAGLINE}">
+<meta property="og:type" content="website"><meta property="og:site_name" content="${SITE}">
+<meta property="og:title" content="${SITE}"><meta property="og:description" content="${TAGLINE}">
+<meta property="og:locale" content="da_DK"><meta property="og:url" content="${origin}/">
+<meta property="og:image" content="${origin}/icon-512.png">
+<meta property="og:image:type" content="image/png">
+<meta property="og:image:width" content="512"><meta property="og:image:height" content="512">
+<meta property="og:image:alt" content="Albumklubbens mærke: en vinylplade">
+<meta name="twitter:card" content="summary">`
+
 /** The pages outside the gate are served by the server, not built by Vite, so they carry their
  * own copy of the look in `web/src/theme.css`: black, white and Inter Tight. */
-const page = (title: string, body: string) => `<!doctype html>
+const page = (title: string, body: string, origin = '') => `<!doctype html>
 <html lang="da"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="robots" content="noindex, nofollow"><meta name="theme-color" content="#000000">
-<title>${title} · Albumklubben</title>
+<title>${title === SITE ? SITE : `${title} · ${SITE}`}</title>
+${origin ? preview(origin) : ''}
 ${iconLinks}
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <style>@import url('https://fonts.googleapis.com/css2?family=Inter+Tight:wght@300;400;600&display=swap');
@@ -103,10 +125,14 @@ a.button:hover{background:transparent;color:#fff}
 const loginButton = (next = '/') =>
   `<p class="last"><a class="button" href="/auth/login?next=${encodeURIComponent(next)}">Log ind med Theta</a></p>`
 
-/** What a logged-out visitor gets at the address they asked for, instead of a jump to Theta. */
-export const loginPage = (next: string) => page('Albumklubben',
+/**
+ * What a logged-out visitor gets at the address they asked for, instead of a jump to Theta — and,
+ * because the whole site is behind it, what a pasted link unfolds into. `origin` is this site's
+ * own, for the absolute addresses a preview needs.
+ */
+export const loginPage = (next: string, origin = '') => page(SITE,
   `<p>Klubhuset og arkivet for frokostlytteklubben på Thoravej&nbsp;29.
-Kun for medlemmer af klubbens gruppe på Theta.</p>${loginButton(safeNext(next))}`)
+Kun for medlemmer af klubbens gruppe på Theta.</p>${loginButton(safeNext(next))}`, origin)
 
 export function registerThetaAuth(app: FastifyInstance, opts: ThetaAuthOptions) {
   const doFetch = opts.fetch ?? fetch
@@ -137,10 +163,16 @@ export function registerThetaAuth(app: FastifyInstance, opts: ThetaAuthOptions) 
     if (OPEN.some(p => path === p || (p.endsWith('/') && path.startsWith(p)))) return done()
     const who = member(req)
     if (who) { req.member = who; return done() }
-    const navigating = req.method === 'GET' &&
-      (req.headers['sec-fetch-mode'] === 'navigate' || (req.headers.accept ?? '').includes('text/html'))
-    // The login page is shown at the address that was asked for, so the way back is kept.
-    if (navigating) return reply.code(401).type('text/html').send(loginPage(req.url))
+    // An unfurler — Theta, Slack, iMessage — asks for a page with `Accept: */*` and no
+    // `Sec-Fetch-Mode`, so neither is the test for whether a page was wanted. Anything that is
+    // a call for data or for a file gets a line of text; everything else gets the login page,
+    // which is shown at the address that was asked for, so the way back is kept, and which
+    // carries the link preview.
+    const wantsData = path.startsWith('/api/') || (req.headers.accept ?? '').includes('application/json')
+    const isFile = /\.[a-z0-9]+$/i.test(path)
+    if (req.method === 'GET' && !wantsData && !isFile) {
+      return reply.code(401).type('text/html').send(loginPage(req.url, opts.publicUrl.replace(/\/$/, '')))
+    }
     reply.code(401).send('Log ind med Theta først')
   })
 

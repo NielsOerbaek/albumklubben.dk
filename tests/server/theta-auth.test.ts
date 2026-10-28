@@ -68,6 +68,56 @@ describe('Log ind med Theta', () => {
     expect((await app.inject({ url: '/healthz' })).body).toBe('ok')
   })
 
+  it('gives an unfurler the login page, because that is all a link can ever unfold into', async () => {
+    const { app } = setup()
+    // Slack, Theta and the rest ask with `Accept: */*` and no Sec-Fetch-Mode. Asking for HTML
+    // was the old test, and it meant a pasted link unfolded into twenty-four bytes of plain text.
+    const res = await app.inject({ url: '/', headers: { accept: '*/*', 'user-agent': 'Slackbot-LinkExpanding 1.0' } })
+    expect(res.statusCode).toBe(401)
+    expect(res.headers['content-type']).toContain('text/html')
+    expect(res.body).toContain('<meta property="og:title" content="Albumklubben">')
+    expect(res.body).toContain('<meta property="og:image" content="https://ak.test/icon-512.png">')
+    expect(res.body).toContain('<meta name="twitter:card" content="summary">')
+    expect(res.body).toContain('Kun for medlemmer af klubbens gruppe på Theta.')
+    // The card says what this is and who it is for, and nothing about who or what is inside.
+    expect(res.body).not.toMatch(/lyttefest|opslagstavle|Kate Bush/i)
+  })
+
+  it('keeps the preview off search, which is a different thing from a shared link', async () => {
+    const res = await setup().app.inject({ url: '/', headers: { accept: '*/*' } })
+    expect(res.body).toContain('<meta name="robots" content="noindex, nofollow">')
+  })
+
+  it('names itself once, not twice', async () => {
+    const res = await setup().app.inject({ url: '/', headers: { accept: '*/*' } })
+    expect(res.body).toContain('<title>Albumklubben</title>')
+    // Other pages outside the gate still say which one they are.
+    const gone = await setup().app.inject({ url: '/auth/callback?error=denied&state=x' })
+    expect(gone.body).toContain('· Albumklubben</title>')
+  })
+
+  it('still answers data and files with a line of text, not with a page', async () => {
+    const { app } = setup()
+    for (const [url, headers] of [
+      ['/api/archive', {}],
+      ['/api/lyttefester', { accept: '*/*' }],
+      ['/uploads/posters/x.jpg', { accept: '*/*' }],
+      ['/tex/128/covers/1.png', { accept: '*/*' }],
+      ['/klubhuset', { accept: 'application/json' }],
+    ] as [string, Record<string, string>][]) {
+      const res = await app.inject({ url, headers })
+      expect(res.statusCode, url).toBe(401)
+      expect(res.headers['content-type'], url).not.toContain('text/html')
+      expect(res.body, url).toBe('Log ind med Theta først')
+    }
+  })
+
+  it('does not hand a page to a POST that has no session', async () => {
+    const res = await setup().app.inject({ method: 'POST', url: '/api/lyttefest', payload: {} })
+    expect(res.statusCode).toBe(401)
+    expect(res.headers['content-type']).not.toContain('text/html')
+  })
+
   it('sends the person to Theta with PKCE, the groups scope and our callback', async () => {
     const { app } = setup()
     const res = await app.inject({ url: '/auth/login?next=/klubhuset' })
