@@ -40,19 +40,26 @@ test('an album with more than one gender in the band stands in every one of thei
   const band: Entry[] = [{ album: album(0, { lineup: toLineup({ men: 5, women: 1 }) }), n: 1 }]
   const cols = columns('gender', band)
   expect(cols.map((c) => c.label)).toEqual(['Mænd', 'Kvinder'])
-  // With the five carried in the men's column and nothing in the women's, where there is one.
-  expect(cols[0].items[0].n).toBe(5)
-  expect(cols[1].items[0].n).toBeUndefined()
-  expect(cols.every((c) => c.items[0].entry.album.id === band[0].album.id)).toBe(true)
+  // One cover a member, so the height of the bar is the people in it and not the albums.
+  expect(cols[0].items).toHaveLength(5)
+  expect(cols[1].items).toHaveLength(1)
+  expect(cols.every((c) => c.items.every((i) => i.entry.album.id === band[0].album.id))).toBe(true)
 })
 
-test('a gender column counts albums and people, not a share that would add up past the whole', () => {
+test('each of a band\'s covers says which member it stands for; a soloist\'s says nothing', () => {
+  const [men, women] = columns('gender', [{ album: album(0, { lineup: toLineup({ men: 3, women: 1 }) }), n: 1 }])
+  expect(men.items.map((i) => i.member)).toEqual([{ i: 1, of: 3 }, { i: 2, of: 3 }, { i: 3, of: 3 }])
+  expect(women.items[0].member).toBeUndefined()
+})
+
+test('a gender column counts people first, not a share that would add up past the whole', () => {
   const [men] = columns('gender', [
     { album: album(0, { lineup: toLineup({ men: 4 }) }), n: 1 },
     { album: album(1, { lineup: toLineup({ men: 1 }) }), n: 1 },
   ])
   expect(men.label).toBe('Mænd')
-  expect(men.sub).toBe('2 albums · 5 i alt')
+  expect(men.items).toHaveLength(5)
+  expect(men.sub).toBe('5 personer · 2 albums')
 })
 
 test('headline numbers', () => {
@@ -72,7 +79,7 @@ test('four rows with shares; a tile opens the dialog', () => {
   for (const section of d.querySelectorAll('.columns')) {
     // Every column says how big it is: a share of the whole, except Køn, where an album can be
     // in two columns at once and the shares would add up past it.
-    const want = section.querySelector('.dim')!.textContent === 'Køn' ? 'i alt' : '%'
+    const want = section.querySelector('.dim')!.textContent === 'Køn' ? 'personer' : '%'
     for (const l of section.querySelectorAll('.clabel')) expect(l.textContent).toContain(want)
   }
   d.querySelector<HTMLButtonElement>('.tile')!.click()
@@ -80,22 +87,26 @@ test('four rows with shares; a tile opens the dialog', () => {
   expect(s.selId).toBe(1)
 })
 
-test('a band of several wears its number, and says it where it cannot be seen', () => {
-  const s: State = { entries: [{ album: album(0, { lineup: toLineup({ men: 4 }) }), n: 1 }], selId: 1, showTracks: false,
+const drawOne = (lineup: ReturnType<typeof toLineup>) => {
+  const s: State = { entries: [{ album: album(0, { lineup }), n: 1 }], selId: 1, showTracks: false,
     filter: 'alle', mapView: 'world', dialogId: null, dialogTracks: false }
   const d = document.createElement('div')
   render(statsView(s, { select() {}, surprise() {}, set() {} }), d)
-  const badges = [...d.querySelectorAll('.tile-badge')]
-  expect(badges.map((b) => b.textContent)).toEqual(['4'])
-  expect(badges[0].getAttribute('aria-hidden')).toBe('true')
-  expect(d.querySelector('.tile-badge')!.closest('.tile')!.getAttribute('aria-label'))
-    .toBe('Kunstner 1, Album 1 (4)')
+  return [...d.querySelectorAll('.columns')].at(-1)! // Køn is the last of the four
+}
+
+test('a band of four is drawn four covers high, each saying which member it is', () => {
+  const koen = drawOne(toLineup({ men: 4 }))
+  const tiles = [...koen.querySelectorAll('.tile')]
+  expect(tiles).toHaveLength(4)
+  expect(tiles.map((t) => t.getAttribute('aria-label'))).toEqual([
+    'Kunstner 1, Album 1 (1 af 4)', 'Kunstner 1, Album 1 (2 af 4)',
+    'Kunstner 1, Album 1 (3 af 4)', 'Kunstner 1, Album 1 (4 af 4)'])
+  expect(koen.querySelector('.clabel')!.textContent).toContain('4 personer · 1 album')
 })
 
-test('one of a kind wears no badge', () => {
-  const s: State = { entries: [{ album: album(0, { lineup: toLineup({ men: 1 }) }), n: 1 }], selId: 1, showTracks: false,
-    filter: 'alle', mapView: 'world', dialogId: null, dialogTracks: false }
-  const d = document.createElement('div')
-  render(statsView(s, { select() {}, surprise() {}, set() {} }), d)
-  expect(d.querySelectorAll('.tile-badge')).toHaveLength(0)
+test('a soloist is drawn once, and named without a number', () => {
+  const koen = drawOne(toLineup({ men: 1 }))
+  expect(koen.querySelectorAll('.tile')).toHaveLength(1)
+  expect(koen.querySelector('.tile')!.getAttribute('aria-label')).toBe('Kunstner 1, Album 1')
 })

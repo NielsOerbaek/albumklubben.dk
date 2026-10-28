@@ -12,8 +12,8 @@ const label = (a: { artist: string; title: string }) => `${a.artist}, ${a.title}
 
 export interface ColumnItem {
   entry: Entry
-  /** How many of this column's kind are on the album, where that is more than one. */
-  n?: number
+  /** Which of the band's members this cover stands for, when it stands for one of several. */
+  member?: { i: number; of: number }
 }
 
 interface Column {
@@ -31,24 +31,29 @@ function group(entries: Entry[], keyOf: (e: Entry) => string, order: (keys: stri
 
 /**
  * Køn is the one dimension where an album can stand in more than one column: a band of five men
- * and one woman is in both, with a 5 on it in the one and nothing on it in the other. The share
- * would be a lie here — the columns would add up past the whole — so it counts people instead.
+ * and one woman is in both.
+ *
+ * It is also the one counted in people rather than albums, so a column is one cover per member —
+ * the same cover five times over for a band of five. That is what makes the bar's height the
+ * number of people in it: counting albums drew a four-piece and a solo artist the same height,
+ * which is the thing a bar chart is supposed to show. The share is left out for the same reason
+ * the columns add up past the whole.
  */
 function genderColumns(entries: Entry[]): Column[] {
   // An album nobody has counted yet stands under Andet rather than dropping out of the chart.
   const of = (e: Entry) => (lineupTotal(e.album.lineup) > 0 ? e.album.lineup : { ...EMPTY_LINEUP, other: 1 })
   return LINEUP_KEYS.flatMap((key: LineupKey) => {
     const items: ColumnItem[] = []
-    let people = 0
+    let albums = 0
     for (const entry of entries) {
       const n = of(entry)[key]
       if (n <= 0) continue
-      items.push({ entry, n: n > 1 ? n : undefined })
-      people += n
+      albums++
+      for (let i = 1; i <= n; i++) items.push({ entry, member: n > 1 ? { i, of: n } : undefined })
     }
     if (items.length === 0) return [] // a column nobody is in is not drawn
-    const a = `${items.length} ${items.length === 1 ? 'album' : 'albums'}`
-    return [{ label: LINEUP_LABEL[key], items, sub: `${a} · ${people} i alt` }]
+    const people = `${items.length} ${items.length === 1 ? 'person' : 'personer'}`
+    return [{ label: LINEUP_LABEL[key], items, sub: `${people} · ${albums} ${albums === 1 ? 'album' : 'albums'}` }]
   })
 }
 
@@ -88,13 +93,14 @@ export function headline(entries: Entry[], meetings: number): { label: string; v
 
 export function statsView(s: State, act: Actions): TemplateResult {
   const meetings = new Set(s.entries.map((e) => e.n)).size
-  const tile = ({ entry: e, n }: ColumnItem) => html`<button class="tile mini"
-    aria-label=${n ? `${label(e.album)} (${n})` : label(e.album)}
-    title=${n ? `${label(e.album)} — ${n}` : label(e.album)}
-    @click=${() => act.set({ dialogId: e.album.id, dialogTracks: false })}>
-    ${e.album.coverUrl ? html`<img src=${textureUrl(e.album.coverUrl, 128)} alt="" loading="lazy">` : nothing}
-    ${n ? html`<span class="tile-badge" aria-hidden="true">${n}</span>` : nothing}
-  </button>`
+  // On Køn the same cover stands once per member, so it says which of them it is.
+  const tile = ({ entry: e, member }: ColumnItem) => {
+    const name = member ? `${label(e.album)} (${member.i} af ${member.of})` : label(e.album)
+    return html`<button class="tile mini" aria-label=${name} title=${name}
+      @click=${() => act.set({ dialogId: e.album.id, dialogTracks: false })}>
+      ${e.album.coverUrl ? html`<img src=${textureUrl(e.album.coverUrl, 128)} alt="" loading="lazy">` : nothing}
+    </button>`
+  }
   return html`<div class="headline">${headline(s.entries, meetings).map((h) =>
       html`<div class="figure"><span class="num">${h.value}</span><span class="muted">${h.label}</span></div>`)}</div>
     ${DIMENSIONS.map(([dim, text]) => html`<section class="columns">
