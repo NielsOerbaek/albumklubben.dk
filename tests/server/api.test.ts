@@ -1,5 +1,4 @@
-import { mkdtempSync, writeFileSync } from 'node:fs'
-import { tmpdir } from 'node:os'
+import {writeFileSync} from 'node:fs'
 import { join } from 'node:path'
 import { Readable } from 'node:stream'
 import sharp from 'sharp'
@@ -9,9 +8,10 @@ import { openDb } from '../../server/db.ts'
 import { saveImage, saveVideo } from '../../server/files.ts'
 import { seed } from '../../server/seed.ts'
 import type { Archive } from '../../shared/types.ts'
+import { tmp } from '../tmp.ts'
 
 const setup = () => {
-  const uploadDir = mkdtempSync(join(tmpdir(), 'api-'))
+  const uploadDir = tmp('api-')
   const db = openDb(':memory:')
   seed(db, 'tests/fixtures/seed', uploadDir) // synthetic: album facts, anonymised picks, plain covers
   const app = buildApp({ db, uploadDir, adminPassword: 'x', sessionSecret: 'y' })
@@ -39,9 +39,9 @@ describe('pages', () => {
   })
 
   it('serves klubhuset.html at /klubhuset', async () => {
-    const webDir = mkdtempSync(join(tmpdir(), 'web-'))
+    const webDir = tmp('web-')
     writeFileSync(join(webDir, 'klubhuset.html'), '<p>klubhuset</p>')
-    const uploadDir = mkdtempSync(join(tmpdir(), 'api-'))
+    const uploadDir = tmp('api-')
     const app = buildApp({ db: openDb(':memory:'), uploadDir, adminPassword: 'x', sessionSecret: 'y', webDir })
     const res = await app.inject('/klubhuset')
     expect(res.statusCode).toBe(200)

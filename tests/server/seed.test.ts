@@ -1,17 +1,17 @@
-import { cpSync, existsSync, mkdtempSync, writeFileSync } from 'node:fs'
-import { tmpdir } from 'node:os'
+import {cpSync, existsSync, writeFileSync} from 'node:fs'
 import { join } from 'node:path'
 import { describe, expect, it } from 'vitest'
 import { openDb } from '../../server/db.ts'
 import { listMeetings } from '../../server/repo.ts'
 import { seed } from '../../server/seed.ts'
+import { tmp } from '../tmp.ts'
 
 // The seed data (data/: the Figma export with covers, posters and the members' picks) is
 // kept out of git. Point ALBUMKLUBBEN_DATA at a copy to run these; without one they skip.
 const DATA = process.env.ALBUMKLUBBEN_DATA ?? 'data'
 
 const setup = () => {
-  const uploadDir = mkdtempSync(join(tmpdir(), 'seed-'))
+  const uploadDir = tmp('seed-')
   const db = openDb(':memory:')
   return { db, uploadDir, result: seed(db, DATA, uploadDir) }
 }
@@ -51,13 +51,13 @@ describe.skipIf(!existsSync(join(DATA, 'albums.json')))('seed', () => {
   })
 
   it('applies tracklists.json by exact artist and title', () => {
-    const dataDir = mkdtempSync(join(tmpdir(), 'seed-data-'))
+    const dataDir = tmp('seed-data-')
     cpSync(DATA, dataDir, { recursive: true })
     writeFileSync(join(dataDir, 'tracklists.json'), JSON.stringify([
       { artist: 'Jeff Buckley', title: 'Grace', tracklist: 'Mojo Pin 5:42\nGrace 5:22', release: 'x' },
     ]))
     const db = openDb(':memory:')
-    seed(db, dataDir, mkdtempSync(join(tmpdir(), 'seed-')))
+    seed(db, dataDir, tmp('seed-'))
     const all = listMeetings(db).flatMap(m => m.albums)
     expect(all.find(a => a.title === 'Grace')!.tracklist).toBe('Mojo Pin 5:42\nGrace 5:22')
     expect(all.filter(a => a.tracklist !== null)).toHaveLength(1)

@@ -1,5 +1,4 @@
-import { existsSync, mkdtempSync, readdirSync } from 'node:fs'
-import { tmpdir } from 'node:os'
+import {existsSync, readdirSync} from 'node:fs'
 import { join } from 'node:path'
 import sharp from 'sharp'
 import { describe, expect, it, vi } from 'vitest'
@@ -9,9 +8,10 @@ import { openDb } from '../../server/db.ts'
 import type { findTracklist } from '../../server/musicbrainz.ts'
 import { getMeeting, listMeetings } from '../../server/repo.ts'
 import type { Archive } from '../../shared/types.ts'
+import { tmp } from '../tmp.ts'
 
 const setup = (musicbrainz?: typeof findTracklist) => {
-  const uploadDir = mkdtempSync(join(tmpdir(), 'admin-'))
+  const uploadDir = tmp('admin-')
   const db = openDb(':memory:')
   const app = buildApp({ db, uploadDir, adminPassword: 'hemmelig', sessionSecret: 'secret', musicbrainz })
   return { app, db, uploadDir }

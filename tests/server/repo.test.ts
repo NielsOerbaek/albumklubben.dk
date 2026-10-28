@@ -1,6 +1,4 @@
 import BetterSqlite3 from 'better-sqlite3'
-import { mkdtempSync } from 'node:fs'
-import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { beforeEach, describe, expect, it } from 'vitest'
 import type { Database } from '../../server/db.ts'
@@ -10,6 +8,7 @@ import {
   updateAlbum, updatePoster,
 } from '../../server/repo.ts'
 import type { AlbumInput } from '../../shared/types.ts'
+import { tmp } from '../tmp.ts'
 
 const album = (over: Partial<AlbumInput> = {}): AlbumInput => ({
   artist: 'A', title: 'T', year: 1999, origin: 'Danmark', country: 'DK', lat: 55, lng: 12,
@@ -101,7 +100,7 @@ CREATE INDEX posters_meeting ON posters(meeting_id, position);
 
 describe('migration', () => {
   it('upgrades a round-1 database in place, twice', () => {
-    const path = join(mkdtempSync(join(tmpdir(), 'mig-')), 'old.db')
+    const path = join(tmp('mig-'), 'old.db')
     const old = new BetterSqlite3(path)
     old.exec(ROUND1)
     old.exec(`INSERT INTO meetings (number) VALUES (1);

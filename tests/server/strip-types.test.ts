@@ -1,9 +1,9 @@
 import { execFile } from 'node:child_process'
-import { mkdtempSync, readdirSync } from 'node:fs'
-import { tmpdir } from 'node:os'
+import {readdirSync} from 'node:fs'
 import { join, resolve } from 'node:path'
 import { pathToFileURL } from 'node:url'
 import { describe, expect, it } from 'vitest'
+import { tmp } from '../tmp.ts'
 
 /**
  * The server is run by Node itself (`node --experimental-strip-types`), which only strips types:
@@ -16,7 +16,7 @@ import { describe, expect, it } from 'vitest'
  */
 describe('the server runs on Node\'s strip-only TypeScript', () => {
   const files = readdirSync('server', { recursive: true, encoding: 'utf8' }).filter(f => f.endsWith('.ts'))
-  const elsewhere = mkdtempSync(join(tmpdir(), 'strip-'))
+  const elsewhere = tmp('strip-')
 
   it('has server modules to check', () => expect(files.length).toBeGreaterThan(5))
 

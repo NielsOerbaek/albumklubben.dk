@@ -1,10 +1,8 @@
-import { mkdtempSync } from 'node:fs'
-import { tmpdir } from 'node:os'
-import { join } from 'node:path'
 import { describe, expect, it } from 'vitest'
 import { buildApp } from '../../server/app.ts'
 import { openDb } from '../../server/db.ts'
 import { ICON_FILES, safeNext } from '../../server/theta-auth.ts'
+import { tmp } from '../tmp.ts'
 
 const ISSUER = 'https://theta.test/oidc'
 const GROUP = '122304557724776'
@@ -33,7 +31,7 @@ function setup(groups: { id: string }[] = [{ id: GROUP }]) {
   const theta = fakeTheta(groups)
   const app = buildApp({
     db: openDb(':memory:'),
-    uploadDir: mkdtempSync(join(tmpdir(), 'auth-')),
+    uploadDir: tmp('auth-'),
     adminPassword: 'hemmelig',
     sessionSecret: 'secret',
     theta: { issuer: ISSUER, clientId: 'albumklubben', clientSecret: 's3cret', groupId: GROUP, publicUrl: 'https://ak.test', fetch: theta.fetch },

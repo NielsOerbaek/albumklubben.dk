@@ -1,12 +1,10 @@
 import { createHmac } from 'node:crypto'
-import { mkdtempSync } from 'node:fs'
-import { tmpdir } from 'node:os'
-import { join } from 'node:path'
 import { describe, expect, it } from 'vitest'
 import { buildApp } from '../../server/app.ts'
 import { openDb } from '../../server/db.ts'
 import { verify } from '../../server/theta-webhook.ts'
 import type { BoardPost, Page, ThetaApi } from '../../server/theta-api.ts'
+import { tmp } from '../tmp.ts'
 
 const ISSUER = 'https://theta.test/oidc'
 const GROUP = '122304557724776'
@@ -37,7 +35,7 @@ function setup() {
   } as unknown as ThetaApi
   const app = buildApp({
     db: openDb(':memory:'),
-    uploadDir: mkdtempSync(join(tmpdir(), 'hook-')),
+    uploadDir: tmp('hook-'),
     adminPassword: 'hemmelig',
     sessionSecret: 'secret',
     theta: { issuer: ISSUER, clientId: 'albumklubben', clientSecret: 's3cret', groupId: GROUP, publicUrl: 'https://ak.test', fetch: fakeOidc },
