@@ -142,6 +142,25 @@ describe('admin CMS', () => {
     expect((await c.app.inject(album.coverUrl!)).statusCode).toBe(200)
   })
 
+  it('takes the band\'s lineup as four counts, and shows them again in the form', async () => {
+    const c = setup()
+    const { cookie } = await login(c.app)
+    const m = await newMeeting(c, cookie)
+    const body = multipart(albumFields({
+      lineup_men: '5', lineup_women: '1', lineup_nonbinary: '', lineup_other: 'ikke et tal',
+    }))
+    await c.app.inject({ method: 'POST', url: `/admin/meetings/${m.id}/albums/new`, headers: { ...body.headers, cookie }, payload: body.payload })
+
+    const album = listMeetings(c.db)[0].albums[0]
+    // Blank and nonsense are nobody, not a crash and not a NaN in the database.
+    expect(album.lineup).toEqual({ men: 5, women: 1, nonbinary: 0, other: 0 })
+
+    const form = await c.app.inject({ url: `/admin/albums/${album.id}`, headers: { cookie } })
+    expect(form.body).toContain('name="lineup_men" value="5"')
+    expect(form.body).toContain('name="lineup_women" value="1"')
+    expect(form.body).toContain('name="lineup_nonbinary" value="0"')
+  })
+
   it('rejects a text file as cover: no album row, no new file in uploads/covers', async () => {
     const c = setup()
     const { cookie } = await login(c.app)
