@@ -93,8 +93,9 @@ export function headline(entries: Entry[], meetings: number): { label: string; v
 
 /**
  * Køn lies down. Standing up it counted 100 people three covers to a row and ran to some 1600 px,
- * taller than the screen and three times the other three. On its side a bar is one row of covers,
- * as long as there are people in it, and the whole thing is a few hundred px tall.
+ * taller than the screen and three times the other three. On its side a bar is three rows of
+ * covers growing to the right — a third of the length a single row ran to — and the whole thing
+ * is a few hundred px tall.
  *
  * The three bars share one scroller, so their lengths can still be held against each other; a
  * bar with its own would say nothing. The names stick to the left edge while it scrolls.
