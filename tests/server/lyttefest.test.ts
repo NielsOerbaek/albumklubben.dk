@@ -259,7 +259,7 @@ describe('hvem der kommer', () => {
       method: 'POST', url: '/theta/webhook', payload: raw,
       headers: {
         'content-type': 'application/json',
-        'theta-signature': `t=${t},v1=${createHmac('sha256', SECRET).update(`${t}.`).update(raw).digest('hex')}`,
+        'x-signature': `t=${t},v1=${createHmac('sha256', SECRET).update(`${t}.`).update(raw).digest('hex')}`,
       },
     })
     expect(res.statusCode).toBe(200)
@@ -386,7 +386,7 @@ describe('ansigterne', () => {
       method: 'POST', url: '/theta/webhook', payload: raw,
       headers: {
         'content-type': 'application/json',
-        'theta-signature': `t=${t},v1=${createHmac('sha256', SECRET).update(`${t}.`).update(raw).digest('hex')}`,
+        'x-signature': `t=${t},v1=${createHmac('sha256', SECRET).update(`${t}.`).update(raw).digest('hex')}`,
       },
     })
     const fest = (await app.inject({ url: '/api/lyttefest/1', headers: { cookie } })).json()

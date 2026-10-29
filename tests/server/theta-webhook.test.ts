@@ -52,7 +52,7 @@ const send = (app: ReturnType<typeof setup>['app'], event: unknown, signature?: 
   const raw = JSON.stringify(event)
   return app.inject({
     method: 'POST', url: '/theta/webhook', payload: raw,
-    headers: { 'content-type': 'application/json', 'theta-signature': (signature ?? sign)(raw) },
+    headers: { 'content-type': 'application/json', 'x-signature': (signature ?? sign)(raw) },
   })
 }
 
@@ -85,7 +85,7 @@ describe('Thetas webhook', () => {
     const stolen = sign(raw)
     const tampered = await app.inject({
       method: 'POST', url: '/theta/webhook', payload: JSON.stringify({ ...posted, data: { group: 'en anden gruppe' } }),
-      headers: { 'content-type': 'application/json', 'theta-signature': stolen },
+      headers: { 'content-type': 'application/json', 'x-signature': stolen },
     })
     expect(tampered.statusCode).toBe(401)
   })

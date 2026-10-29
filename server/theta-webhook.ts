@@ -6,15 +6,12 @@ import type { Card } from './theta-api.ts'
  * Theta's signed events. This is the only route outside the login gate: it is not a member who
  * calls it but Theta, and the signature is what makes it safe.
  *
- * NOTE: the exact scheme is "Signed events" in theta-app's interop README, which was not at hand
- * when this was written. What is checked below is an HMAC-SHA256 over `<timestamp>.<raw body>`
- * with the shared secret, sent as:
+ * The scheme is "Signed events" in theta-app's interop README (backend/src/modules/interop/
+ * signature.ts): an HMAC-SHA256 over `<timestamp>.<raw body>` with the shared secret, sent as:
  *
- *     Theta-Signature: t=<unix seconds>,v1=<hex>
+ *     X-Signature: t=<unix seconds>,v1=<hex>
  *
- * If Theta signs differently, `verify` below is the one function to change — it is deliberately
- * the only place that knows the scheme, and it fails closed, so a wrong guess refuses events
- * rather than letting anything through.
+ * `verify` below is the only place that knows the scheme, and it fails closed.
  */
 const MAX_AGE_S = 5 * 60
 
@@ -60,12 +57,10 @@ export function registerThetaWebhook(app: FastifyInstance, handlers: WebhookHand
 
     scope.post('/theta/webhook', async (req, reply) => {
       const raw = (req as any).rawBody as Buffer | undefined
-      if (!raw || !verify(handlers.secret, req.headers['theta-signature'] as string | undefined, raw)) {
-        // The scheme here is read off the interop README's "Signed events", which was not at hand
-        // when this was written. Until a real event has been seen, a refusal says what arrived —
-        // the header names, and the value of anything that looks like the signature — so the
-        // first press of a button on a card is enough to put it right. A signature is a digest,
-        // not a secret, and no body is logged.
+      if (!raw || !verify(handlers.secret, req.headers['x-signature'] as string | undefined, raw)) {
+        // A refusal says what arrived — the header names, and the value of anything that looks
+        // like the signature — so a change of scheme on Theta's side shows up in the log. A
+        // signature is a digest, not a secret, and no body is logged.
         req.log.warn({
           headers: Object.keys(req.headers),
           signature: Object.entries(req.headers)
